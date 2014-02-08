@@ -601,7 +601,6 @@ static void acm_port_destruct(struct tty_port *port)
 
 	dev_dbg(&acm->control->dev, "%s\n", __func__);
 
-	tty_unregister_device(acm_tty_driver, acm->minor);
 	acm_release_minor(acm);
 	usb_put_intf(acm->control);
 	kfree(acm->country_codes);
@@ -1418,6 +1417,8 @@ static void acm_disconnect(struct usb_interface *intf)
 
 	stop_data_traffic(acm);
 
+	tty_unregister_device(acm_tty_driver, acm->minor);
+
 	usb_free_urb(acm->ctrlurb);
 	for (i = 0; i < ACM_NW; i++)
 		usb_free_urb(acm->wb[i].urb);
@@ -1600,6 +1601,9 @@ static const struct usb_device_id acm_ids[] = {
 					   quirk for this. */
 	},
 	{ USB_DEVICE(0x0572, 0x1340), /* Conexant CX93010-2x UCMxx */
+	.driver_info = NO_UNION_NORMAL,
+	},
+	{ USB_DEVICE(0x05f9, 0x4002), /* PSC Scanning, Magellan 800i */
 	.driver_info = NO_UNION_NORMAL,
 	},
 	{ USB_DEVICE(0x1bbb, 0x0003), /* Alcatel OT-I650 */
