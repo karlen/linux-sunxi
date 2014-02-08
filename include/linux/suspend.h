@@ -36,7 +36,8 @@ typedef int __bitwise suspend_state_t;
 #define PM_SUSPEND_ON		((__force suspend_state_t) 0)
 #define PM_SUSPEND_STANDBY	((__force suspend_state_t) 1)
 #define PM_SUSPEND_MEM		((__force suspend_state_t) 3)
-#define PM_SUSPEND_MAX		((__force suspend_state_t) 4)
+#define PM_SUSPEND_BOOTFAST	((__force suspend_state_t) 7)
+#define PM_SUSPEND_MAX		((__force suspend_state_t) 8)
 
 enum suspend_stat_step {
 	SUSPEND_FREEZE = 1,
@@ -356,8 +357,9 @@ extern int unregister_pm_notifier(struct notifier_block *nb);
 extern bool events_check_enabled;
 
 extern bool pm_wakeup_pending(void);
-extern bool pm_get_wakeup_count(unsigned int *count);
+extern bool pm_get_wakeup_count(unsigned int *count, bool block);
 extern bool pm_save_wakeup_count(unsigned int count);
+extern void pm_wakep_autosleep_enabled(bool set);
 
 static inline void lock_system_sleep(void)
 {
@@ -406,6 +408,17 @@ static inline void lock_system_sleep(void) {}
 static inline void unlock_system_sleep(void) {}
 
 #endif /* !CONFIG_PM_SLEEP */
+
+#ifdef CONFIG_PM_AUTOSLEEP
+
+/* kernel/power/autosleep.c */
+void queue_up_suspend_work(void);
+
+#else /* !CONFIG_PM_AUTOSLEEP */
+
+static inline void queue_up_suspend_work(void) {}
+
+#endif /* !CONFIG_PM_AUTOSLEEP */
 
 #ifdef CONFIG_ARCH_SAVE_PAGE_KEYS
 /*

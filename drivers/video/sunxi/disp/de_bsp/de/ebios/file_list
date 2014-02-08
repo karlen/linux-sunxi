@@ -1,0 +1,9 @@
+./de_be.c
+./de_dsi.c
+./de_lcd.c
+./de_hwc.c
+./de_lcd.h
+./vga_std.c
+./de_tve.c
+./de_fe.c
+./de_layer.c

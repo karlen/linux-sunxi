@@ -734,6 +734,7 @@ int usb_add_config(struct usb_composite_dev *cdev,
 
 	INIT_LIST_HEAD(&config->functions);
 	config->next_interface_id = 0;
+	memset(config->interface, 0, sizeof(config->interface));
 
 	status = bind(config);
 	if (status < 0) {
@@ -772,6 +773,57 @@ done:
 		DBG(cdev, "added config '%s'/%u --> %d\n", config->label,
 				config->bConfigurationValue, status);
 	return status;
+}
+
+static int unbind_config(struct usb_composite_dev *cdev,
+			      struct usb_configuration *config)
+{
+	while (!list_empty(&config->functions)) {
+		struct usb_function		*f;
+
+		f = list_first_entry(&config->functions,
+				struct usb_function, list);
+		list_del(&f->list);
+		if (f->unbind) {
+			DBG(cdev, "unbind function '%s'/%p\n", f->name, f);
+			f->unbind(config, f);
+			/* may free memory for "f" */
+		}
+	}
+	list_del(&config->list);
+	if (config->unbind) {
+		DBG(cdev, "unbind config '%s'/%p\n", config->label, config);
+		config->unbind(config);
+			/* may free memory for "c" */
+	}
+#ifdef CONFIG_USB_SUNXI_USB
+    usb_ep_autoconfig_reset(cdev->gadget);
+#endif
+	return 0;
+}
+
+/**
+ * usb_remove_config() - remove a configuration from a device.
+ * @cdev: wraps the USB gadget
+ * @config: the configuration
+ *
+ * Drivers must call usb_gadget_disconnect before calling this function
+ * to disconnect the device from the host and make sure the host will not
+ * try to enumerate the device while we are changing the config list.
+ */
+int usb_remove_config(struct usb_composite_dev *cdev,
+		      struct usb_configuration *config)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave(&cdev->lock, flags);
+
+	if (cdev->config == config)
+		reset_config(cdev);
+
+	spin_unlock_irqrestore(&cdev->lock, flags);
+
+	return unbind_config(cdev, config);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1328,28 +1380,10 @@ composite_unbind(struct usb_gadget *gadget)
 
 	while (!list_empty(&cdev->configs)) {
 		struct usb_configuration	*c;
-
 		c = list_first_entry(&cdev->configs,
 				struct usb_configuration, list);
-		while (!list_empty(&c->functions)) {
-			struct usb_function		*f;
-
-			f = list_first_entry(&c->functions,
-					struct usb_function, list);
-			list_del(&f->list);
-			if (f->unbind) {
-				DBG(cdev, "unbind function '%s'/%p\n",
-						f->name, f);
-				f->unbind(c, f);
-				/* may free memory for "f" */
-			}
-		}
 		list_del(&c->list);
-		if (c->unbind) {
-			DBG(cdev, "unbind config '%s'/%p\n", c->label, c);
-			c->unbind(c);
-			/* may free memory for "c" */
-		}
+		unbind_config(cdev, c);
 	}
 	if (composite->unbind)
 		composite->unbind(cdev);
@@ -1641,3 +1675,152 @@ void usb_composite_setup_continue(struct usb_composite_dev *cdev)
 	spin_unlock_irqrestore(&cdev->lock, flags);
 }
 
+#ifdef CONFIG_USB_SUNXI_USB
+
+#include <mach/sys_config.h>
+
+static struct android_usb_config g_android_usb_config;
+
+static s32 get_android_config(struct android_usb_config *config)
+{
+    script_item_value_type_e type = 0;
+	script_item_u item_temp;
+
+	//----------------------------------------
+    //  usb_feature
+    //----------------------------------------
+    /* vendor_id */
+	type = script_get_item("usb_feature", "vendor_id", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_INT){
+		config->vendor_id = item_temp.val;
+	}else{
+		pr_debug("ERR: get usb_feature vendor_id failed\n");
+		config->vendor_id = 0x18D1;
+	}
+
+    /* mass_storage_id */
+	type = script_get_item("usb_feature", "mass_storage_id", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_INT){
+		config->mass_storage_id = item_temp.val;
+	}else{
+		 pr_debug("ERR: get usb_feature mass_storage_id failed\n");
+		config->mass_storage_id = 0x0001;
+	}
+
+    /* adb_id */
+	type = script_get_item("usb_feature", "adb_id", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_INT){
+		config->adb_id = item_temp.val;
+	}else{
+		pr_debug("ERR: get usb_feature adb_id failed\n");
+		config->adb_id = 0x0002;
+	}
+
+	/* manufacturer_name */
+	type = script_get_item("usb_feature", "manufacturer_name", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_STR){
+		strcpy(config->usb_manufacturer_name, item_temp.str);
+	}else{
+		pr_debug("ERR: get usb_feature manufacturer_name failed\n");
+		strcpy(config->usb_manufacturer_name, "USB Developer");
+	}
+
+	/* product_name */
+	type = script_get_item("usb_feature", "product_name", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_STR){
+		strcpy(config->usb_product_name, item_temp.str);
+	}else{
+		pr_debug("ERR: get usb_feature product_name failed\n");
+		strcpy(config->usb_product_name, "Android");
+	}
+
+	/* serial_number */
+	type = script_get_item("usb_feature", "serial_number", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_STR){
+		strcpy(config->usb_serial_number, item_temp.str);
+	}else{
+		pr_debug("ERR: get usb_feature serial_number failed\n");
+		strcpy(config->usb_serial_number, "20080411");
+	}
+
+
+    //----------------------------------------
+    //  msc_feature
+    //----------------------------------------
+
+	/* vendor_name */
+	type = script_get_item("msc_feature", "vendor_name", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_STR){
+		strcpy(config->msc_vendor_name, item_temp.str);
+	}else{
+		pr_debug("ERR: get msc_feature vendor_name failed\n");
+		strcpy(config->msc_vendor_name, "USB 2.0");
+	}
+
+	/* product_name */
+	type = script_get_item("msc_feature", "product_name", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_STR){
+		strcpy(config->msc_product_name, item_temp.str);
+	}else{
+		pr_debug("ERR: get msc_feature product_name failed\n");
+		strcpy(config->msc_product_name, "USB Flash Driver");
+	}
+
+	/* release */
+	type = script_get_item("msc_feature", "release", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_INT){
+		config->msc_release = item_temp.val;
+	}else{
+		pr_debug("ERR: get msc_feature release failed\n");
+		config->msc_release = 100;
+	}
+
+	/* luns */
+	type = script_get_item("msc_feature", "luns", &item_temp);
+	if(type == SCIRPT_ITEM_VALUE_TYPE_INT){
+		config->luns = item_temp.val;
+	}else{
+		pr_debug("ERR: get msc_feature luns failed\n");
+		config->luns = 3;
+	}
+    return 0;
+}
+
+static void print_android_config(struct android_usb_config *config)
+{
+    pr_debug("------print_msc_config-----\n");
+    pr_debug("vendor_id             = 0x%x\n", config->vendor_id);
+    pr_debug("mass_storage_id       = 0x%x\n", config->mass_storage_id);
+    pr_debug("adb_id                = 0x%x\n", config->adb_id);
+
+    pr_debug("usb_manufacturer_name = %s\n", config->usb_manufacturer_name);
+    pr_debug("usb_product_name      = %s\n", config->usb_product_name);
+    pr_debug("usb_serial_number     = %s\n", config->usb_serial_number);
+
+    pr_debug("msc_vendor_name       = %s\n", config->msc_vendor_name);
+    pr_debug("msc_product_name      = %s\n", config->msc_product_name);
+    pr_debug("msc_release           = %d\n", config->msc_release);
+    pr_debug("luns                  = %d\n", config->luns);
+    pr_debug("---------------------------\n");
+}
+
+s32 parse_android_usb_config(void)
+{
+    struct android_usb_config *config = &g_android_usb_config;
+
+    memset(config, 0, sizeof(struct android_usb_config));
+
+    get_android_config(config);
+
+    print_android_config(config);
+
+    return 0;
+}
+
+s32 get_android_usb_config(struct android_usb_config *config)
+{
+    memcpy(config, &g_android_usb_config, sizeof(struct android_usb_config));
+
+    return 0;
+}
+#endif

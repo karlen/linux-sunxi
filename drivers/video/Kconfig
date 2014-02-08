@@ -23,6 +23,8 @@ source "drivers/gpu/drm/Kconfig"
 
 source "drivers/gpu/stub/Kconfig"
 
+source "drivers/gpu/ion/Kconfig"
+
 config VGASTATE
        tristate
        default n
@@ -258,6 +260,24 @@ config FB_TILEBLITTING
 
 comment "Frame buffer hardware drivers"
 	depends on FB
+
+config FB_SUNXI
+  tristate "DISP Driver Support(sunxi)"
+  depends on FB
+  ---help---
+  default m
+
+config LCD_SUNXI
+  tristate "LCD Driver Support(sunxi)"
+  depends on FB_SUNXI
+  ---help---
+  default m
+
+config HDMI_SUNXI
+  tristate "HDMI Driver Support(sunxi)"
+  depends on FB_SUNXI
+  ---help---
+  default m
 
 config FB_GRVGA
 	tristate "Aeroflex Gaisler framebuffer support"

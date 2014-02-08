@@ -1,5 +1,6 @@
 menuconfig POWER_SUPPLY
 	tristate "Power supply class support"
+	default y
 	help
 	  Say Y here to enable power supply class support. This allows
 	  power supply (batteries, AC, USB) monitoring by userspace
@@ -7,6 +8,8 @@ menuconfig POWER_SUPPLY
 	  (if selected below).
 
 if POWER_SUPPLY
+
+source "drivers/power/axp_power/Kconfig"
 
 config POWER_SUPPLY_DEBUG
 	bool "Power supply debug"
@@ -189,6 +192,16 @@ config BATTERY_MAX17042
 	  to operate with a single lithium cell. MAX8997 and MAX8966 are
 	  multi-function devices that include fuel gauages that are compatible
 	  with MAX17042.
+
+config BATTERY_ANDROID
+	tristate "Battery driver for Android"
+	help
+	  Say Y to enable generic support for battery charging according
+	  to common Android policies.
+	  This driver adds periodic battery level and health monitoring,
+	  kernel log reporting and other debugging features, common board
+	  battery file glue logic for battery/case temperature sensors,
+	  etc.
 
 config BATTERY_Z2
 	tristate "Z2 battery driver"

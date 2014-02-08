@@ -25,6 +25,10 @@ obj-$(CONFIG_ZD1211RW)		+= zd1211rw/
 obj-$(CONFIG_RTL8180)		+= rtl818x/
 obj-$(CONFIG_RTL8187)		+= rtl818x/
 obj-$(CONFIG_RTLWIFI)		+= rtlwifi/
+obj-$(CONFIG_RTL8188EU) 	+= rtl8188eu/
+obj-$(CONFIG_RTL8189ES) 	+= rtl8189es/
+obj-$(CONFIG_RTL8723AU) 	+= rtl8723au/
+obj-$(CONFIG_RTL8723BS)		+= rtl8723bs/
 
 # 16-bit wireless PCMCIA client drivers
 obj-$(CONFIG_PCMCIA_RAYCS)	+= ray_cs.o
@@ -58,6 +62,8 @@ obj-$(CONFIG_WL12XX_PLATFORM_DATA)	+= wl12xx/
 obj-$(CONFIG_IWM)	+= iwmc3200wifi/
 
 obj-$(CONFIG_MWIFIEX)	+= mwifiex/
+
+obj-$(CONFIG_BCMDHD)	+= bcmdhd/
 
 obj-$(CONFIG_BRCMFMAC)	+= brcm80211/
 obj-$(CONFIG_BRCMSMAC)	+= brcm80211/

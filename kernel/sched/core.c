@@ -2095,6 +2095,31 @@ context_switch(struct rq *rq, struct task_struct *prev,
 	finish_task_switch(this_rq(), prev);
 }
 
+#ifdef CONFIG_CPU_FREQ_GOV_FANTASYS
+
+#define NR_RUNNING_AVG_BITSHIFT     (5)
+#define NR_RUNNING_MULT_VAL(x)      ((x<<10)-(x<<4)-(x<<3))
+static DEFINE_SPINLOCK(nr_running_avg_lock);
+static DEFINE_PER_CPU_SHARED_ALIGNED(int, nr_running_avg_val);
+
+static void cal_nr_running_avg(struct rq *rq)
+{
+    int             avg;
+    unsigned long   flags;
+
+    spin_lock_irqsave(&nr_running_avg_lock, flags);
+    /* calculate average value for cpu n */
+    avg = per_cpu(nr_running_avg_val, rq->cpu)<<NR_RUNNING_AVG_BITSHIFT;
+    avg -= per_cpu(nr_running_avg_val, rq->cpu);
+    avg += NR_RUNNING_MULT_VAL(rq->nr_running);
+    avg >>= NR_RUNNING_AVG_BITSHIFT;
+    per_cpu(nr_running_avg_val, rq->cpu) = avg;
+
+    spin_unlock_irqrestore(&nr_running_avg_lock, flags);
+}
+
+#endif  /* #ifdef CONFIG_CPU_FREQ_GOV_FANTASYS */
+
 /*
  * nr_running, nr_uninterruptible and nr_context_switches:
  *
@@ -2111,6 +2136,36 @@ unsigned long nr_running(void)
 
 	return sum;
 }
+
+#ifdef CONFIG_CPU_FREQ_GOV_FANTASYS
+unsigned long nr_running_avg(void)
+{
+    int             cpu, avg = 0;
+    unsigned long   flags;
+
+    spin_lock_irqsave(&nr_running_avg_lock, flags);
+    /* calculate on line cpus' rq loading */
+    for_each_online_cpu(cpu) {
+        avg += per_cpu(nr_running_avg_val, cpu);
+    }
+    spin_unlock_irqrestore(&nr_running_avg_lock, flags);
+
+    return avg;
+}
+EXPORT_SYMBOL_GPL(nr_running_avg);
+#endif
+
+#ifdef CONFIG_CPU_FREQ_GOV_FANTASYS
+unsigned long nr_running_avg_cpu(int cpu)
+{
+    if (!cpu_online(cpu)) {
+        per_cpu(nr_running_avg_val, cpu) = 0;
+    }
+
+    return per_cpu(nr_running_avg_val, cpu);
+}
+EXPORT_SYMBOL_GPL(nr_running_avg_cpu);
+#endif
 
 unsigned long nr_uninterruptible(void)
 {
@@ -2656,6 +2711,15 @@ void update_cpu_load(struct rq *this_rq)
 	}
 
 	sched_avg_update(this_rq);
+
+#ifdef CONFIG_CPU_FREQ_GOV_FANTASYS
+    pending_updates--;
+    while(pending_updates--) {
+        cal_nr_running_avg(this_rq);
+    }
+    cal_nr_running_avg(this_rq);
+#endif
+
 }
 
 static void update_cpu_load_active(struct rq *this_rq)
@@ -7243,13 +7307,24 @@ static inline int preempt_count_equals(int preempt_offset)
 	return (nested == preempt_offset);
 }
 
+static int __might_sleep_init_called;
+int __init __might_sleep_init(void)
+{
+	__might_sleep_init_called = 1;
+	return 0;
+}
+early_initcall(__might_sleep_init);
+
 void __might_sleep(const char *file, int line, int preempt_offset)
 {
 	static unsigned long prev_jiffy;	/* ratelimiting */
 
 	rcu_sleep_check(); /* WARN_ON_ONCE() by default, no rate limit reqd. */
 	if ((preempt_count_equals(preempt_offset) && !irqs_disabled()) ||
-	    system_state != SYSTEM_RUNNING || oops_in_progress)
+	    oops_in_progress)
+		return;
+	if (system_state != SYSTEM_RUNNING &&
+	    (!__might_sleep_init_called || system_state != SYSTEM_BOOTING))
 		return;
 	if (time_before(jiffies, prev_jiffy + HZ) && prev_jiffy)
 		return;
@@ -7809,6 +7884,23 @@ static void cpu_cgroup_destroy(struct cgroup *cgrp)
 	sched_destroy_group(tg);
 }
 
+static int
+cpu_cgroup_allow_attach(struct cgroup *cgrp, struct cgroup_taskset *tset)
+{
+	const struct cred *cred = current_cred(), *tcred;
+	struct task_struct *task;
+
+	cgroup_taskset_for_each(task, cgrp, tset) {
+		tcred = __task_cred(task);
+
+		if ((current != task) && !capable(CAP_SYS_NICE) &&
+		    cred->euid != tcred->uid && cred->euid != tcred->suid)
+			return -EACCES;
+	}
+
+	return 0;
+}
+
 static int cpu_cgroup_can_attach(struct cgroup *cgrp,
 				 struct cgroup_taskset *tset)
 {
@@ -8170,6 +8262,7 @@ struct cgroup_subsys cpu_cgroup_subsys = {
 	.destroy	= cpu_cgroup_destroy,
 	.can_attach	= cpu_cgroup_can_attach,
 	.attach		= cpu_cgroup_attach,
+	.allow_attach	= cpu_cgroup_allow_attach,
 	.exit		= cpu_cgroup_exit,
 	.populate	= cpu_cgroup_populate,
 	.subsys_id	= cpu_cgroup_subsys_id,
