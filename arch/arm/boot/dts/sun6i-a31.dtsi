@@ -472,6 +472,14 @@
 			clocks = <&mii_phy_tx_clk>, <&gmac_int_tx_clk>;
 			clock-output-names = "gmac_tx";
 		};
+
+		audio_codec_clk: clk@01c20140 {
+			#clock-cells = <0>;
+			compatible = "allwinner,sun4i-a10-codec-clk";
+			reg = <0x01c20140 0x4>;
+			clocks = <&pll2 SUN4I_A10_PLL2_1X>;
+			clock-output-names = "codec";
+		};
 	};
 
 	soc@01c00000 {
