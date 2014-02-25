@@ -202,11 +202,38 @@
 		};
 
 		pll2: clk@01c20008 {
-			#clock-cells = <1>;
-			compatible = "allwinner,sun4i-a10-b-pll2-clk";
+			#clock-cells = <0>;
+			compatible = "allwinner,sun6i-a31-pll2-clk";
 			reg = <0x01c20008 0x4>;
 			clocks = <&osc24M>;
-			clock-output-names = "pll2", "pll2x2", "pll2x4", "pll2x8";
+			clock-output-names = "pll2";
+		};
+
+		pll2x2: clk@1 {
+			#clock-cells = <0>;
+			compatible = "fixed-factor-clock";
+			clocks = <&pll2>;
+			clock-mult = <2>;
+			clock-div = <1>;
+			clock-output-names = "pll2 x2";
+		};
+
+		pll2x4: clk@2 {
+			#clock-cells = <0>;
+			compatible = "fixed-factor-clock";
+			clocks = <&pll2>;
+			clock-mult = <4>;
+			clock-div = <1>;
+			clock-output-names = "pll2 x4";
+		};
+
+		pll2x8: clk@3 {
+			#clock-cells = <0>;
+			compatible = "fixed-factor-clock";
+			clocks = <&pll2>;
+			clock-mult = <8>;
+			clock-div = <1>;
+			clock-output-names = "pll2 x8";
 		};
 
 		pll6: clk@01c20028 {
@@ -416,6 +443,22 @@
 			clock-output-names = "spi3";
 		};
 
+		i2s0_clk: clk@01c200b0 {
+			#clock-cells = <0>;
+			compatible = "allwinner,sun6i-a31-mod1-clk";
+			reg = <0x01c200b0 0x4>;
+			clocks = <&pll2x8>, <&pll2x4>, <&pll2x2>, <&pll2>;
+			clock-output-names = "i2s0";
+		};
+
+		i2s1_clk: clk@01c200b4 {
+			#clock-cells = <0>;
+			compatible = "allwinner,sun6i-a31-mod1-clk";
+			reg = <0x01c200b4 0x4>;
+			clocks = <&pll2x8>, <&pll2x4>, <&pll2x2>, <&pll2>;
+			clock-output-names = "i2s1";
+		};
+
 		usb_clk: clk@01c200cc {
 			#clock-cells = <1>;
 			#reset-cells = <1>;
@@ -470,6 +513,14 @@
 			reg = <0x01c200d0 0x4>;
 			clocks = <&mii_phy_tx_clk>, <&gmac_int_tx_clk>;
 			clock-output-names = "gmac_tx";
+		};
+
+		audio_codec_clk: clk@01c20140 {
+			#clock-cells = <0>;
+			compatible = "allwinner,sun4i-a10-audio-codec-clk";
+			reg = <0x01c20140 0x4>;
+			clocks = <&pll2>;
+			clock-output-names = "audio_codec";
 		};
 	};
 
@@ -831,6 +882,15 @@
 			compatible = "allwinner,sun4i-a10-lradc-keys";
 			reg = <0x01c22800 0x100>;
 			interrupts = <GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>;
+			status = "disabled";
+		};
+
+		codec: codec@01c22c00 {
+			compatible = "allwinner,sun6i-a31-audio-codec";
+			reg = <0x01c22c00 0x400>;
+			interrupts = <0 29 4>;
+			clocks = <&apb1_gates 0>, <&audio_codec_clk>;
+			resets = <&apb1_rst 0>;
 			status = "disabled";
 		};
 
