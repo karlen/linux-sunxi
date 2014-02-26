@@ -146,6 +146,7 @@ struct sun6i_vchan {
 	struct dma_slave_config	cfg;
 	struct sun6i_pchan	*phy;
 	u8			port;
+	bool			cyclic;
 };
 
 struct sun6i_dma_dev {
@@ -361,6 +362,7 @@ static int sun6i_dma_start_desc(struct sun6i_vchan *vchan)
 	struct virt_dma_desc *desc = vchan_next_desc(&vchan->vc);
 	struct sun6i_pchan *pchan = vchan->phy;
 	u32 irq_val, irq_reg, irq_offset;
+	u8 irq_type;
 
 	if (!pchan)
 		return -EAGAIN;
@@ -381,8 +383,10 @@ static int sun6i_dma_start_desc(struct sun6i_vchan *vchan)
 	irq_reg = pchan->idx / DMA_IRQ_CHAN_NR;
 	irq_offset = pchan->idx % DMA_IRQ_CHAN_NR;
 
+	irq_type = vchan->cyclic ? DMA_IRQ_PKG : DMA_IRQ_QUEUE;
+
 	irq_val = readl(sdev->base + DMA_IRQ_EN(irq_offset));
-	irq_val |= DMA_IRQ_QUEUE << (irq_offset * DMA_IRQ_CHAN_WIDTH);
+	irq_val |= irq_type << (irq_offset * DMA_IRQ_CHAN_WIDTH);
 	writel(irq_val, sdev->base + DMA_IRQ_EN(irq_offset));
 
 	writel(pchan->desc->p_lli, pchan->base + DMA_CHAN_LLI_ADDR);
@@ -479,23 +483,35 @@ static irqreturn_t sun6i_dma_interrupt(int irq, void *dev_id)
 		writel(status, sdev->base + DMA_IRQ_STAT(i));
 
 		for (j = 0; (j < DMA_IRQ_CHAN_NR) && status; j++) {
-			if (status & DMA_IRQ_QUEUE) {
-				pchan = sdev->pchans + j;
-				vchan = pchan->vchan;
+			pchan = sdev->pchans + j;
+			vchan = pchan->vchan;
 
-				if (vchan) {
-					spin_lock(&vchan->vc.lock);
+			if (vchan) {
+				unsigned long flags;
+
+				spin_lock_irqsave(&vchan->vc.lock, flags);
+
+				if ((status & 0xf) & DMA_IRQ_PKG) {
+					dev_vdbg(sdev->slave.dev,
+						 "Cyclic interrupt for physical channel %d",
+						 pchan->idx);
+					vchan_cyclic_callback(&pchan->desc->vd);
+				}
+
+				if ((status & 0xf) & DMA_IRQ_QUEUE) {
 					vchan_cookie_complete(&pchan->desc->vd);
 					pchan->done = pchan->desc;
-					spin_unlock(&vchan->vc.lock);
+
+					if (!atomic_read(&sdev->tasklet_shutdown))
+						tasklet_schedule(&sdev->task);
 				}
+
+				spin_unlock_irqrestore(&vchan->vc.lock, flags);
 			}
 
 			status = status >> DMA_IRQ_CHAN_WIDTH;
 		}
 
-		if (!atomic_read(&sdev->tasklet_shutdown))
-			tasklet_schedule(&sdev->task);
 		ret = IRQ_HANDLED;
 	}
 
@@ -641,6 +657,66 @@ err_lli_free:
 		dma_pool_free(sdev->pool, prev, virt_to_phys(prev));
 	kfree(txd);
 	return NULL;
+}
+
+struct dma_async_tx_descriptor *sun6i_dma_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t buf_addr,
+							  size_t buf_len, size_t period_len,
+							  enum dma_transfer_direction dir,
+							  unsigned long flags, void *context)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	struct dma_slave_config *sconfig = &vchan->cfg;
+	struct sun6i_dma_lli *l_item, *prev = NULL;
+	struct sun6i_desc *txd;
+
+	dma_addr_t phy;
+	unsigned int periods = buf_len / period_len;
+	unsigned int i;
+
+	txd = kzalloc(sizeof(*txd), GFP_NOWAIT);
+	if (!txd) {
+		dev_err(chan2dev(chan), "%s: Failed to alloc sunxi_desc!!\n", __func__);
+		return NULL;
+	}
+
+	for (i = 0; i < periods; i++){
+		l_item = dma_pool_alloc(sdev->pool, GFP_NOWAIT, &phy);
+		if (!l_item) {
+			kfree(txd);
+			return NULL;
+		}
+
+		if (dir == DMA_MEM_TO_DEV) {
+			sun6i_dma_cfg_lli(l_item, (buf_addr + period_len * i),
+					  sconfig->dst_addr, period_len, sconfig);
+			l_item->cfg |= DMA_CHAN_CFG_DST_IO_MODE |
+				DMA_CHAN_CFG_SRC_LINEAR_MODE |
+				DMA_CHAN_CFG_SRC_DRQ(DRQ_SDRAM) |
+				DMA_CHAN_CFG_DST_DRQ(vchan->port);
+		} else if (dir == DMA_DEV_TO_MEM) {
+			sun6i_dma_cfg_lli(l_item, sconfig->src_addr,
+					  (buf_addr + period_len * i), period_len, sconfig);
+			l_item->cfg |= DMA_CHAN_CFG_DST_LINEAR_MODE |
+				DMA_CHAN_CFG_SRC_IO_MODE |
+				DMA_CHAN_CFG_DST_DRQ(DRQ_SDRAM) |
+				DMA_CHAN_CFG_SRC_DRQ(vchan->port);
+		}
+
+		prev = sun6i_dma_lli_add(prev, l_item, phy, txd);
+	}
+
+	/* Make a cyclic list */
+	prev->p_lli_next = txd->p_lli;
+	vchan->cyclic = true;
+
+#ifdef DEBUG
+	dev_dbg(chan2dev(chan), "First: %pad\n", &txd->p_lli);
+	for (prev = txd->v_lli; prev != NULL; prev = prev->v_lli_next)
+		sun6i_dma_dump_lli(vchan, prev);
+#endif
+
+	return vchan_tx_prep(&vchan->vc, &txd->vd, flags);
 }
 
 static int sun6i_dma_config(struct dma_chan *chan,
@@ -963,6 +1039,7 @@ static int sun6i_dma_probe(struct platform_device *pdev)
 	dma_cap_set(DMA_PRIVATE, sdc->slave.cap_mask);
 	dma_cap_set(DMA_MEMCPY, sdc->slave.cap_mask);
 	dma_cap_set(DMA_SLAVE, sdc->slave.cap_mask);
+	dma_cap_set(DMA_CYCLIC, sdc->slave.cap_mask);
 
 	INIT_LIST_HEAD(&sdc->slave.channels);
 	sdc->slave.device_free_chan_resources	= sun6i_dma_free_chan_resources;
@@ -971,6 +1048,7 @@ static int sun6i_dma_probe(struct platform_device *pdev)
 	sdc->slave.device_prep_slave_sg		= sun6i_dma_prep_slave_sg;
 	sdc->slave.device_prep_dma_memcpy	= sun6i_dma_prep_dma_memcpy;
 	sdc->slave.copy_align			= DMAENGINE_ALIGN_4_BYTES;
+	sdc->slave.device_prep_dma_cyclic	= sun6i_dma_prep_dma_cyclic;
 	sdc->slave.device_config		= sun6i_dma_config;
 	sdc->slave.device_pause			= sun6i_dma_pause;
 	sdc->slave.device_resume		= sun6i_dma_resume;
