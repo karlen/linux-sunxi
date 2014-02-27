@@ -890,8 +890,10 @@
 			reg = <0x01c22c00 0x400>;
 			interrupts = <0 29 4>;
 			clocks = <&apb1_gates 0>, <&audio_codec_clk>;
+			clock-names = "apb", "mod";
+			dmas = <&dma 15>, <&dma 15>;
+			dma-names = "rx", "tx";
 			resets = <&apb1_rst 0>;
-			status = "disabled";
 		};
 
 		rtp: rtp@01c25000 {

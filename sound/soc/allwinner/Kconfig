@@ -1,0 +1,5 @@
+config SND_SOC_SUN6I_AUDIO_CODEC
+	depends on ARCH_SUNXI
+	select REGMAP_MMIO
+	select SND_SOC_GENERIC_DMAENGINE_PCM
+	tristate "Allwinner A31 Audio Codec Support"
