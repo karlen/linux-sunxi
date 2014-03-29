@@ -34,8 +34,6 @@ static void __init sun6i_mod1_clk_setup(struct device_node *node)
 	struct clk *clk;
 	int i, ret;
 
-	printk("Prout\n");
-
 	ret = of_address_to_resource(node, 0, &res);
 	
 	if (!request_mem_region(res.start, resource_size(&res), node->name))

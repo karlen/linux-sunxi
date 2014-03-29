@@ -78,9 +78,15 @@ static void sun6i_codec_hp_chan_mute(struct sun6i_priv *sun6i, bool left, bool r
 
 #define SUN6I_DAC_DIGITAL_CTRL_REG	0x00
 #define SUN6I_DAC_FIFO_CTRL_REG		0x04
+#define SUN6I_DAC_FIFO_STATUS_REG	0x08
+#define SUN6I_DAC_FIFO_REG		0x0c
+#define SUN6I_ADC_FIFO_CTRL_REG		0x10
+#define SUN6I_ADC_FIFO_STATUS_REG	0x14
+#define SUN6I_ADC_FIFO_REG		0x18
 #define SUN6I_DAC_ANALOG_CTRL_REG	0x20
 #define SUN6I_POWER_AMPLIFIER_CTRL_REG	0x24
 #define SUN6I_ANALOG_PERF_TUNING_REG	0x30
+
 
 static const char *sun6i_zero_crossover_time[] = {"32ms", "64ms"};
 static const char *sun6i_fir_length[] = {"64 bits", "32 bits"};
@@ -1228,7 +1234,59 @@ static struct snd_soc_card sun6i_codec_card = {
 	.num_dapm_routes = ARRAY_SIZE(sun6i_card_route),
 };
 
+static const struct snd_pcm_hardware sun6i_pcm_hardware = {
+	.info			= (SNDRV_PCM_INFO_INTERLEAVED |
+				   SNDRV_PCM_INFO_BLOCK_TRANSFER |
+				   SNDRV_PCM_INFO_MMAP |
+				   SNDRV_PCM_INFO_MMAP_VALID |
+				   SNDRV_PCM_INFO_PAUSE |
+				   SNDRV_PCM_INFO_RESUME),
+	.formats		= (SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE),
+	.rates			= (SNDRV_PCM_RATE_8000_192000 |
+				   SNDRV_PCM_RATE_KNOT),
+
+	.rate_min		= 8000,
+	.rate_max		= 192000,
+	.channels_min		= 1,
+	.channels_max		= 2,
+	.buffer_bytes_max	= 128 * 1024,	/* value must be (2^n)Kbyte size */
+	.period_bytes_min	= 1024 * 2,
+	.period_bytes_max	= 1024 * 32,
+	.periods_min		= 2,
+	.periods_max		= 8,
+	.fifo_size	     	= 32,
+};
+
+
+static int sun6i_configure_dma(struct snd_pcm_substream *substream,
+			       struct snd_pcm_hw_params *params,
+			       struct dma_slave_config *slave_config)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	int ret;
+
+	ret = snd_hwparams_to_dma_slave_config(substream, params, slave_config);
+	if (ret) {
+		dev_err(rtd->cpu_dai->dev, "hwparams to dma slave configure failed\n");
+		return ret;
+	}
+
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		slave_config->dst_addr = sun6i->base + SUN6I_DAC_FIFO_REG;
+		slave_config->dst_maxburst = 1;
+	} else {
+		slave_config->src_addr = sun6i->base + SUN6I_ADC_FIFO_REG;
+		slave_config->src_maxburst = 1;
+	}
+
+	return 0;
+ } 
+
 static const struct snd_dmaengine_pcm_config sun6i_dmaengine_pcm_config = {
+	.pcm_hardware		= &sun6i_pcm_hardware,
+	.prealloc_buffer_size	= 32 * 1024,
+	.prepare_slave_config	= sun6i_configure_dma,
 };
 
 static struct regmap_config sun6i_codec_regmap_config = {
@@ -1260,12 +1318,14 @@ static int sun6i_codec_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Couldn't get the APB clock\n");
 		return PTR_ERR(sun6i->apb_clk);
 	}
+	clk_prepare_enable(sun6i->apb_clk);
 
 	sun6i->mod_clk = devm_clk_get(&pdev->dev, "mod");
 	if (IS_ERR(sun6i->mod_clk)) {
 		dev_err(&pdev->dev, "Couldn't get the module clock\n");
 		return PTR_ERR(sun6i->mod_clk);
 	}
+	clk_prepare_enable(sun6i->mod_clk);
 
 	sun6i->rstc = devm_reset_control_get(&pdev->dev, NULL);
 	if (IS_ERR(sun6i->rstc)) {
