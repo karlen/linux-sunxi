@@ -1102,7 +1102,7 @@ static void __init sunxi_simple_gates_clk_setup(struct device_node *node,
 	of_property_read_string(node, "clock-output-names", &clk_name);
 
 	clk = clk_register_gate(NULL, clk_name,
-				clk_parent, 0,
+				clk_parent, CLK_SET_RATE_PARENT,
 				reg, data->bit,
 				0, &clk_lock);
 	WARN_ON(IS_ERR(clk));
