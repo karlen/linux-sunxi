@@ -148,8 +148,10 @@ static const struct snd_kcontrol_new sun6i_right_hp_mux_controls =
 	SOC_DAPM_ENUM("Right Headphone Amplifier Select", sun6i_right_hp_mux_enum);
 
 static const struct snd_soc_dapm_widget sun6i_dapm_widgets[] = {
+	/* Digital controls of the DACs */
 	SND_SOC_DAPM_DAC("DAC", "Playback", SUN6I_DAC_DIGITAL_CTRL_REG, 31, 0),
 
+	/* Analog parts of the DACs */
 	SND_SOC_DAPM_DAC("Left DAC", "Playback", SUN6I_DAC_ANALOG_CTRL_REG, 30, 0),
 	SND_SOC_DAPM_DAC("Right DAC", "Playback", SUN6I_DAC_ANALOG_CTRL_REG, 31, 0),
 
@@ -157,16 +159,11 @@ static const struct snd_soc_dapm_widget sun6i_dapm_widgets[] = {
 	SND_SOC_DAPM_PGA("Headphone Amplifier",
 			 SUN6I_POWER_AMPLIFIER_CTRL_REG, 31, 0, NULL, 0),
 
-	SND_SOC_DAPM_PGA("Left Headphone Amplifier",
-			 SND_SOC_NOPM, 0, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("Right Headphone Amplifier",
-			 SND_SOC_NOPM, 0, 0, NULL, 0),
-
 	/* Mutes of both channels coming to the headphone amplifier */
-	SND_SOC_DAPM_SWITCH("Left Headphone Switch",
-			    SUN6I_DAC_ANALOG_CTRL_REG, 6, 1, 0),
-	SND_SOC_DAPM_SWITCH("Right Headphone Switch",
-			    SUN6I_DAC_ANALOG_CTRL_REG, 7, 1, 0),
+	SND_SOC_DAPM_PGA("Left Headphone Amplifier",
+			 SUN6I_DAC_ANALOG_CTRL_REG, 6, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("Right Headphone Amplifier",
+			 SUN6I_DAC_ANALOG_CTRL_REG, 7, 0, NULL, 0),
 
 	SND_SOC_DAPM_MIXER("Left Output Mixer", SUN6I_DAC_ANALOG_CTRL_REG, 28, 0,
 			   sun6i_left_output_mixer_controls,
@@ -206,12 +203,14 @@ static const struct snd_soc_dapm_route sun6i_dapm_routes[] = {
 	{ "Right Headphone Amplifier Mux", NULL, "Right DAC" },
 
 	/* Left HP Amplifier */
-	{ "Left Headphone Amplifier", NULL, "Headphone Amplifier" },
-	{ "Left Headphone Amplifier", "Left Headphone Switch", "Left Headphone Amplifier Mux" },
+	{ "Headphone Amplifier", NULL, "Left Headphone Amplifier Mux" },
 
 	/* Right HP Amplifier */
+	{ "Headphone Amplifier", NULL, "Right Headphone Amplifier Mux" },
+
+	/* Power up the headphone amplifiers */
+	{ "Left Headphone Amplifier", NULL, "Headphone Amplifier" },
 	{ "Right Headphone Amplifier", NULL, "Headphone Amplifier" },
-	{ "Right Headphone Amplifier", "Right Headphone Switch", "Right Headphone Amplifier Mux" },
 
 	/* Headphone outputs */
 	{ "HPL", NULL, "Left Headphone Amplifier" },
@@ -913,6 +912,7 @@ static int sun6i_prepare(struct snd_pcm_substream *substream,
 			break;
 		}
 
+/*
 		if (clk_set_rate(sun6i->mod_clk, freq)) {
 			dev_err(dai->dev, "Couldn't set mod clock rate to %d\n", freq);
 			return -EINVAL;
@@ -922,18 +922,18 @@ static int sun6i_prepare(struct snd_pcm_substream *substream,
 		reg_val &= ~(7 << 29);
 		reg_val |= rate << 29;
 		writel(reg_val, sun6i->base + SUN6I_DAC_FIFOC);
-
+*/
 		switch (substream->runtime->channels) {
 		case 1:
-			reg_val = readl(sun6i->base + SUN6I_DAC_FIFOC);
-			reg_val |= BIT(6);
-			writel(reg_val, sun6i->base + SUN6I_DAC_FIFOC);			
+			/* reg_val = readl(sun6i->base + SUN6I_DAC_FIFOC); */
+			/* reg_val |= BIT(6); */
+			/* writel(reg_val, sun6i->base + SUN6I_DAC_FIFOC);			 */
 			break;
 		case 2:
 		default:
-			reg_val = readl(sun6i->base + SUN6I_DAC_FIFOC);
-			reg_val &= ~BIT(6);
-			writel(reg_val, sun6i->base + SUN6I_DAC_FIFOC);
+			/* reg_val = readl(sun6i->base + SUN6I_DAC_FIFOC); */
+			/* reg_val &= ~BIT(6); */
+			/* writel(reg_val, sun6i->base + SUN6I_DAC_FIFOC); */
 			break;
 		}
 	} else {
@@ -987,16 +987,16 @@ static int sun6i_prepare(struct snd_pcm_substream *substream,
 
 		switch (substream->runtime->channels) {
 		case 1:
-			reg_val = readl(sun6i->base + SUN6I_ADC_FIFOC);
-			reg_val |= BIT(7);
-			writel(reg_val, sun6i->base + SUN6I_ADC_FIFOC);			
+			/* reg_val = readl(sun6i->base + SUN6I_ADC_FIFOC); */
+			/* reg_val |= BIT(7); */
+			/* writel(reg_val, sun6i->base + SUN6I_ADC_FIFOC);			 */
 			break;
 
 		case 2:
 		default:
-			reg_val = readl(sun6i->base + SUN6I_ADC_FIFOC);
-			reg_val &= ~BIT(7);
-			writel(reg_val, sun6i->base + SUN6I_ADC_FIFOC);
+			/* reg_val = readl(sun6i->base + SUN6I_ADC_FIFOC); */
+			/* reg_val &= ~BIT(7); */
+			/* writel(reg_val, sun6i->base + SUN6I_ADC_FIFOC); */
 			break;
 		}
 	}
@@ -1113,7 +1113,7 @@ static const struct snd_soc_dai_ops sun6i_codec_dai_ops = {
 
 static struct snd_soc_dai_driver sun6i_codec_dai = {
 	.probe	= sun6i_dai_probe,
-	.name = "sun6i-codec",
+	.name = "sun6i-audio-codec-pcm",
 	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 1,
@@ -1131,40 +1131,37 @@ static struct snd_soc_dai_driver sun6i_codec_dai = {
 
 static int sun6i_soc_probe(struct snd_soc_codec *codec)
 {
-	printk("codec->dev %p\n", codec->dev);
-	printk("dev data %p\n", dev_get_drvdata(codec->dev));
-	printk("sun6i %p\n", sun6i);
-	printk("sun6i->regmap %p\n", sun6i->regmap);
+	codec->control_data = sun6i->regmap;
 
-	/* HPCOMM is off and output is floating (WTF?!) */
-	codec_wr_control(sun6i, SUN6I_PA_CTRL, 0x3, HPCOM_CTL, 0x0);
-	/* Disable headphone output */
-	codec_wr_control(sun6i, SUN6I_PA_CTRL, 0x1, HPCOM_PRO, 0x0);
+	/* /\* HPCOMM is off and output is floating (WTF?!) *\/ */
+	/* codec_wr_control(sun6i, SUN6I_PA_CTRL, 0x3, HPCOM_CTL, 0x0); */
+	/* /\* Disable headphone output *\/ */
+	/* codec_wr_control(sun6i, SUN6I_PA_CTRL, 0x1, HPCOM_PRO, 0x0); */
 
-	/*
-	 * Enable Headset MIC Bias Current sensor & ADC
-	 * Due to an hardware bug, it seems to be only possible at init
-	 */
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, HBIASADCEN, 0x1);
+	/* /\* */
+	/*  * Enable Headset MIC Bias Current sensor & ADC */
+	/*  * Due to an hardware bug, it seems to be only possible at init */
+	/*  *\/ */
+	/* codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, HBIASADCEN, 0x1); */
 
-	/*
-	 * Mute Playback Left and Right channels
-	 * Also disables the associated mixer and DAC
-	 */
-	sun6i_codec_hp_chan_mute(sun6i, true, true);
+	/* /\* */
+	/*  * Mute Playback Left and Right channels */
+	/*  * Also disables the associated mixer and DAC */
+	/*  *\/ */
+	/* sun6i_codec_hp_chan_mute(sun6i, true, true); */
 
-	/* Disable Playback Lineouts */ 
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTL_EN, 0x0);
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTR_EN, 0x0);
+	/* /\* Disable Playback Lineouts *\/  */
+	/* codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTL_EN, 0x0); */
+	/* codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTR_EN, 0x0); */
 
-	/*
-	 * Fix the init blaze noise
-	 * Really have to find more details about that
-	 */
-	codec_wr_control(sun6i, SUN6I_ADDAC_TUNE, 0x1, PA_SLOPE_SECECT, 0x1);
+	/* /\* */
+	/*  * Fix the init blaze noise */
+	/*  * Really have to find more details about that */
+	/*  *\/ */
+	/* codec_wr_control(sun6i, SUN6I_ADDAC_TUNE, 0x1, PA_SLOPE_SECECT, 0x1); */
 
-	/* set HPCOM control as direct driver for floating (Redundant?) */
-	codec_wr_control(sun6i, SUN6I_PA_CTRL, 0x3, HPCOM_CTL, 0x0);
+	/* /\* set HPCOM control as direct driver for floating (Redundant?) *\/ */
+	/* codec_wr_control(sun6i, SUN6I_PA_CTRL, 0x3, HPCOM_CTL, 0x0); */
 
 	/*
 	 * Stop doing DMA requests whenever there's only 16 samples
@@ -1178,8 +1175,11 @@ static int sun6i_soc_probe(struct snd_soc_codec *codec)
 	/* Flush RX FIFO */
 	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, ADC_FIFO_FLUSH, 0x1);
 
-	/* Use a 32 bits FIR */
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC, 0x1, FIR_VERSION, 0x1);
+	/* Do DRQ whenever the FIFO is empty */
+	codec_wr_control(sun6i, SUN6I_DAC_FIFOC, 0x1, 4, 0x1);
+
+	/* /\* Use a 32 bits FIR *\/ */
+	/* codec_wr_control(sun6i, SUN6I_DAC_FIFOC, 0x1, FIR_VERSION, 0x1); */
 
 	return 0;
 }
@@ -1195,99 +1195,6 @@ static struct snd_soc_codec_driver soc_codec_dev_sun6i = {
 	.num_dapm_routes	= ARRAY_SIZE(sun6i_dapm_routes),
 };
 
-static const struct snd_soc_dapm_widget sun6i_card_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-};
-
-static const struct snd_soc_dapm_route sun6i_card_route[] = {
-	{ "Headphone Jack",	NULL,	"HPL" },
-	{ "Headphone Jack",	NULL,	"HPR" },
-};
-
-static int sun6i_dai_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_codec *codec = rtd->codec;
-	struct snd_soc_dapm_context *dapm = &codec->dapm;
-
-	snd_soc_dapm_enable_pin(dapm, "Headphone Jack");
-
-	return 0;
-}
-
-static struct snd_soc_dai_link sun6i_card_dai[] = {
-	{
-		.name		= "sun6i_codec",
-		.stream_name	= "sun6i_codec",
-		.cpu_dai_name	= "snd-soc-dummy-dai",
-
-		.codec_dai_name = "sun6i-codec",
-		.init		= sun6i_dai_init,
-	},
-};
-
-static struct snd_soc_card sun6i_codec_card = {
-	.name	= "sun6i-codec",
-	.owner	= THIS_MODULE,
-
-	.dai_link = sun6i_card_dai,
-	.num_links = ARRAY_SIZE(sun6i_card_dai),
-
-	.dapm_widgets = sun6i_card_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(sun6i_card_dapm_widgets),
-	.dapm_routes = sun6i_card_route,
-	.num_dapm_routes = ARRAY_SIZE(sun6i_card_route),
-};
-
-static int sun6i_pcm_prepare_slave_config(struct snd_pcm_substream *substream,
-					  struct snd_pcm_hw_params *params,
-					  struct dma_slave_config *slave_config)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_dmaengine_dai_dma_data *dma_data;
-	int ret;
-
-	dma_data = snd_soc_dai_get_dma_data(rtd->codec_dai, substream);
-
-	ret = snd_hwparams_to_dma_slave_config(substream, params, slave_config);
-	if (ret)
-		return ret;
-
-	snd_dmaengine_pcm_set_config_from_dai_data(substream, dma_data,
-						   slave_config);
-
-	return 0;
-}
-
-static const struct snd_pcm_hardware sun6i_pcm_hardware = {
-	.info			= (SNDRV_PCM_INFO_INTERLEAVED |
-				   SNDRV_PCM_INFO_BLOCK_TRANSFER |
-				   SNDRV_PCM_INFO_MMAP |
-				   SNDRV_PCM_INFO_MMAP_VALID |
-				   SNDRV_PCM_INFO_PAUSE |
-				   SNDRV_PCM_INFO_RESUME),
-	.formats		= (SNDRV_PCM_FMTBIT_S16_LE |
-				   SNDRV_PCM_FMTBIT_S24_LE),
-	.rates			= (SNDRV_PCM_RATE_8000_192000 |
-				   SNDRV_PCM_RATE_KNOT),
-
-	.rate_min		= 8000,
-	.rate_max		= 192000,
-	.channels_min		= 1,
-	.channels_max		= 2,
-	.buffer_bytes_max	= 128 * 1024,	/* value must be (2^n)Kbyte size */
-	.period_bytes_min	= 1024 * 2,
-	.period_bytes_max	= 1024 * 32,
-	.periods_min		= 2,
-	.periods_max		= 8,
-	.fifo_size	     	= 32,
-};
-
-static const struct snd_dmaengine_pcm_config sun6i_dmaengine_pcm_config = {
-	.prepare_slave_config	= sun6i_pcm_prepare_slave_config,
-	.pcm_hardware		= &sun6i_pcm_hardware,
-	.prealloc_buffer_size	= 32 * 1024,
-};
-
 static struct regmap_config sun6i_codec_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
@@ -1300,8 +1207,6 @@ static int sun6i_codec_probe(struct platform_device *pdev)
 {
 	struct resource *res;
 	int ret;
-
-	printk("BWAAAAAAH\n");
 
 	sun6i = devm_kzalloc(&pdev->dev, sizeof(struct sun6i_priv), GFP_KERNEL);
 	if (!sun6i)
@@ -1332,6 +1237,10 @@ static int sun6i_codec_probe(struct platform_device *pdev)
 		return PTR_ERR(sun6i->rstc);
 	}
 
+	ret = reset_control_deassert(sun6i->rstc);
+	if (ret)
+		printk("prout\n");
+
 	sun6i->regmap = devm_regmap_init_mmio(&pdev->dev, sun6i->base,
 					      &sun6i_codec_regmap_config);
 	if (IS_ERR(sun6i->regmap)) {
@@ -1339,39 +1248,10 @@ static int sun6i_codec_probe(struct platform_device *pdev)
 		return PTR_ERR(sun6i->regmap);
 	}
 
-	sun6i->dma_data[SNDRV_PCM_STREAM_PLAYBACK].addr =
-		(dma_addr_t)res->start + SUN6I_DAC_FIFO_REG;
-	sun6i->dma_data[SNDRV_PCM_STREAM_CAPTURE].addr =
-		(dma_addr_t)res->start + SUN6I_ADC_FIFO_REG;
-
-	sun6i->dma_data[SNDRV_PCM_STREAM_PLAYBACK].addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-	sun6i->dma_data[SNDRV_PCM_STREAM_CAPTURE].addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-
-	sun6i->dma_data[SNDRV_PCM_STREAM_PLAYBACK].maxburst = 1;
-	sun6i->dma_data[SNDRV_PCM_STREAM_CAPTURE].maxburst = 1;
-
-	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, &sun6i_dmaengine_pcm_config, 0);
-	if (ret) {
-		dev_err(&pdev->dev, "Couldn't register DMAengine PCM layer\n");
-		return ret;
-	}
-
 	ret = snd_soc_register_codec(&pdev->dev, &soc_codec_dev_sun6i,
 				     &sun6i_codec_dai, 1);
 	if (ret) {
 		dev_err(&pdev->dev, "Couldn't register the codec\n");
-		return ret;
-	}
-
-	sun6i_card_dai->codec_of_node = pdev->dev.of_node;
-	sun6i_card_dai->platform_of_node = pdev->dev.of_node;
-
-	sun6i_codec_card.dev = &pdev->dev;
-
-	ret = devm_snd_soc_register_card(&pdev->dev, &sun6i_codec_card);
-	if (ret) {
-		dev_err(&pdev->dev, "Couldn't register the card\n");
-		snd_soc_unregister_codec(&pdev->dev);
 		return ret;
 	}
 
@@ -1385,19 +1265,11 @@ static int sun6i_codec_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static const struct of_device_id sun6i_codec_match[] = {
-	{ .compatible = "allwinner,sun6i-a31-audio-codec", },
-	{}
-};
-MODULE_DEVICE_TABLE(of, sun6i_codec_match);
-
-
 static struct platform_driver sun6i_codec_driver = {
 	.probe		= sun6i_codec_probe,
 	.remove		= sun6i_codec_remove,
 	.driver		= {
-		.name	= "sun6i-codec",
-		.of_match_table = sun6i_codec_match,
+		.name	= "sun6i-audio-codec",
 	},
 };
 
