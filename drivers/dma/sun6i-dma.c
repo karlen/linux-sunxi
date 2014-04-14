@@ -792,7 +792,7 @@ static int sun6i_dma_terminate_all(struct dma_chan *chan)
 
 	if (pchan) {
 		writel(DMA_CHAN_ENABLE_STOP, pchan->base + DMA_CHAN_ENABLE);
-		writel(DMA_CHAN_PAUSE_RESUME, pchan->base + DMA_CHAN_PAUSE);
+//		writel(DMA_CHAN_PAUSE_RESUME, pchan->base + DMA_CHAN_PAUSE);
 
 		vchan->phy = NULL;
 		pchan->vchan = NULL;
