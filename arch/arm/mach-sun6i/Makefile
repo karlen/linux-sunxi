@@ -11,7 +11,7 @@ obj-y += sys_config.o
 obj-$(CONFIG_CPU_FREQ) += cpu-freq/
 obj-$(CONFIG_DEVFREQ_DRAM_FREQ) += dram-freq/
 obj-$(CONFIG_PM) += pm/
-obj-$(CONFIG_NET) += rf/
+#obj-$(CONFIG_NET) += rf/
 obj-$(CONFIG_SUNXI_SYSFS) += sysfs/
 obj-$(CONFIG_AW_TIME_DELAY)	+= delay.o
 ifeq ($(CONFIG_SMP),y)
