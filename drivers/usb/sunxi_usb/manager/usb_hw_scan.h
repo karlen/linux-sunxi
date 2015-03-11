@@ -42,13 +42,13 @@ typedef enum usb_det_vbus_state{
 /* usb info */
 typedef struct usb_scan_info{
 	struct usb_cfg 			*cfg;
-
+#ifndef CONFIG_ARCH_SUN6I
 	u32                     id_hdle;                /* id handle                */
 	user_gpio_set_t         id_gpio_set;            /* id gpio set              */
 
 	u32                     det_vbus_hdle;        	/* detect vbus handle       */
 	user_gpio_set_t         det_vbus_gpio_set;      /* detect vbus gpio set     */
-
+#endif
     usb_id_state_t          id_old_state;           /* last id state            */
     usb_det_vbus_state_t    det_vbus_old_state;     /* last detect vbus state   */
 
@@ -57,6 +57,7 @@ typedef struct usb_scan_info{
 }usb_scan_info_t;
 
 void usb_hw_scan(struct usb_cfg *cfg);
+__u32 set_vbus_id_state(u32 state);
 
 __s32 usb_hw_scan_init(struct usb_cfg *cfg);
 __s32 usb_hw_scan_exit(struct usb_cfg *cfg);

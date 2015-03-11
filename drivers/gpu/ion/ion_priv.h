@@ -213,6 +213,7 @@ void ion_heap_unmap_kernel(struct ion_heap *, struct ion_buffer *);
 int ion_heap_map_user(struct ion_heap *, struct ion_buffer *,
 			struct vm_area_struct *);
 int ion_heap_buffer_zero(struct ion_buffer *buffer);
+int ion_heap_pages_zero(struct page *page, size_t size, pgprot_t pgprot);
 
 /**
  * ion_heap_alloc_pages - allocate pages from alloc_pages
@@ -355,5 +356,16 @@ void ion_page_pool_free(struct ion_page_pool *, struct page *);
  */
 int ion_page_pool_shrink(struct ion_page_pool *pool, gfp_t gfp_mask,
 			  int nr_to_scan);
+
+/**
+ * ion_pages_sync_for_device - cache flush pages for use with the specified
+ *                             device
+ * @dev:		the device the pages will be used with
+ * @page:		the first page to be flushed
+ * @size:		size in bytes of region to be flushed
+ * @dir:		direction of dma transfer
+ */
+void ion_pages_sync_for_device(struct device *dev, struct page *page,
+		size_t size, enum dma_data_direction dir);
 
 #endif /* _ION_PRIV_H */

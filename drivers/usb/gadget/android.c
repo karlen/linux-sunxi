@@ -28,6 +28,11 @@
 #include <linux/usb/composite.h>
 #include <linux/usb/gadget.h>
 
+#ifdef CONFIG_USB_SW_SUN6I_USB
+#include <mach/system.h>
+#include <asm/cputype.h>
+#endif
+
 #include "gadget_chips.h"
 
 /*
@@ -219,7 +224,7 @@ static void android_disable(struct android_dev *dev)
 }
 
 /*-------------------------------------------------------------------------*/
-
+#ifndef CONFIG_ARCH_SUN6I
 #include <plat/sys_config.h>
 
 static s32 get_msc_config(struct android_usb_config *config)
@@ -316,19 +321,6 @@ static void print_msc_config(struct android_usb_config *config)
 }
 
 static struct android_usb_config g_android_usb_config;
-
-static s32 modify_device_data(void)
-{
-    struct android_usb_config *config = &g_android_usb_config;
-
-    memset(config, 0, sizeof(struct android_usb_config));
-
-    get_msc_config(config);
-
-    print_msc_config(config);
-
-    return 0;
-}
 
 /*-------------------------------------------------------------------------*/
 /* Supported functions initialization */
@@ -483,7 +475,7 @@ static int functionfs_check_dev_callback(const char *dev_name)
 {
 	return 0;
 }
-
+#endif
 
 struct adb_data {
 	bool opened;
@@ -926,10 +918,15 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	if (!config)
 		return -ENOMEM;
 
-    if(g_android_usb_config.luns <= FSG_MAX_LUNS){
+#ifndef CONFIG_USB_SW_SUN6I_USB
+	config->fsg.nluns = 1;
+	config->fsg.luns[0].removable = 1;
+#else
+    if(g_android_usb_config.luns <= FSG_MAX_LUNS) {
         config->fsg.nluns = g_android_usb_config.luns;
-    }else{
-        printk("err: g_android_usb_config.luns is too big, (%d, 8)\n", g_android_usb_config.luns);
+    } else {
+		config->fsg.nluns = FSG_MAX_LUNS;
+		pr_debug("err: g_android_usb_config.luns is too big, (%d, 8)\n", g_android_usb_config.luns);
     }
 
     for(i = 0; i < config->fsg.nluns; i++){
@@ -938,6 +935,7 @@ static int mass_storage_function_init(struct android_usb_function *f,
         config->fsg.luns[i].cdrom       = 0;
         config->fsg.luns[i].nofua       = 0;
     }
+#endif
 
 	common = fsg_common_init(NULL, cdev, &config->fsg);
 	if (IS_ERR(common)) {
@@ -1114,7 +1112,9 @@ static struct android_usb_function audio_source_function = {
 };
 
 static struct android_usb_function *supported_functions[] = {
+#ifndef CONFIG_ARCH_SUN6I
 	&ffs_function,
+#endif
 	&adb_function,
 	&acm_function,
 	&mtp_function,
@@ -1657,7 +1657,17 @@ static int __init init(void)
 	struct android_dev *dev;
 	int err;
 
-    modify_device_data();
+#ifdef CONFIG_USB_SW_SUN6I_USB
+	struct android_usb_config usb_config;
+
+	parse_android_usb_config();
+	get_android_usb_config(&usb_config);
+
+	device_desc.idVendor    = usb_config.vendor_id;
+	device_desc.idProduct   = usb_config.mass_storage_id;
+#else
+	modify_device_data();
+#endif
 
 	android_class = class_create(THIS_MODULE, "android_usb");
 	if (IS_ERR(android_class))

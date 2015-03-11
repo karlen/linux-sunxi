@@ -24,7 +24,11 @@
 #ifndef  __SW_HCD_BOARD_H__
 #define  __SW_HCD_BOARD_H__
 
+#ifndef CONFIG_ARCH_SUN6I
 #include <plat/sys_config.h>
+#else
+#include <mach/sys_config.h>
+#endif
 
 #define  USB_SRAMC_BASE	            0x01c00000
 #define  USB_CLOCK_BASE				0x01C20000
@@ -52,14 +56,27 @@ typedef struct sw_hcd_io{
 	__hdle usb_bsp_hdle;				/* usb bsp handle 		*/
 
 	__u32 clk_is_open;					/* is usb clock open? 	*/
+#ifndef CONFIG_ARCH_SUN6I
 	struct clk	*sie_clk;				/* SIE clock handle 	*/
 	struct clk	*phy_clk;				/* PHY gate 			*/
 	struct clk	*phy0_clk;				/* PHY reset 			*/
-
+#else
+	struct clk	*ahb_otg;				/* ahb clock handle 	*/
+	struct clk	*mod_usbotg;			/* mod_usb otg clock handle 	*/
+	struct clk	*mod_usbphy;			/* PHY0 clock handle 	*/
+#endif
+	unsigned drv_vbus_valid;
+	unsigned usb_restrict_valid;
 	unsigned Drv_vbus_Handle;
+#ifndef CONFIG_ARCH_SUN6I
 	user_gpio_set_t drv_vbus_gpio_set;
+#else
+	script_item_u drv_vbus_gpio_set;
+#endif
+	script_item_u restrict_gpio_set;
 	__u32 host_init_state;				/* usb 控制器的初始化状态。0 : 不工作. 1 : 工作 */
 	__u32 usb_enable;
+	__u32 usb_restrict_flag;
 }sw_hcd_io_t;
 
 #endif   //__SW_HCD_BOARD_H__

@@ -21,10 +21,16 @@
 #include "axp18-mfd.h"
 #include "axp19-mfd.h"
 #include "axp20-mfd.h"
+#include "axp22-mfd.h"
 
+#ifndef CONFIG_ARCH_SUN6I
 #include <plat/platform.h>
 #include <plat/system.h>
 #include <plat/sys_config.h>
+#else
+#include <mach/sys_config.h>
+#include <mach/system.h>
+#endif
 
 #define NMI_IRQ_CTRL_REG	(SW_VA_IO_BASE + 0x30)
 #define NMI_IRQ_PEND_REG	(SW_VA_IO_BASE + 0x34)
@@ -49,15 +55,19 @@ static void axp_mfd_irq_work(struct work_struct *work)
 		blocking_notifier_call_chain(
 				&chip->notifier_list, irqs, NULL);
 	}
-
+#ifndef CONFIG_ARCH_SUN6I
 	/* The irq raised by the A20 NMI pin needs explict clearing */
 	if (sunxi_is_sun7i() && chip->client->irq == SW_INT_IRQNO_ENMI)
 		writel(0x01, NMI_IRQ_PEND_REG);
-
+#endif
+#ifdef	CONFIG_AXP_TWI_USED
 	enable_irq(chip->client->irq);
+#else
+	ar100_enable_axp_irq();
+#endif
 }
 
-#if 1
+#ifdef CONFIG_AXP_TWI_USED
 static irqreturn_t axp_mfd_irq_handler(int irq, void *data)
 {
 	struct axp_mfd_chip *chip = data;
@@ -65,6 +75,17 @@ static irqreturn_t axp_mfd_irq_handler(int irq, void *data)
 	(void)schedule_work(&chip->irq_work);
 
 	return IRQ_HANDLED;
+}
+#else
+static int axp_mfd_irq_cb(void *arg)
+{
+	struct axp_mfd_chip *chip = (struct axp_mfd_chip *)arg;
+	/* when process axp irq, the axp irq ar100 cpu must disable now,
+	 * we just need re-enable axp irq when process finished.
+	 * by sunny at 2012-11-29 10:25:30.
+	 */
+	(void)schedule_work(&chip->irq_work);
+	return 0;
 }
 #endif
 
@@ -87,12 +108,19 @@ static struct axp_mfd_chip_ops axp_mfd_ops[] = {
 		.disable_irqs = axp20_disable_irqs,
 		.read_irqs    = axp20_read_irqs,
 	},
+	[3] = {
+		.init_chip    = axp22_init_chip,
+		.enable_irqs  = axp22_enable_irqs,
+		.disable_irqs = axp22_disable_irqs,
+		.read_irqs    = axp22_read_irqs,
+	},
 };
 
 static const struct i2c_device_id axp_mfd_id_table[] = {
 	{ "axp18_mfd", 0 },
 	{ "axp19_mfd", 1 },
 	{ "axp20_mfd", 2 },
+	{ "axp22_mfd", 3 },
 	{},
 };
 MODULE_DEVICE_TABLE(i2c, axp_mfd_id_table);
@@ -121,6 +149,13 @@ int axp_mfd_create_attrs(struct axp_mfd_chip *chip)
 			goto sysfs_failed3;
 		}
 	}
+	else if (chip->type ==  AXP22){
+		for (j = 0; j < ARRAY_SIZE(axp22_mfd_attrs); j++) {
+			ret = device_create_file(chip->dev,&axp22_mfd_attrs[j]);
+			if (ret)
+			goto sysfs_failed4;
+		}
+	}
 	else
 		ret = 0;
 	goto succeed;
@@ -136,6 +171,9 @@ sysfs_failed2:
 sysfs_failed3:
 	while (j--)
 		device_remove_file(chip->dev,&axp20_mfd_attrs[j]);
+sysfs_failed4:
+	while (j--)
+		device_remove_file(chip->dev,&axp22_mfd_attrs[j]);
 succeed:
 	return ret;
 }
@@ -194,7 +232,6 @@ static int __devinit axp_mfd_add_subdevs(struct axp_mfd_chip *chip,
 		goto failed;
 	}
 
-
 	return 0;
 
 failed:
@@ -216,7 +253,7 @@ static void axp_power_off(void)
 	axp_set_bits(&axp->dev, POWER19_OFF_CTL, 0x80);
 #endif
 
-#if defined (CONFIG_AW_AXP20)
+#if defined (CONFIG_AW_AXP20) || defined (CONFIG_AW_AXP22)
 	if(pmu_pwroff_vol >= 2600 && pmu_pwroff_vol <= 3300){
 		if (pmu_pwroff_vol > 3200){
 			val = 0x7;
@@ -288,6 +325,9 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 	struct axp_platform_data *pdata = client->dev.platform_data;
 	struct axp_mfd_chip *chip;
 	int ret;
+	script_item_u script_val;
+	script_item_value_type_e type;
+
 	chip = kzalloc(sizeof(struct axp_mfd_chip), GFP_KERNEL);
 	if (chip == NULL)
 		return -ENOMEM;
@@ -308,6 +348,7 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 	if (ret)
 		goto out_free_chip;
 
+#ifdef CONFIG_AXP_TWI_USED
 	ret = request_irq(client->irq, axp_mfd_irq_handler,
 		IRQF_DISABLED, "axp_mfd", chip);
   	if (ret) {
@@ -321,14 +362,35 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 		writel(0x01, NMI_IRQ_PEND_REG);   /* Clear any pending irqs */
 		writel(0x01, NMI_IRQ_ENABLE_REG); /* Enable NMI irq pin */
 	}
-
+#else
+	ret = ar100_axp_cb_register(axp_mfd_irq_cb, chip);
+	if (ret) {
+  		dev_err(&client->dev, "failed to reg irq cb %d\n",
+  				client->irq);
+  		goto out_free_chip;
+  	}
+  	/* enable ar100 system axp irq,
+  	 * by sunny at 2013-1-10 9:00:59.
+  	 */
+  	ar100_enable_axp_irq();
+#endif
 	ret = axp_mfd_add_subdevs(chip, pdata);
 	if (ret)
 		goto out_free_irq;
 
 	/* PM hookup */
-	if(!pm_power_off)
-		pm_power_off = axp_power_off;
+	if(!pm_power_off) {
+		type = script_get_item("pmu_para", "pmu_fake_power_off_enable", &script_val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			printk("pmu fake power off config type err!");
+			script_val.val = 0;
+		}
+		if (script_val.val) {
+			pm_power_off = ar100_fake_power_off;
+		} else {
+			pm_power_off = axp_power_off;
+		}
+	}
 
 	ret = axp_mfd_create_attrs(chip);
 	if(ret){
@@ -336,7 +398,11 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 	}
 	
 	/* set ac/usb_in shutdown mean restart */
+#ifndef CONFIG_ARCH_SUN6I
   	ret = script_parser_fetch("target", "power_start", &power_start, sizeof(int));
+#else
+	ret = axp_script_parser_fetch("pmu_para", "power_start", &power_start, sizeof(int));
+#endif 
   	if (ret)
   	{
     	printk("[AXP]axp driver uning configuration failed(%d)\n", __LINE__);

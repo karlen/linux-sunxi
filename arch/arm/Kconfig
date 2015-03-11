@@ -740,6 +740,26 @@ config ARCH_SUN5I
         help
 	  This enables support for Allwinner Technology Co., Ltd A10s/A13 SoC based systems
 
+config ARCH_SUN6I
+	bool "Allwinner SUN6I (A31 SoC) Platform"
+	select ARM_AMBA
+	select CLKDEV_LOOKUP
+	select ARM_GIC
+	select CPU_V7
+	select HAVE_SMP
+	select HAVE_MACH_CLKDEV
+	select GENERIC_CLOCKEVENTS
+	select NEED_MACH_MEMORY_H
+	select MIGHT_HAVE_CACHE_L2X0
+	select ARCH_HAS_BARRIERS if SMP
+	select ZONE_DMA
+	select HAVE_SCHED_CLOCK
+	select ARCH_REQUIRE_GPIOLIB
+	select ARCH_HAS_CPUFREQ
+	select SWP_EMULATE if (SMP && CPU_V7)
+	help
+	  This enables support for AllWinner Ltd develop boards.
+
 config ARCH_SUN7I
 	bool "AllWinner SUN7I (A20 SoC) Platform"
 	select PLAT_SUNXI
@@ -1172,6 +1192,10 @@ source "arch/arm/mach-s5pv210/Kconfig"
 if PLAT_SUNXI
 source "arch/arm/plat-sunxi/Kconfig"
 endif
+
+if ARCH_SUN6I
+source "arch/arm/mach-sun6i/Kconfig"
+endif 
 
 source "arch/arm/mach-exynos/Kconfig"
 

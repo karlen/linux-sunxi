@@ -21,3 +21,10 @@ obj-$(CONFIG_AW_AXP20) += axp20-sply.o
 obj-$(CONFIG_AW_AXP20) += axp20-gpio.o
 obj-$(CONFIG_AW_AXP20) += virtual20.o
 obj-$(CONFIG_AW_AXP20) += virtual20_dev.o
+
+obj-$(CONFIG_AW_AXP22) += axp22-board.o
+obj-$(CONFIG_AW_AXP22) += axp22-regu.o
+obj-$(CONFIG_AW_AXP22) += axp22-sply.o
+obj-$(CONFIG_AW_AXP22) += axp22-gpio.o
+obj-$(CONFIG_AW_AXP22) += virtual22.o
+obj-$(CONFIG_AW_AXP22) += virtual22_dev.o

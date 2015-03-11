@@ -37,7 +37,11 @@
 #include  "sunxi_usb_bsp.h"
 #include  "sunxi_sys_reg.h"
 
+#ifndef CONFIG_ARCH_SUN6I
 #include <plat/sys_config.h>
+#else
+#include <mach/sys_config.h>
+#endif
 
 #include  "sw_usb_board.h"
 #include  "sw_udc.h"

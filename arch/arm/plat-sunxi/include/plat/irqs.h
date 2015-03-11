@@ -36,7 +36,7 @@
 /* registers */
 
 /* mask */
-#ifdef CONFIG_ARCH_SUN7I
+#if defined(CONFIG_ARCH_SUN7I) || defined(CONFIG_ARCH_SUN6I)
 #define AW_IRQ_GIC_START	32
 #define SW_INT_START		AW_IRQ_GIC_START
 #define NR_IRQS			(AW_IRQ_GIC_START + 128 + 32)

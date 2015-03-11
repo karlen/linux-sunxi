@@ -478,6 +478,7 @@ static __s32 pin_init(sw_hcd_io_t *sw_hcd_io)
 */
 static __s32 pin_exit(sw_hcd_io_t *sw_hcd_io)
 {
+#ifndef CONFIG_ARCH_SUN6I
 	if (sw_hcd_io->Drv_vbus_Handle) {
 		if (sw_hcd_io->drv_vbus_gpio_set.port == 0xffff) { /* power */
 			axp_gpio_set_io(sw_hcd_io->drv_vbus_gpio_set.port_num,
@@ -490,6 +491,17 @@ static __s32 pin_exit(sw_hcd_io_t *sw_hcd_io)
 		}
 	}
 	sw_hcd_io->Drv_vbus_Handle = 0;
+#else
+	if (sw_hcd_io->drv_vbus_valid) {
+		gpio_free(sw_hcd_io->drv_vbus_gpio_set.gpio.gpio);
+		sw_hcd_io->drv_vbus_valid = 0;
+	}
+
+	if (sw_hcd_io->usb_restrict_valid) {
+		gpio_free(sw_hcd_io->restrict_gpio_set.gpio.gpio);
+		sw_hcd_io->usb_restrict_valid = 0;
+	}
+#endif
 
 	return 0;
 }

@@ -187,6 +187,9 @@ typedef struct sw_hcd{
 
 	/* active means connected and not suspended */
 	unsigned is_active:1;
+	unsigned is_connected:1;
+	unsigned is_reset:1;
+	unsigned is_suspend:1;
 
 	unsigned is_multipoint:1;           /* flag. is multiple transaction ep? */
 	unsigned ignore_disconnect:1;	    /* during bus resets                */
@@ -201,7 +204,11 @@ typedef struct sw_hcd{
 
 	sw_hcd_io_t	*sw_hcd_io;
 	u32 enable;
+	u32 init_controller;
 	u32 suspend;
+       u32 session_req_flag;
+       u32 reset_flag;
+       u32 vbus_error_flag;
 }sw_hcd_t;
 
 struct sw_hcd_ep_reg{
@@ -265,6 +272,12 @@ static inline struct sw_hcd *dev_to_sw_hcd(struct device *dev)
 /* vbus 操作 */
 static inline void sw_hcd_set_vbus(struct sw_hcd *sw_hcd, int is_on)
 {
+	/* check argment */
+	if (sw_hcd == NULL) {
+		pr_err("ERR: invalid argment sw_hcd is null\n");
+		return;
+	}
+
 	if(sw_hcd->board_set_vbus){
 		sw_hcd->board_set_vbus(sw_hcd, is_on);
 	}

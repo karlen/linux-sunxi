@@ -39,6 +39,22 @@
 
 #define AXP20_GPIO012_STATE               (POWER20_GPIO012_SIGNAL)
 
+/*    AXP22   
+* GPIO0<-->GPIO0/LDO(PIN 37)
+* GPIO1<-->GPIO1/LDO(PIN 31)
+* GPIO2<-->DC1SW(PIN 22)
+* GPIO3<-->CHGLED/MOTODRV(PIN 52)
+* GPIO4<-->N_VBUSEN(PIN 11)
+*/
+#define AXP22_GPIO0_CFG                   (AXP22_GPIO0_CTL)//0x90
+#define AXP22_GPIO1_CFG                   (AXP22_GPIO1_CTL)//0x92
+#define AXP22_GPIO2_CFG                   (AXP22_LDO_DC_EN2)//0x12
+#define AXP22_GPIO3_CFG                   (AXP22_OFF_CTL)//0x32
+#define AXP22_GPIO4_CFG                   (AXP22_HOTOVER_CTL)//0x8f
+#define AXP22_GPIO4_STA                   (AXP22_IPS_SET)//0x30
+
+#define AXP22_GPIO01_STATE               (AXP22_GPIO01_SIGNAL)
+
 extern int axp_gpio_set_io(int gpio, int io_state);
 extern int axp_gpio_get_io(int gpio, int *io_state);
 extern int axp_gpio_set_value(int gpio, int value);

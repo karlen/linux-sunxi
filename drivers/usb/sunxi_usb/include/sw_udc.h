@@ -74,6 +74,12 @@ typedef struct sw_udc_ep {
 #define  SW_UDC_FIFO_NUM			0
 #endif
 
+#define	SW_UDC_TEST_J		0x0100
+#define	SW_UDC_TEST_K		0x0200
+#define	SW_UDC_TEST_SE0_NAK	0x0300
+#define	SW_UDC_TEST_PACKET	0x0400
+
+
 static const char ep0name [] = "ep0";
 
 static const char *const ep_name[] = {
@@ -88,6 +94,14 @@ static const char *const ep_name[] = {
 };
 
 #define SW_UDC_ENDPOINTS       ARRAY_SIZE(ep_name)
+
+#define  is_tx_ep(ep)		((ep->bEndpointAddress) & USB_DIR_IN)
+
+enum sw_buffer_map_state {
+	UN_MAPPED = 0,
+	PRE_MAPPED,
+	SW_UDC_USB_MAPPED
+};
 
 struct sw_udc_request {
 	struct list_head		queue;		/* ep's requests */
@@ -164,6 +178,8 @@ typedef struct sw_udc_io{
 //---------------------------------------------------------------
 typedef struct sw_udc {
 	spinlock_t			        lock;
+	struct platform_device			*pdev;
+	struct device				*controller;
 
 	struct sw_udc_ep		    ep[SW_UDC_ENDPOINTS];
 	int				            address;

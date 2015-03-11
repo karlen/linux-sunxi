@@ -52,7 +52,9 @@
 #include  "usb_msg_center.h"
 
 static struct usb_scan_info g_usb_scan_info;
-
+extern int axp_usb_det(void);
+extern atomic_t thread_suspend_flag;
+int device_insmod_delay = 0;
 void (*__usb_hw_scan) (struct usb_scan_info *);
 
 
@@ -74,11 +76,19 @@ void (*__usb_hw_scan) (struct usb_scan_info *);
 *
 *******************************************************************************
 */
+#ifndef CONFIG_ARCH_SUN6I
 static __u32 get_pin_data(u32 id_hdle)
 {
-    return gpio_read_one_pin_value(id_hdle, NULL);
-}
 
+    return gpio_read_one_pin_value(id_hdle, NULL);
+
+}
+#else
+static __u32 get_pin_data(struct usb_gpio *usb_gpio)
+{
+	return __gpio_get_value(usb_gpio->gpio_set.gpio.gpio);
+}
+#endif
 /*
 *********************************************************************
 *                     PIODataIn_debounce
@@ -100,6 +110,7 @@ static __u32 get_pin_data(u32 id_hdle)
 *
 *********************************************************************
 */
+#ifndef CONFIG_ARCH_SUN6I
 static __u32 PIODataIn_debounce(__hdle phdle, __u32 *value)
 {
     __u32 retry  = 0;
@@ -139,7 +150,48 @@ static __u32 PIODataIn_debounce(__hdle phdle, __u32 *value)
 
 	return change;
 }
+#else
+static __u32 PIODataIn_debounce(struct usb_gpio *usb_gpio, __u32 *value)
+{
+    __u32 retry  = 0;
+    __u32 time   = 10;
+	__u32 temp1  = 0;
+	__u32 cnt    = 0;
+	__u32 change = 0;	/* 是否有抖动? */
 
+    /* 取 10 次PIO的状态，如果10次的值都一样，说明本次读操作有效，
+       否则，认为本次读操作失败。
+    */
+    if(usb_gpio->valid){
+        retry = time;
+		while(retry--){
+			temp1 = get_pin_data(usb_gpio);
+			if(temp1){
+				cnt++;
+			}
+		}
+
+        /* 10 次都为0，或者都为1 */
+		if((cnt == time)||(cnt == 0)){
+		    change = 0;
+		}
+	    else{
+	        change = 1;
+	    }
+	}else{
+		change = 1;
+	}
+
+	if(!change){
+		*value = temp1;
+	}
+
+	DMSG_DBG_MANAGER("usb_gpio->valid = %x, cnt = %x, change= %d, temp1 = %x\n",
+	                usb_gpio->valid, cnt, change, temp1);
+
+	return change;
+}
+#endif
 /*
 *******************************************************************************
 *                     get_id_state
@@ -162,9 +214,13 @@ static u32 get_id_state(struct usb_scan_info *info)
 {
 	enum usb_id_state id_state = USB_DEVICE_MODE;
 	__u32 pin_data = 0;
-
-	if(info->id_hdle){
-		if(!PIODataIn_debounce(info->id_hdle, &pin_data)){
+#ifndef CONFIG_ARCH_SUN6I
+	if (info->id_hdle) {
+		if (!PIODataIn_debounce(info->id_hdle, &pin_data)) {
+#else
+	if (info->cfg->port[0].id.valid) {
+		if (!PIODataIn_debounce(&info->cfg->port[0].id, &pin_data)) {
+#endif
 			if(pin_data){
 				id_state = USB_DEVICE_MODE;
 			}else{
@@ -203,8 +259,14 @@ static u32 get_detect_vbus_state(struct usb_scan_info *info)
 	enum usb_det_vbus_state det_vbus_state = USB_DET_VBUS_INVALID;
 	__u32 pin_data = 0;
 
-	if(info->det_vbus_hdle){
-		if(!PIODataIn_debounce(info->det_vbus_hdle, &pin_data)){
+#ifndef CONFIG_ARCH_SUN6I
+	if (info->id_hdle) {
+		if (!PIODataIn_debounce(info->id_hdle, &pin_data)) {
+#else
+	if(info->cfg->port[0].det_vbus_type == USB_DET_VBUS_TYPE_GIPO){
+		if (info->cfg->port[0].id.valid) {
+			if (!PIODataIn_debounce(&info->cfg->port[0].id, &pin_data)) {
+#endif
 			if(pin_data){
 				det_vbus_state = USB_DET_VBUS_VALID;
 			}else{
@@ -212,6 +274,18 @@ static u32 get_detect_vbus_state(struct usb_scan_info *info)
 			}
 
 			info->det_vbus_old_state = det_vbus_state;
+#ifdef CONFIG_ARCH_SUN6I
+			} else {
+				det_vbus_state = info->det_vbus_old_state;
+			}
+		}
+	} else if (info->cfg->port[0].det_vbus_type == USB_DET_VBUS_TYPE_AXP) {
+		if (axp_usb_det()) {
+			det_vbus_state = USB_DET_VBUS_VALID;
+		} else {
+			det_vbus_state = USB_DET_VBUS_INVALID;
+		}
+#endif
 		}else{
 			det_vbus_state = info->det_vbus_old_state;
 		}
@@ -303,6 +377,9 @@ static void do_vbus0_id0(struct usb_scan_info *info)
 	switch(role){
 		case USB_ROLE_NULL:
 			/* delay for vbus is stably */
+			if(atomic_read(&thread_suspend_flag)){
+				break;
+			}
 			if(info->host_insmod_delay < USB_SCAN_INSMOD_HOST_DRIVER_DELAY){
 				info->host_insmod_delay++;
 				break;
@@ -319,6 +396,9 @@ static void do_vbus0_id0(struct usb_scan_info *info)
 
 		case USB_ROLE_DEVICE:
 			/* rmmod usb device */
+			if(atomic_read(&thread_suspend_flag)){
+				break;
+			}
 			hw_rmmod_usb_device();
 		break;
 
@@ -361,10 +441,16 @@ static void do_vbus0_id1(struct usb_scan_info *info)
 		break;
 
 		case USB_ROLE_HOST:
+			if(atomic_read(&thread_suspend_flag)){
+				break;
+			}
 			hw_rmmod_usb_host();
 		break;
 
 		case USB_ROLE_DEVICE:
+			if(atomic_read(&thread_suspend_flag)){
+				break;
+			}
 			hw_rmmod_usb_device();
 		break;
 
@@ -403,6 +489,9 @@ static void do_vbus1_id0(struct usb_scan_info *info)
 	switch(role){
 		case USB_ROLE_NULL:
 			/* delay for vbus is stably */
+			if(atomic_read(&thread_suspend_flag)){
+				break;
+			}
 			if(info->host_insmod_delay < USB_SCAN_INSMOD_HOST_DRIVER_DELAY){
 				info->host_insmod_delay++;
 				break;
@@ -417,6 +506,9 @@ static void do_vbus1_id0(struct usb_scan_info *info)
 		break;
 
 		case USB_ROLE_DEVICE:
+			if(atomic_read(&thread_suspend_flag)){
+				break;
+			}
 			hw_rmmod_usb_device();
 		break;
 
@@ -452,9 +544,16 @@ static void do_vbus1_id1(struct usb_scan_info *info)
 	role = get_usb_role();
 	info->host_insmod_delay = 0;
 
+	if(g_msc_read_debug)
+		printk("dp_dm=%d, device_insmod_delay=%d\n",
+				get_dp_dm_status(info), device_insmod_delay);
+
 	switch(role){
 		case USB_ROLE_NULL:
 			if (get_dp_dm_status(info) == 0x00) {
+				if(atomic_read(&thread_suspend_flag)){
+					break;
+				}
 				/* delay for vbus is stably */
 				if (info->device_insmod_delay <
 					USB_SCAN_INSMOD_DEVICE_DRIVER_DELAY) {
@@ -468,6 +567,9 @@ static void do_vbus1_id1(struct usb_scan_info *info)
 		break;
 
 		case USB_ROLE_HOST:
+			if(atomic_read(&thread_suspend_flag)){
+				break;
+			}
 			hw_rmmod_usb_host();
 		break;
 
@@ -638,6 +740,7 @@ __s32 usb_hw_scan_init(struct usb_cfg *cfg)
 	__s32 ret = 0;
 
 	memset(scan_info, 0, sizeof(struct usb_scan_info));
+	device_insmod_delay = 0;
 	scan_info->cfg 					= cfg;
 	scan_info->id_old_state 		= USB_DEVICE_MODE;
 	scan_info->det_vbus_old_state 	= USB_DET_VBUS_INVALID;

@@ -26,6 +26,11 @@ config AW_AXP20
 	---help---
 	  AXP20 driver
 
+config AW_AXP22
+	bool "AXP22 driver"
+	---help---
+	  AXP22 driver
+
 endchoice
 
 config AXP_CHARGEINIT

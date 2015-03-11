@@ -42,3 +42,4 @@ obj-$(CONFIG_USB_FSL_MPH_DR_OF)	+= fsl-mph-dr-of.o
 obj-$(CONFIG_USB_OCTEON2_COMMON) += octeon2-common.o
 obj-$(CONFIG_MIPS_ALCHEMY)	+= alchemy-common.o
 obj-$(CONFIG_USB_SUNXI_COMMON)	+= sw_hci_sunxi.o
+obj-$(CONFIG_USB_SW_SUN6I_HCI)	+= sw_hci_sun6i.o

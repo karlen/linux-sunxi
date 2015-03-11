@@ -1327,6 +1327,11 @@ MODULE_LICENSE ("GPL");
 #define	PLATFORM_DRIVER		sw_ehci_hcd_driver
 #endif
 
+#ifdef CONFIG_USB_SW_SUN6I_HCI
+#include "ehci-sun6i.c"
+#define	PLATFORM_DRIVER		sw_ehci_hcd_driver
+#endif
+
 #ifdef CONFIG_USB_OCTEON_EHCI
 #include "ehci-octeon.c"
 #define PLATFORM_DRIVER		ehci_octeon_driver
