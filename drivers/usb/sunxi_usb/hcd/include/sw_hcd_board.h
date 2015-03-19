@@ -72,8 +72,8 @@ typedef struct sw_hcd_io{
 	user_gpio_set_t drv_vbus_gpio_set;
 #else
 	script_item_u drv_vbus_gpio_set;
-#endif
 	script_item_u restrict_gpio_set;
+#endif
 	__u32 host_init_state;				/* usb 控制器的初始化状态。0 : 不工作. 1 : 工作 */
 	__u32 usb_enable;
 	__u32 usb_restrict_flag;

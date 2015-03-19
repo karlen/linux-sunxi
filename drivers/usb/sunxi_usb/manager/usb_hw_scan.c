@@ -377,9 +377,11 @@ static void do_vbus0_id0(struct usb_scan_info *info)
 	switch(role){
 		case USB_ROLE_NULL:
 			/* delay for vbus is stably */
+#ifdef CONFIG_ARCH_SUN6I
 			if(atomic_read(&thread_suspend_flag)){
 				break;
 			}
+#endif
 			if(info->host_insmod_delay < USB_SCAN_INSMOD_HOST_DRIVER_DELAY){
 				info->host_insmod_delay++;
 				break;
@@ -396,9 +398,11 @@ static void do_vbus0_id0(struct usb_scan_info *info)
 
 		case USB_ROLE_DEVICE:
 			/* rmmod usb device */
+#ifdef CONFIG_ARCH_SUN6I
 			if(atomic_read(&thread_suspend_flag)){
 				break;
 			}
+#endif
 			hw_rmmod_usb_device();
 		break;
 
@@ -441,16 +445,20 @@ static void do_vbus0_id1(struct usb_scan_info *info)
 		break;
 
 		case USB_ROLE_HOST:
+#ifdef CONFIG_ARCH_SUN6I
 			if(atomic_read(&thread_suspend_flag)){
 				break;
 			}
+#endif
 			hw_rmmod_usb_host();
 		break;
 
 		case USB_ROLE_DEVICE:
+#ifdef CONFIG_ARCH_SUN6I
 			if(atomic_read(&thread_suspend_flag)){
 				break;
 			}
+#endif
 			hw_rmmod_usb_device();
 		break;
 
@@ -489,9 +497,11 @@ static void do_vbus1_id0(struct usb_scan_info *info)
 	switch(role){
 		case USB_ROLE_NULL:
 			/* delay for vbus is stably */
+#ifdef CONFIG_ARCH_SUN6I
 			if(atomic_read(&thread_suspend_flag)){
 				break;
 			}
+#endif
 			if(info->host_insmod_delay < USB_SCAN_INSMOD_HOST_DRIVER_DELAY){
 				info->host_insmod_delay++;
 				break;
@@ -506,9 +516,11 @@ static void do_vbus1_id0(struct usb_scan_info *info)
 		break;
 
 		case USB_ROLE_DEVICE:
+#ifdef CONFIG_ARCH_SUN6I
 			if(atomic_read(&thread_suspend_flag)){
 				break;
 			}
+#endif
 			hw_rmmod_usb_device();
 		break;
 
@@ -544,16 +556,19 @@ static void do_vbus1_id1(struct usb_scan_info *info)
 	role = get_usb_role();
 	info->host_insmod_delay = 0;
 
+#ifdef CONFIG_ARCH_SUN6I
 	if(g_msc_read_debug)
 		printk("dp_dm=%d, device_insmod_delay=%d\n",
 				get_dp_dm_status(info), device_insmod_delay);
-
+#endif
 	switch(role){
 		case USB_ROLE_NULL:
 			if (get_dp_dm_status(info) == 0x00) {
+#ifdef CONFIG_ARCH_SUN6I
 				if(atomic_read(&thread_suspend_flag)){
 					break;
 				}
+#endif
 				/* delay for vbus is stably */
 				if (info->device_insmod_delay <
 					USB_SCAN_INSMOD_DEVICE_DRIVER_DELAY) {
@@ -567,9 +582,11 @@ static void do_vbus1_id1(struct usb_scan_info *info)
 		break;
 
 		case USB_ROLE_HOST:
+#ifdef CONFIG_ARCH_SUN6I
 			if(atomic_read(&thread_suspend_flag)){
 				break;
 			}
+#endif
 			hw_rmmod_usb_host();
 		break;
 
