@@ -47,7 +47,7 @@
 static int pmu_used2 = 0;
 static int gpio_adp_hdle = 0;
 static int pmu_suspendpwroff_vol = 0;
-static int pmu_earlysuspend_chgcur = 0;
+int pmu_earlysuspend_chgcur = 0;
 struct axp_adc_res adc;
 static int count_rdc = 0;
 static int count_dis = 0;

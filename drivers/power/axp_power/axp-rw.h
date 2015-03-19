@@ -24,7 +24,9 @@
 #define _LINUX_AXP_RW_H_
 
 #include <linux/mfd/axp-mfd.h>
+#if defined(CONFIG_ARCH_SUN6I) && !defined(CONFIG_AXP_TWI_USED)
 #include <mach/ar100.h>
+#endif
 
 static uint8_t axp_reg_addr = 0;
 
@@ -34,7 +36,7 @@ EXPORT_SYMBOL_GPL(axp);
 static inline int __axp_read(struct i2c_client *client,
 				int reg, uint8_t *val)
 {
-#ifdef	CONFIG_AXP_TWI_USED
+#if defined(CONFIG_AXP_TWI_USED) || !defined(CONFIG_ARCH_SUN6I)
 	int ret;
 
 	ret = i2c_smbus_read_byte_data(client, reg);
@@ -62,7 +64,7 @@ static inline int __axp_read(struct i2c_client *client,
 static inline int __axp_reads(struct i2c_client *client, int reg,
 				 int len, uint8_t *val)
 {
-#ifdef	CONFIG_AXP_TWI_USED
+#if defined(CONFIG_AXP_TWI_USED) || !defined(CONFIG_ARCH_SUN6I)
 	int ret;
 
 	ret = i2c_smbus_read_i2c_block_data(client, reg, len, val);
@@ -103,7 +105,7 @@ static inline int __axp_reads(struct i2c_client *client, int reg,
 static inline int __axp_write(struct i2c_client *client,
 				 int reg, uint8_t val)
 {
-#ifdef	CONFIG_AXP_TWI_USED
+#if defined(CONFIG_AXP_TWI_USED) || !defined(CONFIG_ARCH_SUN6I)
 	int ret;
 
 	ret = i2c_smbus_write_byte_data(client, reg, val);
@@ -130,7 +132,7 @@ static inline int __axp_write(struct i2c_client *client,
 static inline int __axp_writes(struct i2c_client *client, int reg,
 				  int len, uint8_t *val)
 {
-#ifdef	CONFIG_AXP_TWI_USED
+#if defined(CONFIG_AXP_TWI_USED) || !defined(CONFIG_ARCH_SUN6I)
 	int ret;
 
 	ret = i2c_smbus_write_i2c_block_data(client, reg, len, val);

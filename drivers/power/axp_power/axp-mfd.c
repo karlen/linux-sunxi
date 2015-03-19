@@ -60,14 +60,14 @@ static void axp_mfd_irq_work(struct work_struct *work)
 	if (sunxi_is_sun7i() && chip->client->irq == SW_INT_IRQNO_ENMI)
 		writel(0x01, NMI_IRQ_PEND_REG);
 #endif
-#ifdef	CONFIG_AXP_TWI_USED
+#if defined(CONFIG_AXP_TWI_USED) || !defined(CONFIG_ARCH_SUN6I)
 	enable_irq(chip->client->irq);
 #else
 	ar100_enable_axp_irq();
 #endif
 }
 
-#ifdef CONFIG_AXP_TWI_USED
+#if defined(CONFIG_AXP_TWI_USED) || !defined(CONFIG_ARCH_SUN6I)
 static irqreturn_t axp_mfd_irq_handler(int irq, void *data)
 {
 	struct axp_mfd_chip *chip = data;
@@ -325,9 +325,10 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 	struct axp_platform_data *pdata = client->dev.platform_data;
 	struct axp_mfd_chip *chip;
 	int ret;
+#ifdef CONFIG_ARCH_SUN6I
 	script_item_u script_val;
 	script_item_value_type_e type;
-
+#endif
 	chip = kzalloc(sizeof(struct axp_mfd_chip), GFP_KERNEL);
 	if (chip == NULL)
 		return -ENOMEM;
@@ -348,7 +349,7 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 	if (ret)
 		goto out_free_chip;
 
-#ifdef CONFIG_AXP_TWI_USED
+#if defined(CONFIG_AXP_TWI_USED) || !defined(CONFIG_ARCH_SUN6I)
 	ret = request_irq(client->irq, axp_mfd_irq_handler,
 		IRQF_DISABLED, "axp_mfd", chip);
   	if (ret) {
@@ -380,6 +381,7 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 
 	/* PM hookup */
 	if(!pm_power_off) {
+#ifdef CONFIG_ARCH_SUN6I
 		type = script_get_item("pmu_para", "pmu_fake_power_off_enable", &script_val);
 		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
 			printk("pmu fake power off config type err!");
@@ -390,6 +392,9 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 		} else {
 			pm_power_off = axp_power_off;
 		}
+#else
+		pm_power_off = axp_power_off;
+#endif
 	}
 
 	ret = axp_mfd_create_attrs(chip);
