@@ -87,6 +87,13 @@
 		enable-active-high;
 		gpio = <&pio 7 15 GPIO_ACTIVE_HIGH>;
 	};
+
+	sound {
+		compatible = "allwinner,sunxi-audio-spdif";
+		model = "On-board SPDIF";
+		spdif-controller = <&spdif>;
+		spdif-out;
+	};
 };
 
 &ahci {
@@ -185,6 +192,13 @@
 };
 
 &reg_usb2_vbus {
+	status = "okay";
+};
+
+&spdif {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spdif_tx_pins_a>;
+	spdif-out = "okay";
 	status = "okay";
 };
 
