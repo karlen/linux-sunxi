@@ -1141,6 +1141,18 @@
 			reg = <0x01c23800 0x10>;
 		};
 
+		i2s: i2s@01c22400 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun4i-a10-i2s";
+			reg = <0x01c22400 0x40>;
+			interrupts = <16>;
+			clocks = <&apb0_gates 3>, <&pll2 0>, <&i2s_clk>;
+			clock-names = "apb", "audio", "i2s";
+			dmas = <&dma 0 3>, <&dma 0 3>;
+			dma-names = "rx", "tx";
+			status = "disabled";
+		};
+
 		rtp: rtp@01c25000 {
 			compatible = "allwinner,sun4i-a10-ts";
 			reg = <0x01c25000 0x100>;
