@@ -700,7 +700,6 @@
 			reg = <0x01c20130 0x4>;
 			clocks = <&pll3>, <&pll7>, <&pll3x2>, <&pll7x2>;
 			clock-output-names = "tcon1-ch1-sclk";
-
 		};
 
 		ve_clk: clk@01c2013c {
