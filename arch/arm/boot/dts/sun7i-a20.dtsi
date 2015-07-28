@@ -1344,7 +1344,7 @@
 			compatible = "allwinner,sun4i-a10-i2s";
 			reg = <0x01c22400 0x40>;
 			interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&apb0_gates 3>, <&pll2 0>, <&i2s0_clk>;
+			clocks = <&apb0_gates 3>, <&pll2 3>, <&i2s0_clk>;
 			clock-names = "apb", "audio", "i2s";
 			dmas = <&dma 0 3>, <&dma 0 3>;
 			dma-names = "rx", "tx";
