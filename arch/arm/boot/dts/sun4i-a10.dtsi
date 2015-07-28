@@ -1022,6 +1022,40 @@
 				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
 			};
+
+			i2s_mclk: i2s0@0 {
+				allwinner,pins = "PB5";
+				allwinner,function = "i2s0";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
+			i2s_bclk: i2s0@1 {
+				allwinner,pins = "PB6";
+				allwinner,function = "i2s0";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
+			i2s_lrclk: i2s0@2 {
+				allwinner,pins = "PB7";
+				allwinner,function = "i2s0";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
+			i2s_sdo0: i2s0@3 {
+				allwinner,pins = "PB8";
+				allwinner,function = "i2s0";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
+			i2s_sdi: i2s0@4 {
+				allwinner,pins = "PB12";
+				allwinner,function = "i2s0";
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
 		};
 
 		timer@01c20c00 {
