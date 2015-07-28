@@ -1288,6 +1288,18 @@
 			status = "disabled";
 		};
 
+		i2s: i2s@01c22400 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun4i-a10-i2s";
+			reg = <0x01c22400 0x400>;
+			interrupts = <16>;
+			clocks = <&apb0_gates 3>, <&i2s_clk>;
+			clock-names = "apb", "mod";
+			dmas = <&dma 0 3>, <&dma 0 3>;
+			dma-names = "rx", "tx";
+			status = "disabled";
+		};
+
 		lradc: lradc@01c22800 {
 			compatible = "allwinner,sun4i-a10-lradc-keys";
 			reg = <0x01c22800 0x100>;
