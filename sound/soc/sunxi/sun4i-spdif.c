@@ -170,19 +170,6 @@ struct sun4i_spdif_dev {
 	bool capture_supported;
 };
 
-static void sun4i_spdif_configure(struct sun4i_spdif_dev *host)
-{
-	/* soft reset SPDIF */
-	regmap_write(host->regmap, SUN4I_SPDIF_CTL, SUN4I_SPDIF_CTL_RESET);
-
-	/* flush TX FIFO */
-	regmap_update_bits(host->regmap, SUN4I_SPDIF_FCTL,
-			   SUN4I_SPDIF_FCTL_FTX, SUN4I_SPDIF_FCTL_FTX);
-
-	/* clear TX counter */
-	regmap_write(host->regmap, SUN4I_SPDIF_TXCNT, 0);
-}
-
 static void sun4i_snd_txctrl_on(struct snd_pcm_substream *substream,
 				struct sun4i_spdif_dev *host)
 {
@@ -216,22 +203,96 @@ static void sun4i_snd_txctrl_off(struct snd_pcm_substream *substream,
 			   SUN4I_SPDIF_INT_TXDRQEN, 0);
 
 	/* Global disable */
+	/* TO DO disable on if rx is disabled */
+/*	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
+			   SUN4I_SPDIF_CTL_GEN, 0);*/
+}
+
+static void sun4i_snd_rxctrl_on(struct snd_pcm_substream *substream,
+				struct sun4i_spdif_dev *host)
+{
+	/* SPDIF RX ENABLE */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_RXCFG,
+					SUN4I_SPDIF_RXCFG_RXEN,
+					SUN4I_SPDIF_RXCFG_RXEN);
+
+	/* DRQ ENABLE */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_INT,
+					SUN4I_SPDIF_INT_RXDRQEN,
+					SUN4I_SPDIF_INT_RXDRQEN);
+
+	/* Global enable */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
-			   SUN4I_SPDIF_CTL_GEN, 0);
+					SUN4I_SPDIF_CTL_GEN,
+					SUN4I_SPDIF_CTL_GEN);
+}
+
+static void sun4i_snd_rxctrl_off(struct snd_pcm_substream *substream,
+				struct sun4i_spdif_dev *host)
+{
+	/* SPDIF RX DISABLE */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_RXCFG,
+					SUN4I_SPDIF_RXCFG_RXEN, 0);
+
+	/* DRQ DISABLE */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_INT,
+					SUN4I_SPDIF_INT_RXDRQEN, 0);
+
+	/* Global disable */
+/*DITTO	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
+					SUN4I_SPDIF_CTL_GEN, 0);*/
+}
+
+static int sun4i_spdif_startup_capture(struct snd_pcm_substream *substream,
+					struct snd_soc_dai *dai)
+{
+	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(dai);
+	u32 status;
+ 
+	regmap_read(host->regmap, SUN4I_SPDIF_TXCFG, &status);
+	if ((status & SUN4I_SPDIF_TXCFG_TXEN) == 0)
+		/* soft reset SPDIF */
+		regmap_write(host->regmap, SUN4I_SPDIF_CTL, SUN4I_SPDIF_CTL_RESET);
+
+	/* flush RX FIFO */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_FCTL,
+			   SUN4I_SPDIF_FCTL_FRX, SUN4I_SPDIF_FCTL_FRX);
+
+	/* clear RX counter */
+	regmap_write(host->regmap, SUN4I_SPDIF_RXCNT, 0);
+
+	return 0;
+}
+
+static int sun4i_spdif_startup_playback(struct snd_pcm_substream *substream,
+					struct snd_soc_dai *dai)
+{
+	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(dai);
+	u32 status;
+ 
+	regmap_read(host->regmap, SUN4I_SPDIF_RXCFG, &status);
+	if ((status & SUN4I_SPDIF_RXCFG_RXEN) == 0)
+		/* soft reset SPDIF */
+		regmap_write(host->regmap, SUN4I_SPDIF_CTL, SUN4I_SPDIF_CTL_RESET);
+
+	/* flush TX FIFO */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_FCTL,
+			   SUN4I_SPDIF_FCTL_FTX, SUN4I_SPDIF_FCTL_FTX);
+
+	/* clear TX counter */
+	regmap_write(host->regmap, SUN4I_SPDIF_TXCNT, 0);
+
+	return 0;
 }
 
 static int sun4i_spdif_startup(struct snd_pcm_substream *substream,
 			       struct snd_soc_dai *cpu_dai)
 {
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(rtd->cpu_dai);
+	/* This will most probably need a mutex */
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		return sun4i_spdif_startup_playback(substream, cpu_dai);
 
-	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -EINVAL;
-
-	sun4i_spdif_configure(host);
-
-	return 0;
+	return sun4i_spdif_startup_capture(substream, cpu_dai);
 }
 
 static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
@@ -342,20 +403,24 @@ static int sun4i_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 	int ret = 0;
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(dai);
 
-	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -EINVAL;
-
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		sun4i_snd_txctrl_on(substream, host);
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			sun4i_snd_txctrl_on(substream, host);
+		else
+			sun4i_snd_rxctrl_on(substream, host);
+
 		break;
 
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		sun4i_snd_txctrl_off(substream, host);
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			sun4i_snd_txctrl_off(substream, host);
+		else
+			sun4i_snd_rxctrl_off(substream, host);
 		break;
 
 	default:
@@ -395,6 +460,12 @@ static const struct regmap_config sun4i_spdif_regmap_config = {
 
 static struct snd_soc_dai_driver sun4i_spdif_dai = {
 	.playback = {
+		.channels_min = 1,
+		.channels_max = 2,
+		.rates = SUN4I_RATES,
+		.formats = SUN4I_FORMATS,
+	},
+	.capture = {
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = SUN4I_RATES,
