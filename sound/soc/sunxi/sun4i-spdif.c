@@ -231,6 +231,41 @@ static void sun4i_snd_txctrl_off(struct snd_pcm_substream *substream,
 			   SUN4I_SPDIF_CTL_GEN, 0);
 }
 
+static void sun4i_snd_rxctrl_on(struct snd_pcm_substream *substream,
+				struct sun4i_spdif_dev *host)
+{
+	/* SPDIF RX ENABLE */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_RXCFG,
+					SUN4I_SPDIF_RXCFG_RXEN,
+					SUN4I_SPDIF_RXCFG_RXEN);
+
+	/* DRQ ENABLE */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_INT,
+					SUN4I_SPDIF_INT_RXDRQEN,
+					SUN4I_SPDIF_INT_RXDRQEN);
+
+	/* Global enable */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
+					SUN4I_SPDIF_CTL_GEN,
+					SUN4I_SPDIF_CTL_GEN);
+}
+
+static void sun4i_snd_rxctrl_off(struct snd_pcm_substream *substream,
+				struct sun4i_spdif_dev *host)
+{
+	/* SPDIF RX DISABLE */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_RXCFG,
+					SUN4I_SPDIF_RXCFG_RXEN, 0);
+
+	/* DRQ DISABLE */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_INT,
+					SUN4I_SPDIF_INT_RXDRQEN, 0);
+
+	/* Global disable */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
+					SUN4I_SPDIF_CTL_GEN, 0);
+}
+
 static int sun4i_spdif_startup(struct snd_pcm_substream *substream,
 			       struct snd_soc_dai *cpu_dai)
 {
@@ -360,20 +395,24 @@ static int sun4i_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 	int ret = 0;
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(dai);
 
-	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -EINVAL;
-
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		sun4i_snd_txctrl_on(substream, host);
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			sun4i_snd_txctrl_on(substream, host);
+		else
+			sun4i_snd_rxctrl_on(substream, host);
+
 		break;
 
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		sun4i_snd_txctrl_off(substream, host);
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			sun4i_snd_txctrl_off(substream, host);
+		else
+			sun4i_snd_rxctrl_off(substream, host);
 		break;
 
 	default:
