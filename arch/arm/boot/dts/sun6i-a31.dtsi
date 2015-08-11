@@ -44,6 +44,7 @@
 
 #include "skeleton.dtsi"
 
+#include <dt-bindings/clock/sun4i-a10-pll2.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/thermal/thermal.h>
 
@@ -200,6 +201,14 @@
 			clock-output-names = "pll1";
 		};
 
+		pll2: clk@01c20008 {
+			#clock-cells = <1>;
+			compatible = "allwinner,sun4i-a10-b-pll2-clk";
+			reg = <0x01c20008 0x4>;
+			clocks = <&osc24M>;
+			clock-output-names = "pll2", "pll2x2", "pll2x4", "pll2x8";
+		};
+
 		pll6: clk@01c20028 {
 			#clock-cells = <1>;
 			compatible = "allwinner,sun6i-a31-pll6-clk";
@@ -295,12 +304,12 @@
 			compatible = "allwinner,sun6i-a31-apb1-gates-clk";
 			reg = <0x01c20068 0x4>;
 			clocks = <&apb1>;
-			clock-indices = <0>, <4>,
-					<5>, <12>,
-					<13>;
-			clock-output-names = "apb1_codec", "apb1_digital_mic",
-					"apb1_pio", "apb1_daudio0",
-					"apb1_daudio1";
+			clock-indices = <0>, <1>,
+					<4>, <5>,
+					<12>, <13>;
+			clock-output-names = "apb1_codec", "apb1_spdif",
+					"apb1_digital_mic", "apb1_pio",
+					"apb1_daudio0", "apb1_daudio1";
 		};
 
 		apb2: clk@01c20058 {
@@ -442,6 +451,17 @@
 			compatible = "fixed-clock";
 			clock-frequency = <125000000>;
 			clock-output-names = "gmac_int_tx";
+		};
+
+		spdif_clk: clk@01c200c0 {
+			#clock-cells = <0>;
+			compatible = "allwinner,sun4i-a10-mod1-clk";
+			reg = <0x01c200c0 0x4>;
+			clocks = <&pll2 SUN4I_A10_PLL2_8X>,
+				 <&pll2 SUN4I_A10_PLL2_4X>,
+				 <&pll2 SUN4I_A10_PLL2_2X>,
+				 <&pll2 SUN4I_A10_PLL2_1X>;
+			clock-output-names = "spdif";
 		};
 
 		gmac_tx_clk: clk@01c200d0 {
@@ -750,6 +770,13 @@
 				allwinner,drive = <SUN4I_PINCTRL_40_MA>;
 				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
 			};
+
+			spdif_pins_a: spdif@0 {
+				allwinner,pins = "PH28";
+				allwinner,function = "spdif";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
+			};
 		};
 
 		ahb1_rst: reset@01c202c0 {
@@ -784,6 +811,20 @@
 		wdt1: watchdog@01c20ca0 {
 			compatible = "allwinner,sun6i-a31-wdt";
 			reg = <0x01c20ca0 0x20>;
+		};
+
+		spdif: spdif@01c21000 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun4i-a10-spdif";
+			reg = <0x01c21000 0x40>;
+			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&apb1_gates 1>, <&pll2 1>, <&spdif_clk>;
+			clock-names = "apb", "audio", "spdif";
+			dmas = <&dma 0 2>, <&dma 0 2>;
+			dma-names = "rx", "tx";
+			spdif-in = "disabled";
+			spdif-out = "disabled";
+			status = "disabled";
 		};
 
 		lradc: lradc@01c22800 {
