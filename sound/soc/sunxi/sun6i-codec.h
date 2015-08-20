@@ -16,173 +16,158 @@
 #define _SUN6I_CODEC_H
 
 /*Codec Register*/
-#define CODEC_BASSADDRESS         (0x01c22c00)
-#define SUN6I_DAC_DPC                (0x00)		//the same as a10
-#define SUN6I_DAC_FIFOC              (0x04)		//the same as a10
-#define SUN6I_DAC_FIFOS              (0x08)		//the same as a10
-#define SUN6I_DAC_TXDATA             (0x0c)		//the same as a10
-#define SUN6I_ADC_FIFOC              (0x10)		//33 ADC FIFO Control Register, different with a10
-#define SUN6I_ADC_FIFOS              (0x14)		//33 ADC FIFO Status Register, different with a10
-#define SUN6I_ADC_RXDATA			 (0x18)		//33 ADC RX Data Register
-#define SUN6I_HMIC_CTRL				 (0x1c)		//Earpiece MIC bias detect register,new func
-#define SUN6I_DAC_ACTL				 (0x20)		//Output Mixer & DAC Analog Control Register
+#define CODEC_BASSADDRESS	(0x01c22c00)
+#define SUNXI_DAC_DPC		(0x00)		//the same as a10
+#define SUNXI_DAC_DPC_EN_DA			(31)
+#define SUNXI_DAC_DPC_DVOL			(12)
+#define SUNXI_DAC_FIFOC		(0x04)		//the same as a10
+#define SUNXI_DAC_FIFOC_DAC_FS			(29)
+#define SUNXI_DAC_FIFOC_FIR_VERSION		(28)
+#define SUNXI_DAC_FIFOC_SEND_LASAT		(26)
+#define SUNXI_DAC_FIFOC_TX_FIFO_MODE		(24)
+#define SUNXI_DAC_FIFOC_DRQ_CLR_CNT		(21)
+#define SUNXI_DAC_FIFOC_TX_TRIG_LEVEL		(8)
+#define SUNXI_DAC_FIFOC_MONO_EN			(6)
+#define SUNXI_DAC_FIFOC_TX_SAMPLE_BITS		(5)
+#define SUNXI_DAC_FIFOC_DAC_DRQ_EN		(4)
+#define SUNXI_DAC_FIFOC_FIFO_FLUSH		(0)
+#define SUNXI_DAC_FIFOS		(0x08)		//the same as a10
+#define SUNXI_DAC_TXDATA	(0x0c)		//the same as a10
+#define SUN6I_ADC_FIFOC		(0x10)		//33 ADC FIFO Control Register, different with a10
+#define SUNXI_ADC_FIFOC_DAC_FS			(29)
+#define SUNXI_ADC_FIFOC_EN_AD			(28)
+#define SUN6I_ADC_DIG_MIC_EN			(27)
+#define SUNXI_ADC_FIFOC_RX_FIFO_MODE		(24)
+#define SUN6I_ADCDFEN				(16)
+#define SUNXI_ADC_FIFOC_RX_TRIG_LEVEL		(8)
+#define SUNXI_ADC_FIFOC_MONO_EN			(7)
+#define SUNXI_ADC_FIFOC_RX_SAMPLE_BITS		(6)
+#define SUNXI_ADC_FIFOC_ADC_DRQ_EN		(4)
+#define SUNXI_ADC_FIFOC_FIFO_FLUSH		(0)
 
-#define SUN6I_PA_CTRL				 (0x24)		//new func
-#define SUN6I_MIC_CTRL				 (0x28)		//Microphone,Lineout and Phoneout Control Register,new func
-#define SUN6I_ADC_ACTL				 (0x2c)		//diff with a10, ADC Analog Control Register
-#define SUN6I_ADDAC_TUNE		     (0x30)
-#define SUN6I_BIAS_CRT				 (0x34)
-#define SUN6I_DAC_TXCNT              (0x40)
-#define SUN6I_ADC_RXCNT              (0x44)
-#define SUN6I_DAC_DEBUG              (0x48)
-#define SUN6I_ADC_DEBUG              (0x4c)
-#define SUN6I_HMIC_CTL 	             (0x50)		//new func
-#define SUN6I_HMIC_DATA	             (0x54)		//new func
-#define SUN6I_DAC_DAP_CTL			 (0x60)		//DAC DAP control Register
-#define SUN6I_DAC_DAP_VOL			 (0x64)		//DAC DAP volume Register
-#define SUN6I_DAC_DAP_COF			 (0x68)		//DAC DAP Coefficient Register
-#define SUN6I_DAC_DAP_OPT			 (0x6c)  	//DAC DAP Optimum Register
-#define SUN6I_ADC_DAP_CTL 			 (0x70)  	//ADC DAP Control Register
-#define SUN6I_ADC_DAP_VOL 			 (0x74)  	//ADC DAP volume Register
-#define SUN6I_ADC_DAP_LCTL			 (0x78)		//ADC DAP Left Control Register
-#define SUN6I_ADC_DAP_RCTL			 (0x7c)		//ADC DAP Right Control Register
-#define SUN6I_ADC_DAP_PARA			 (0x80)		//ADC DAP Parameter Control Register
-#define SUN6I_ADC_DAP_LAC			 (0x84)	  	//ADC DAP Left Average Coefficient Register
-#define SUN6I_ADC_DAP_LDAT			 (0x88)		//ADC DAP Left Decay&Attack Time Register
-#define SUN6I_ADC_DAP_RAC			 (0x8c)		//ADC DAP Right Average Coefficient Register
-#define SUN6I_ADC_DAP_RDAC			 (0x90)		//ADC DAP Right Decay&Attack time Register
-#define SUN6I_ADC_DAP_HPFC			 (0x94)		//ADC DAP HPF Coefficient Register
+#define SUN6I_ADC_FIFOS		(0x14)		//33 ADC FIFO Status Register, different with a10
+#define SUN6I_ADC_RXDATA	(0x18)		//33 ADC RX Data Register
+#define SUN6I_HMIC_CTRL		(0x1c)		//Earpiece MIC bias detect register,new func
+#define SUN6I_DAC_ACTL		(0x20)		//Output Mixer & DAC Analog Control Register
+#define SUNXI_DAC_ACTL_DACAENR			(31)
+#define SUNXI_DAC_ACTL_DACAENL			(30)
+#define SUNXI_DAC_ACTL_MIXEN			(29)
+#define SUN6I_DAC_ACTL_MIXENR			(29)
+#define SUN6I_DAC_ACTL_MIXENL			(28)
+#define SUN6I_DAC_ACTL_MIXMUTER			(17)
+#define SUNXI_DAC_ACTL_LDACLMIXS		(15)
+#define SUNXI_DAC_ACTL_RDACRMIXS		(14)
+#define SUNXI_DAC_ACTL_LDACRMIXS		(13)
+#define SUN6I_DAC_ACTL_MIXMUTEL			(10)
+#define SUN6I_DAC_ACTL_HPISR			(9)
+#define SUN6I_DAC_ACTL_HPISL			(8)
+#define SUNXI_DAC_ACTL_DACPAS			(8)
+#define SUNXI_DAC_ACTL_MIXPAS			(7)
+#define SUN6I_DAC_ACTL_HPPAMUTER		(7)
+#define SUN6I_DAC_ACTL_HPPAMUTEL		(6)
+#define SUNXI_DAC_ACTL_PA_MUTE			(6)
+#define SUNXI_DAC_ACTL_PA_VOL			(0)
 
-/*DAC Digital Part Control Register 
-* codecbase+0x00
-*/
-#define DAC_EN                    (31)
-#define DIGITAL_VOL               (12)			//not used yet
+#define SUN6I_PA_CTRL		(0x24)		//new func
+#define SUN6I_PA_CTRL_HPPAEN			(31)
+#define SUN6I_PA_CTRL_HPCOM_CTL			(29)
+#define SUN6I_PA_CTRL_HPCOM_PRO			(28)
+#define SUN6I_PA_CTRL_PA_ANTI_POP_CTL		(26)
+#define SUN6I_PA_CTRL_LTRNMUTE			(25)
+#define SUN6I_PA_CTRL_RTLNMUTE			(24)
+#define SUN6I_PA_CTRL_MIC1G			(15)
+#define SUN6I_PA_CTRL_MIG2G			(12)
+#define SUN6I_PA_CTRL_LINEING			(9)
+#define SUN6I_PA_CTRL_PHONEG			(6)
+#define SUN6I_PA_CTRL_PHONEPG			(3)
+#define SUN6I_PA_CTRL_PHONENG			(0)
 
-/*DAC FIFO Control Register 
-* codecbase+0x04
-*/
-#define FIR_VERSION				  (28)
-#define LAST_SE                   (26)
-#define TX_FIFO_MODE              (24)
-#define DRA_LEVEL                 (21)
-#define TX_TRI_LEVEL              (8)
-#define DAC_MODE                  (6)			//not used yet
-#define TASR                      (5)			//not used yet
-#define DAC_DRQ                   (4)
-#define DAC_FIFO_FLUSH            (0)
+#define SUN6I_MIC_CTRL		(0x28)		//Microphone,Lineout and Phoneout Control Register,new func
+#define SUN6I_MIC_CTRL_HBIASEN			(31)
+#define SUN6I_MIC_CTRL_MBIASEN			(30)
+#define SUN6I_MIC_CTRL_HBIASADCEN		(29)
+#define SUN6I_MIC_CTRL_MIC1AMPEN		(28)
+#define SUN6I_MIC_CTRL_MIC1BOOST		(25)
+#define SUN6I_MIC_CTRL_MIC2AMPEN		(24)
+#define SUN6I_MIC_CTRL_MIC2BOOST		(21)
+#define SUN6I_MIC_CTRL_MIC2_SEL			(20)
+#define SUN6I_MIC_CTRL_LINEOUTL_EN		(19)
+#define SUN6I_MIC_CTRL_LINEOUTR_EN		(18)
+#define SUN6I_MIC_CTRL_LINEOUTL_SRC_SEL		(17)
+#define SUN6I_MIC_CTRL_LINEOUTR_SRC_SEL		(16)
+#define SUN6I_MIC_CTRL_LINEOUT_VOL		(11)
+#define SUN6I_MIC_CTRL_PHONEPREG		(8)
+#define SUN6I_MIC_CTRL_PHONEOUTG		(5)
+#define SUN6I_MIC_CTRL_PHONEOUT_EN		(4)
+#define SUN6I_MIC_CTRL_PHONEOUTS0		(3)
+#define SUN6I_MIC_CTRL_PHONEOUTS1		(2)
+#define SUN6I_MIC_CTRL_PHONEOUTS2		(1)
+#define SUN6I_MIC_CTRL_PHONEOUTS3		(0)
 
-/*DAC Output Mixer & DAC Analog Control Register
-* codecbase+0x20
-*/
-#define VOLUME                    (0)
-#define LHPPA_MUTE                (6)
-#define RHPPA_MUTE                (7)
-#define LHPIS					  (8)
-#define RHPIS					  (9)
-#define LMIXMUTE				  (10)
-#define RMIXMUTE				  (17)
-#define LMIXEN					  (28)
-#define RMIXEN					  (29)
-#define DACALEN					  (30)
-#define DACAREN					  (31)
+#define SUN6I_ADC_ACTL		(0x2c)		//diff with a10, ADC Analog Control Register
+#define SUNXI_ADC_ACTL_ADCREN			(31)
+#define SUNXI_ADC_ACTL_ADCLEN			(30)
+#define SUNXI_ADC_ACTL_PREG1EN			(29)
+#define SUNXI_ADC_ACTL_PREG2EN			(28)
+#define SUNXI_ADC_ACTL_VMICEN			(27)
+#define SUN6I_ADC_ACTL_ADCRG			(27)
+#define SUN6I_ADC_ACTL_ADCLG			(24)
+#define SUNXI_ADC_ACTL_VADCG			(20)
+#define SUNXI_ADC_ACTL_ADCIS			(17)
+#define SUN6I_ADC_ACTL_RADCMIXMUTEMIC1BOOST	(13)
+#define SUN6I_ADC_ACTL_RADCMIXMUTEMIC2BOOST	(12)
+#define SUN6I_ADC_ACTL_RADCMIXMUTEPHONEPN	(11)
+#define SUN6I_ADC_ACTL_RADCMIXMUTEPHONEP	(10)
+#define SUN6I_ADC_ACTL_RADCMIXMUTELINEINR	(9)
+#define SUN6I_ADC_ACTL_RADCMIXMUTEROUTPUT	(8)
+#define SUN6I_ADC_ACTL_RADCMIXMUTELOUTPUT	(7)
+#define SUN6I_ADC_ACTL_LADCMIXMUTEMIC1BOOST	(6)
+#define SUN6I_ADC_ACTL_LADCMIXMUTEMIC2BOOST	(5)
+#define SUNXI_ADC_ACTL_PA_EN			(4)
+#define SUN6I_ADC_ACTL_LADCMIXMUTEPHONEPN	(4)
+#define SUNXI_ADC_ACTL_DDE			(3)
+#define SUN6I_ADC_ACTL_LADCMIXMUTEPHONEP	(3)
+#define SUN6I_ADC_ACTL_LADCMIXMUTELINEINL	(2)
+#define SUN6I_ADC_ACTL_LADCMIXMUTELOUTPUT	(1)
+#define SUN6I_ADC_ACTL_LADCMIXMUTEROUTPUT	(0)
 
-/*ADC FIFO Control Register
-* codecbase+0x10
-*/
-#define ADC_EN                	  (28)
-#define ADC_DIG_MIC_EN			  (27)
-#define RX_FIFO_MODE              (24)
-#define ADCDFEN					  (16)
-#define RX_TRI_LEVEL              (8)
-#define ADC_MODE                  (7)
-#define RASR                      (6)
-#define ADC_DRQ                   (4)
-#define ADC_FIFO_FLUSH            (0)
+#define SUN6I_ADDAC_TUNE	(0x30)
+#define SUN6I_ADDAC_TUNE_PA_SLOPE_SECECT	(30)
+#define SUN6I_ADDAC_TUNE_DITHER			(25)
+#define SUN6I_ADDAC_TUNE_ZERO_CROSS_EN		(22)
+#define SUN6I_BIAS_CRT		(0x34)
+#define SUN6I_BIAS_CRT_OPMIC_BIAS_CUR		(30)
+#define SUN6I_BIAS_CRT_BIASCALIVERIFY		(29)
+#define SUN6I_BIAS_CRT_BIASVERIFY		(23)
+#define SUN6I_BIAS_CRT_BIASCALI			(17)
+#define SUN6I_BIAS_CRT_DA16CALIVERIFY		(16)
+#define SUN6I_BIAS_CRT_DA16VERIFY		(8)
+#define SUN6I_BIAS_CRT_DA16CALI			(0)
 
-/*Output Mixer & PA Control Register
-* codecbase+0x24
-* new function
-*/
-#define HPPAEN					  (31)
-#define HPCOM_CTL				  (29)
-#define HPCOM_PRO				  (28)
-#define PA_ANTI_POP_CTL			  (26)
-#define LTRNMUTE				  (25)
-#define RTLNMUTE				  (24)
-#define MIC1G					  (15)
-#define MIG2G					  (12)
-#define LINEING					  (9)
-#define PHONEG					  (6)
-#define PHONEPG					  (3)
-#define PHONENG					  (0)
+#define SUN6I_DAC_TXCNT		(0x40)
+#define SUN6I_ADC_RXCNT		(0x44)
+#define SUN6I_DAC_DEBUG		(0x48)
+#define SUN6I_ADC_DEBUG		(0x4c)
+#define SUN6I_HMIC_CTL		(0x50)		//new func
+#define SUN6I_HMIC_DATA		(0x54)		//new func
+#define SUN6I_DAC_DAP_CTL	(0x60)		//DAC DAP control Register
+#define SUN6I_DAC_DAP_VOL	(0x64)		//DAC DAP volume Register
+#define SUN6I_DAC_DAP_COF	(0x68)		//DAC DAP Coefficient Register
+#define SUN6I_DAC_DAP_OPT	(0x6c)		//DAC DAP Optimum Register
+#define SUN6I_ADC_DAP_CTL	(0x70)		//ADC DAP Control Register
+#define SUN6I_ADC_DAP_VOL	(0x74)		//ADC DAP volume Register
+#define SUN6I_ADC_DAP_LCTL	(0x78)		//ADC DAP Left Control Register
+#define SUN6I_ADC_DAP_RCTL	(0x7c)		//ADC DAP Right Control Register
+#define SUN6I_ADC_DAP_PARA	(0x80)		//ADC DAP Parameter Control Register
+#define SUN6I_ADC_DAP_LAC	(0x84)		//ADC DAP Left Average Coefficient Register
+#define SUN6I_ADC_DAP_LDAT	(0x88)		//ADC DAP Left Decay&Attack Time Register
+#define SUN6I_ADC_DAP_RAC	(0x8c)		//ADC DAP Right Average Coefficient Register
+#define SUN6I_ADC_DAP_RDAC	(0x90)		//ADC DAP Right Decay&Attack time Register
+#define SUN6I_ADC_DAP_HPFC	(0x94)		//ADC DAP HPF Coefficient Register
 
-/*Microphone,Lineout and Phoneout Control Register
-* codecbase+0x28
-* new function
-*/
-#define HBIASEN					  (31)
-#define MBIASEN					  (30)
-#define HBIASADCEN				  (29)
-#define MIC1AMPEN				  (28)
-#define MIC1BOOST				  (25)
-#define MIC2AMPEN				  (24)
-#define MIC2BOOST				  (21)
-#define MIC2_SEL				  (20)
-#define LINEOUTL_EN			  	  (19)
-#define LINEOUTR_EN			  	  (18)
-#define LINEOUTL_SRC_SEL		  (17)
-#define	LINEOUTR_SRC_SEL		  (16)
-#define	LINEOUT_VOL				  (11)
-#define PHONEPREG				  (8)
-#define PHONEOUTG				  (5)
-#define PHONEOUT_EN				  (4)
-#define PHONEOUTS0				  (3)
-#define PHONEOUTS1				  (2)
-#define PHONEOUTS2				  (1)
-#define PHONEOUTS3				  (0)
-
-/*ADC Analog Control Register
-* codecbase+0x2c
-*/
-#define ADCREN					  (31)
-#define ADCLEN					  (30)
-#define ADCRG					  (27)
-#define ADCLG					  (24)
-#define RADCMIXMUTEMIC1BOOST	  (13)
-#define RADCMIXMUTEMIC2BOOST	  (12)
-#define RADCMIXMUTEPHONEPN		  (11)
-#define RADCMIXMUTEPHONEP		  (10)
-#define RADCMIXMUTELINEINR		  (9)
-#define RADCMIXMUTEROUTPUT		  (8)
-#define RADCMIXMUTELOUTPUT		  (7)
-#define LADCMIXMUTEMIC1BOOST	  (6)
-#define LADCMIXMUTEMIC2BOOST	  (5)
-#define LADCMIXMUTEPHONEPN		  (4)
-#define LADCMIXMUTEPHONEP		  (3)
-#define LADCMIXMUTELINEINL		  (2)
-#define LADCMIXMUTELOUTPUT		  (1)
-#define LADCMIXMUTEROUTPUT		  (0)
 
 #define RADCMIXMUTE				  (7)
 #define LADCMIXMUTE				  (0)
-
-/*ADDA Analog Performance Tuning Register
-* codecbase+0x30
-*/
-#define PA_SLOPE_SECECT			  (30)
-#define DITHER				   	  (25)
-#define ZERO_CROSS_EN			  (22)
-/*bias&DA16 Calibration verify register
-* codecbase+0x34
-*/
-#define OPMIC_BIAS_CUR			  (30)
-#define BIASCALIVERIFY			  (29)
-#define BIASVERIFY				  (23)
-#define BIASCALI				  (17)
-#define DA16CALIVERIFY			  (16)
-#define DA16VERIFY				  (8)
-#define DA16CALI				  (0)
 
 /*DAC Debug Register
 * codecbase+0x48

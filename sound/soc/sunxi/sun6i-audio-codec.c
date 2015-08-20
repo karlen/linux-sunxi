@@ -74,8 +74,8 @@ void codec_wr_control(struct sun6i_priv *sun6i, u32 reg, u32 mask, u32 shift, u3
 
 static void sun6i_codec_hp_chan_mute(struct sun6i_priv *sun6i, bool left, bool right)
 {
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, LHPPA_MUTE, left ? 0 : 1);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, RHPPA_MUTE, right ? 0 : 1);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPPAMUTEL, left ? 0 : 1);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPPAMUTER, right ? 0 : 1);
 }
 
 #define SUN6I_DAC_DIGITAL_CTRL_REG	0x00
@@ -244,49 +244,49 @@ static int codec_pa_play_open(struct sun6i_priv *sun6i)
 	/* } */
 
 	/*mute l_pa and r_pa*/
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, LHPPA_MUTE, 0x0);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, RHPPA_MUTE, 0x0);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPPAMUTEL, 0x0);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPPAMUTER, 0x0);
 
 	/*enable dac digital*/
-	codec_wr_control(sun6i, SUN6I_DAC_DPC, 0x1, DAC_EN, 0x1);
+	codec_wr_control(sun6i, SUNXI_DAC_DPC, 0x1, SUNXI_DAC_DPC_EN_DA, 0x1);
 	/*set TX FIFO send drq level*/
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x7f, TX_TRI_LEVEL, 0xf);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0xf);
 	/*set TX FIFO MODE*/
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x1, TX_FIFO_MODE, 0x1);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_TX_FIFO_MODE, 0x1);
 
 	//send last sample when dac fifo under run
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x1, LAST_SE, 0x0);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
 
 	/*enable dac_l and dac_r*/
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, DACALEN, 0x1);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, DACAREN, 0x1);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUNXI_DAC_ACTL_DACAENL, 0x1);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUNXI_DAC_ACTL_DACAENR, 0x1);
 
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTR_EN, 0x1);
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTL_EN, 0x1);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTL_EN, 0x1);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTR_EN, 0x1);
 
 	/* TODO: This used to be retrieved by FEX */
 	/* if (!pa_double_used) { */
-		codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTL_SRC_SEL, 0x1);
-		codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTR_SRC_SEL, 0x1);
+		codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTR_SRC_SEL, 0x1);
+		codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTL_SRC_SEL, 0x1);
 	/* } else { */
 	/* 	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTL_SRC_SEL, 0x0); */
 	/* 	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTR_SRC_SEL, 0x0); */
 	/* } */
 
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, LHPIS, 0x1);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, RHPIS, 0x1);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPISL, 0x1);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPISR, 0x1);
 
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x7f, RMIXMUTE, 0x2);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x7f, LMIXMUTE, 0x2);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x7f, SUN6I_DAC_ACTL_MIXMUTER, 0x2);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x7f, SUN6I_DAC_ACTL_MIXMUTEL, 0x2);
 
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, LMIXEN, 0x1);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, RMIXEN, 0x1);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_MIXENL, 0x1);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_MIXENR, 0x1);
 	
 	/*
 	 * TODO: This used to be retrieved by FEX.
 	 * The script has nice comments explaining what values mean in term of dB output
 	 */
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1f, LINEOUT_VOL, 0x19);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1f, SUN6I_MIC_CTRL_LINEOUT_VOL, 0x19);
 
 	/* TODO: Configure the GPIO using gpiolib */
 	/* mdelay(3); */
@@ -316,25 +316,25 @@ static int codec_capture_open(struct sun6i_priv *sun6i)
 	cap_vol = 5;
 
 	/*enable mic1 pa*/
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, MIC1AMPEN, 0x1);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_MIC1AMPEN, 0x1);
 	/*mic1 gain 36dB,if capture volume is too small, enlarge the mic1boost*/
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x7,MIC1BOOST,cap_vol);//36db
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x7, SUN6I_MIC_CTRL_MIC1BOOST,cap_vol);//36db
 	/*enable Master microphone bias*/
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, MBIASEN, 0x1);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_MBIASEN, 0x1);
 
 	/*enable Right MIC1 Boost stage*/
-	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, RADCMIXMUTEMIC1BOOST, 0x1);
+	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, SUN6I_ADC_ACTL_RADCMIXMUTEMIC1BOOST, 0x1);
 	/*enable Left MIC1 Boost stage*/
-	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, LADCMIXMUTEMIC1BOOST, 0x1);
+	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, SUN6I_ADC_ACTL_LADCMIXMUTEMIC1BOOST, 0x1);
 	/*enable adc_r adc_l analog*/
-	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1,  ADCREN, 0x1);
-	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1,  ADCLEN, 0x1);
+	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, SUNXI_ADC_ACTL_ADCREN, 0x1);
+	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, SUNXI_ADC_ACTL_ADCLEN, 0x1);
 	/*set RX FIFO mode*/
-	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, RX_FIFO_MODE, 0x1);
+	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
 	/*set RX FIFO rec drq level*/
-	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1f, RX_TRI_LEVEL, 0xf);
+	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
 	/*enable adc digital part*/
-	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1,ADC_EN, 0x1);
+	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
 
 	return 0;
 }
@@ -342,9 +342,9 @@ static int codec_capture_open(struct sun6i_priv *sun6i)
 static int codec_play_start(struct sun6i_priv *sun6i)
 {
 	/*enable dac drq*/
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x1, DAC_DRQ, 0x1);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x1);
 	/*DAC FIFO Flush,Write '1' to flush TX FIFO, self clear to '0'*/
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x1, DAC_FIFO_FLUSH, 0x1);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_FIFO_FLUSH, 0x1);
 
 	return 0;
 }
@@ -365,31 +365,31 @@ static int codec_play_stop(struct sun6i_priv *sun6i)
 	/* TODO: This used to be retrieved by FEX*/
 	headphone_vol = 0x3b;
 
-	codec_wr_control(sun6i, SUN6I_ADDAC_TUNE, 0x1, ZERO_CROSS_EN, 0x0);
+	codec_wr_control(sun6i, SUN6I_ADDAC_TUNE, 0x1, SUN6I_ADDAC_TUNE_ZERO_CROSS_EN, 0x0);
 	for (i = 0; i < headphone_vol; i++) {
 		/*set HPVOL volume*/
-		codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x3f, VOLUME, headphone_vol);
+		codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x3f, SUNXI_DAC_ACTL_PA_VOL, headphone_vol);
 		headphone_vol = headphone_vol - i;
 		mdelay(1);
 		i++;
 		if (i > headphone_vol-1) {
-			codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x3f, VOLUME, 0x0);
+			codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x3f, SUNXI_DAC_ACTL_PA_VOL, 0x0);
 			break;
 		}
 	}
 	/*mute l_pa and r_pa*/
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, LHPPA_MUTE, 0x0);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, RHPPA_MUTE, 0x0);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPPAMUTEL, 0x0);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPPAMUTER, 0x0);
 
 	/*disable dac drq*/
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x1, DAC_DRQ, 0x0);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x0);
 
 	/*disable dac_l and dac_r*/
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, DACALEN, 0x0);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, DACAREN, 0x0);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUNXI_DAC_ACTL_DACAENL, 0x0);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUNXI_DAC_ACTL_DACAENR, 0x0);
 
 	/*disable dac digital*/
-	codec_wr_control(sun6i, SUN6I_DAC_DPC ,  0x1, DAC_EN, 0x0);
+	codec_wr_control(sun6i, SUNXI_DAC_DPC ,  0x1, SUNXI_DAC_DPC_EN_DA, 0x0);
 
 	/* TODO: Configure the GPIO */
 	/* item.gpio.data = 0; */
@@ -398,40 +398,40 @@ static int codec_play_stop(struct sun6i_priv *sun6i)
 	/* 	printk("sw_gpio_setall_range failed\n"); */
 	/* } */
 
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTR_EN, 0x0);
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTL_EN, 0x0);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTR_EN, 0x0);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTL_EN, 0x0);
 
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTL_SRC_SEL, 0x0);
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, LINEOUTR_SRC_SEL, 0x0);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTL_SRC_SEL, 0x0);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTR_SRC_SEL, 0x0);
 
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, LHPIS, 0x0);
-	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, RHPIS, 0x0);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPISL, 0x0);
+	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPISR, 0x0);
 	
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, PHONEOUTS2, 0x0);
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, PHONEOUTS3, 0x0);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_PHONEOUTS2, 0x0);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_PHONEOUTS3, 0x0);
 	return 0;
 }
 
 static int codec_capture_start(struct sun6i_priv *sun6i)
 {
 	/*enable adc drq*/
-	codec_wr_control(sun6i, SUN6I_ADC_FIFOC ,0x1, ADC_DRQ, 0x1);
+	codec_wr_control(sun6i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
 	return 0;
 }
 
 static int codec_capture_stop(struct sun6i_priv *sun6i)
 {
 	/*disable adc digital part*/
-	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1,ADC_EN, 0x0);
+	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x0);
 	/*disable adc drq*/
-	codec_wr_control(sun6i, SUN6I_ADC_FIFOC ,0x1, ADC_DRQ, 0x0);	
+	codec_wr_control(sun6i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x0);
 	/*disable mic1 pa*/
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, MIC1AMPEN, 0x0);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_MIC1AMPEN, 0x0);
 	/*disable Master microphone bias*/
-	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, MBIASEN, 0x0);
+	codec_wr_control(sun6i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_MBIASEN, 0x0);
 	/*disable adc_r adc_l analog*/
-	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, ADCREN, 0x0);
-	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, ADCLEN, 0x0);
+	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, SUNXI_ADC_ACTL_ADCREN, 0x0);
+	codec_wr_control(sun6i, SUN6I_ADC_ACTL, 0x1, SUNXI_ADC_ACTL_ADCLEN, 0x0);
 
 	return 0;
 }
@@ -1006,13 +1006,13 @@ static int sun6i_prepare(struct snd_pcm_substream *substream,
 			/* return codec_pa_play_open(sun6i); */
 		} else {
 			/*set TX FIFO send drq level*/
-			codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x7f, TX_TRI_LEVEL, 0xf);
+			codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0xf);
 
 			/*set TX FIFO MODE*/
-			codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x1, TX_FIFO_MODE, 0x1);
+			codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_TX_FIFO_MODE, 0x1);
 
 			//send last sample when dac fifo under run
-			codec_wr_control(sun6i, SUN6I_DAC_FIFOC ,0x1, LAST_SE, 0x0);
+			codec_wr_control(sun6i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
 		}
 	} else {
 		/* return codec_capture_open(sun6i); */
@@ -1061,7 +1061,7 @@ static int sun6i_trigger(struct snd_pcm_substream *substream, int cmd,
 
 			/*hardware fifo delay*/
 			mdelay(200);
-			codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, ADC_FIFO_FLUSH, 0x1);
+			codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_FIFO_FLUSH, 0x1);
 			break;
 
 		case SNDRV_PCM_TRIGGER_SUSPEND:
@@ -1167,19 +1167,19 @@ static int sun6i_soc_probe(struct snd_soc_codec *codec)
 	 * Stop doing DMA requests whenever there's only 16 samples
 	 * left available in the TX FIFO.
 	 */
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC, 0x3, DRA_LEVEL,0x3);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC, 0x3, SUNXI_DAC_FIFOC_DRQ_CLR_CNT,0x3);
 
 	/* Flush TX FIFO */
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC, 0x1, DAC_FIFO_FLUSH, 0x1);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC, 0x1, SUNXI_DAC_FIFOC_FIFO_FLUSH, 0x1);
 
 	/* Flush RX FIFO */
-	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, ADC_FIFO_FLUSH, 0x1);
+	codec_wr_control(sun6i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_FIFO_FLUSH, 0x1);
 
 	/* Do DRQ whenever the FIFO is empty */
-	codec_wr_control(sun6i, SUN6I_DAC_FIFOC, 0x1, 4, 0x1);
+	codec_wr_control(sun6i, SUNXI_DAC_FIFOC, 0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x1);
 
 	/* /\* Use a 32 bits FIR *\/ */
-	/* codec_wr_control(sun6i, SUN6I_DAC_FIFOC, 0x1, FIR_VERSION, 0x1); */
+	/* codec_wr_control(sun6i, SUNXI_DAC_FIFOC, 0x1, FIR_VERSION, 0x1); */
 
 	return 0;
 }
