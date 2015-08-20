@@ -140,7 +140,7 @@ static const struct of_device_id sun6i_audio_card_dt_ids[] = {
 	{ .compatible = "allwinner,sun6i-a31-audio-codec", },
 	{}
 };
-MODULE_DEVICE_TABLE(of, sun6i_codec_match);
+MODULE_DEVICE_TABLE(of, sun6i_audio_card_dt_ids);
 
 static struct platform_driver sun6i_audio_card_driver = {
 	.probe		= sun6i_audio_card_probe,
