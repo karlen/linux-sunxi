@@ -206,9 +206,10 @@
 			compatible = "allwinner,sun6i-a31-pll2-clk";
 			reg = <0x01c20008 0x4>;
 			clocks = <&osc24M>;
-			clock-output-names = "pll2";
+			clock-output-names = "pll2-1x", "pll2-2x",
+					     "pll2-4x", "pll2-8x";
 		};
-
+/*
 		pll2x2: clk@1 {
 			#clock-cells = <0>;
 			compatible = "fixed-factor-clock";
@@ -235,7 +236,7 @@
 			clock-div = <1>;
 			clock-output-names = "pll2 x8";
 		};
-
+*/
 		pll6: clk@01c20028 {
 			#clock-cells = <1>;
 			compatible = "allwinner,sun6i-a31-pll6-clk";
@@ -447,7 +448,10 @@
 			#clock-cells = <0>;
 			compatible = "allwinner,sun6i-a31-mod1-clk";
 			reg = <0x01c200b0 0x4>;
-			clocks = <&pll2x8>, <&pll2x4>, <&pll2x2>, <&pll2>;
+			clocks = <&pll2 SUN4I_A10_PLL2_8X>,
+				 <&pll2 SUN4I_A10_PLL2_4X>,
+				 <&pll2 SUN4I_A10_PLL2_2X>,
+				 <&pll2 SUN4I_A10_PLL2_1X>;
 			clock-output-names = "i2s0";
 		};
 
@@ -455,7 +459,10 @@
 			#clock-cells = <0>;
 			compatible = "allwinner,sun6i-a31-mod1-clk";
 			reg = <0x01c200b4 0x4>;
-			clocks = <&pll2x8>, <&pll2x4>, <&pll2x2>, <&pll2>;
+			clocks = <&pll2 SUN4I_A10_PLL2_8X>,
+				 <&pll2 SUN4I_A10_PLL2_4X>,
+				 <&pll2 SUN4I_A10_PLL2_2X>,
+				 <&pll2 SUN4I_A10_PLL2_1X>;
 			clock-output-names = "i2s1";
 		};
 
