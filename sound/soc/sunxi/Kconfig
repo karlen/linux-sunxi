@@ -8,11 +8,16 @@ config SND_SUN4I_CODEC
 	  Select Y or M to add support for the Codec embedded in the Allwinner
 	  A10 and affiliated SoCs.
 
+config SND_SUN6I_CODEC
+	select MFD_CORE
+	select REGMAP_MMIO
+	select SND_SOC_GENERIC_DMAENGINE_PCM
+	tristate "Allwinner A31 Audio Codec Support"
+
 config SND_SUN4I_I2S
 	tristate "APB on-chip sun4i/sun5i/sun7i I2S"
 	select SND_SOC_GENERIC_DMAENGINE_PCM
 	select REGMAP_MMIO
-	default m
 
 config SND_SUNXI_UDA1380
 	tristate "Audio support for A20 with UDA1380 codec on I2S DA0"
