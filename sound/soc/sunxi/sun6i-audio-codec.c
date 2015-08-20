@@ -78,47 +78,35 @@ static void sun6i_codec_hp_chan_mute(struct sun6i_priv *sun6i, bool left, bool r
 	codec_wr_control(sun6i, SUN6I_DAC_ACTL, 0x1, SUN6I_DAC_ACTL_HPPAMUTER, right ? 0 : 1);
 }
 
-#define SUN6I_DAC_DIGITAL_CTRL_REG	0x00
-#define SUN6I_DAC_FIFO_CTRL_REG		0x04
-#define SUN6I_DAC_FIFO_STATUS_REG	0x08
-#define SUN6I_DAC_FIFO_REG		0x0c
-#define SUN6I_ADC_FIFO_CTRL_REG		0x10
-#define SUN6I_ADC_FIFO_STATUS_REG	0x14
-#define SUN6I_ADC_FIFO_REG		0x18
-#define SUN6I_DAC_ANALOG_CTRL_REG	0x20
-#define SUN6I_POWER_AMPLIFIER_CTRL_REG	0x24
-#define SUN6I_ANALOG_PERF_TUNING_REG	0x30
-
-
 static const char *sun6i_zero_crossover_time[] = {"32ms", "64ms"};
 static const char *sun6i_fir_length[] = {"64 bits", "32 bits"};
 static const char *sun6i_left_hp_mux[] = {"Left DAC", "Left Output Mixer"};
 static const char *sun6i_right_hp_mux[] = {"Right DAC", "Right Output Mixer"};
 
 static const struct soc_enum sun6i_zero_crossover_time_enum =
-	SOC_ENUM_SINGLE(SUN6I_ANALOG_PERF_TUNING_REG, 21, 2, sun6i_zero_crossover_time);
+	SOC_ENUM_SINGLE(SUN6I_ADDAC_TUNE, 21, 2, sun6i_zero_crossover_time);
 
 static const struct soc_enum sun6i_fir_length_enum =
-	SOC_ENUM_SINGLE(SUN6I_DAC_FIFO_CTRL_REG, 28, 2, sun6i_fir_length);
+	SOC_ENUM_SINGLE(SUNXI_DAC_FIFOC, 28, 2, sun6i_fir_length);
 
 static const struct soc_enum sun6i_left_hp_mux_enum =
-	SOC_ENUM_SINGLE(SUN6I_DAC_ANALOG_CTRL_REG, 8, 2, sun6i_left_hp_mux);
+	SOC_ENUM_SINGLE(SUN6I_DAC_ACTL, 8, 2, sun6i_left_hp_mux);
 
 static const struct soc_enum sun6i_right_hp_mux_enum =
-	SOC_ENUM_SINGLE(SUN6I_DAC_ANALOG_CTRL_REG, 9, 2, sun6i_right_hp_mux);
+	SOC_ENUM_SINGLE(SUN6I_DAC_ACTL, 9, 2, sun6i_right_hp_mux);
 
 static const struct snd_kcontrol_new sun6i_snd_controls[] = {
 	/* This is actually an attenuation by 64 steps of -1.16dB */
 	SOC_SINGLE("DAC Playback Volume",
-		   SUN6I_DAC_DIGITAL_CTRL_REG, 12, 0x1f, 1),
+		   SUNXI_DAC_DPC, 12, 0x1f, 1),
 	SOC_SINGLE("DAC High Pass Filter Switch",
-		   SUN6I_DAC_DIGITAL_CTRL_REG, 18, 1, 0),
+		   SUNXI_DAC_DPC, 18, 1, 0),
 
 	SOC_SINGLE("Headphone Volume",
-		   SUN6I_DAC_ANALOG_CTRL_REG, 0, 0x1f, 0),
+		   SUN6I_DAC_ACTL, 0, 0x1f, 0),
 
 	SOC_SINGLE("Zero-crossover Switch",
-		   SUN6I_ANALOG_PERF_TUNING_REG, 22, 1, 0),
+		   SUN6I_ADDAC_TUNE, 22, 1, 0),
 
 	SOC_ENUM("Zero-crossover Time", sun6i_zero_crossover_time_enum),
 	SOC_ENUM("FIR Length", sun6i_fir_length_enum),
@@ -126,19 +114,19 @@ static const struct snd_kcontrol_new sun6i_snd_controls[] = {
 };
 
 static const struct snd_kcontrol_new sun6i_left_output_mixer_controls[] = {
-	SOC_DAPM_SINGLE("Right DAC Switch", SUN6I_DAC_ANALOG_CTRL_REG, 10, 1, 0),
-	SOC_DAPM_SINGLE("Left DAC Switch", SUN6I_DAC_ANALOG_CTRL_REG, 11, 1, 0),
-	SOC_DAPM_SINGLE("Left LineIn Switch", SUN6I_DAC_ANALOG_CTRL_REG, 12, 1, 0),
-	SOC_DAPM_SINGLE("Microphone 2 Boost Switch", SUN6I_DAC_ANALOG_CTRL_REG, 15, 1, 0),
-	SOC_DAPM_SINGLE("Microphone 1 Boost Switch", SUN6I_DAC_ANALOG_CTRL_REG, 16, 1, 0),
+	SOC_DAPM_SINGLE("Right DAC Switch", SUN6I_DAC_ACTL, 10, 1, 0),
+	SOC_DAPM_SINGLE("Left DAC Switch", SUN6I_DAC_ACTL, 11, 1, 0),
+	SOC_DAPM_SINGLE("Left LineIn Switch", SUN6I_DAC_ACTL, 12, 1, 0),
+	SOC_DAPM_SINGLE("Microphone 2 Boost Switch", SUN6I_DAC_ACTL, 15, 1, 0),
+	SOC_DAPM_SINGLE("Microphone 1 Boost Switch", SUN6I_DAC_ACTL, 16, 1, 0),
 };
 
 static const struct snd_kcontrol_new sun6i_right_output_mixer_controls[] = {
-	SOC_DAPM_SINGLE("Left DAC Switch", SUN6I_DAC_ANALOG_CTRL_REG, 17, 1, 0),
-	SOC_DAPM_SINGLE("Right DAC Switch", SUN6I_DAC_ANALOG_CTRL_REG, 18, 1, 0),
-	SOC_DAPM_SINGLE("Right LineIn Switch", SUN6I_DAC_ANALOG_CTRL_REG, 19, 1, 0),
-	SOC_DAPM_SINGLE("Microphone 2 Boost Switch", SUN6I_DAC_ANALOG_CTRL_REG, 22, 1, 0),
-	SOC_DAPM_SINGLE("Microphone 1 Boost Switch", SUN6I_DAC_ANALOG_CTRL_REG, 23, 1, 0),
+	SOC_DAPM_SINGLE("Left DAC Switch", SUN6I_DAC_ACTL, 17, 1, 0),
+	SOC_DAPM_SINGLE("Right DAC Switch", SUN6I_DAC_ACTL, 18, 1, 0),
+	SOC_DAPM_SINGLE("Right LineIn Switch", SUN6I_DAC_ACTL, 19, 1, 0),
+	SOC_DAPM_SINGLE("Microphone 2 Boost Switch", SUN6I_DAC_ACTL, 22, 1, 0),
+	SOC_DAPM_SINGLE("Microphone 1 Boost Switch", SUN6I_DAC_ACTL, 23, 1, 0),
 };
 
 static const struct snd_kcontrol_new sun6i_left_hp_mux_controls =
@@ -149,26 +137,26 @@ static const struct snd_kcontrol_new sun6i_right_hp_mux_controls =
 
 static const struct snd_soc_dapm_widget sun6i_dapm_widgets[] = {
 	/* Digital controls of the DACs */
-	SND_SOC_DAPM_DAC("DAC", "Playback", SUN6I_DAC_DIGITAL_CTRL_REG, 31, 0),
+	SND_SOC_DAPM_DAC("DAC", "Playback", SUNXI_DAC_DPC, 31, 0),
 
 	/* Analog parts of the DACs */
-	SND_SOC_DAPM_DAC("Left DAC", "Playback", SUN6I_DAC_ANALOG_CTRL_REG, 30, 0),
-	SND_SOC_DAPM_DAC("Right DAC", "Playback", SUN6I_DAC_ANALOG_CTRL_REG, 31, 0),
+	SND_SOC_DAPM_DAC("Left DAC", "Playback", SUN6I_DAC_ACTL, 30, 0),
+	SND_SOC_DAPM_DAC("Right DAC", "Playback", SUN6I_DAC_ACTL, 31, 0),
 
 	/* Power up of the Headphone amplifier */
 	SND_SOC_DAPM_PGA("Headphone Amplifier",
-			 SUN6I_POWER_AMPLIFIER_CTRL_REG, 31, 0, NULL, 0),
+			 SUN6I_PA_CTRL, 31, 0, NULL, 0),
 
 	/* Mutes of both channels coming to the headphone amplifier */
 	SND_SOC_DAPM_PGA("Left Headphone Amplifier",
-			 SUN6I_DAC_ANALOG_CTRL_REG, 6, 0, NULL, 0),
+			 SUN6I_DAC_ACTL, 6, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("Right Headphone Amplifier",
-			 SUN6I_DAC_ANALOG_CTRL_REG, 7, 0, NULL, 0),
+			 SUN6I_DAC_ACTL, 7, 0, NULL, 0),
 
-	SND_SOC_DAPM_MIXER("Left Output Mixer", SUN6I_DAC_ANALOG_CTRL_REG, 28, 0,
+	SND_SOC_DAPM_MIXER("Left Output Mixer", SUN6I_DAC_ACTL, 28, 0,
 			   sun6i_left_output_mixer_controls,
 			   ARRAY_SIZE(sun6i_left_output_mixer_controls)),
-	SND_SOC_DAPM_MIXER("Right Output Mixer", SUN6I_DAC_ANALOG_CTRL_REG, 29, 0,
+	SND_SOC_DAPM_MIXER("Right Output Mixer", SUN6I_DAC_ACTL, 29, 0,
 			   sun6i_right_output_mixer_controls,
 			   ARRAY_SIZE(sun6i_right_output_mixer_controls)),
 
