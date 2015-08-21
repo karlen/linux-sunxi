@@ -893,11 +893,11 @@
 		};
 
 		codec: codec@01c22c00 {
-		#address-cells = <1>;
-		#size-cells = <1>;
-			compatible = "allwinner,sun6i-a31-audio-codec";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "allwinner,sun6i-a31-codec";
 			interrupts = <0 29 4>;
-
+#if 0
 			pcm {
 				compatible = "allwinner,sun6i-a31-audio-pcm";
 				dmas = <&dma 15>, <&dma 15>;
@@ -911,6 +911,15 @@
 				clock-names = "apb", "mod";
 				resets = <&apb1_rst 0>;
 			};
+#else
+			reg = <0x01c22c00 0x40>;
+			clocks = <&apb1_gates 0>, <&audio_codec_clk>;
+			clock-names = "apb", "codec";
+			dmas = <&dma 15>,
+			       <&dma 15>;
+			dma-names = "rx", "tx";
+			status = "disabled";
+#endif
 		};
 
 		rtp: rtp@01c25000 {
