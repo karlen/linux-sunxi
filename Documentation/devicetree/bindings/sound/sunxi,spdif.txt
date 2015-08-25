@@ -1,0 +1,49 @@
+Allwinner Sony/Philips Digital Interface Format (S/PDIF) Controller
+
+The Allwinner S/PDIF audio block is a transceiver that allows the
+processor to receive and transmit digital audio via an coaxial cable or
+a fibre cable.
+
+Required properties:
+
+  - compatible		: should be one of the following:
+    - "allwinner,sun4i-a10-spdif": for the Allwinner A10 SoC
+    - "allwinner,sun7i-a20-spdif": for the Allwinner A20 SoC
+    - "allwinner,sun6i-a31-spdif": for the Allwinner A31 SoC
+
+  - reg			: Offset and length of the register set for the device.
+
+  - interrupts		: Contains the spdif interrupt.
+
+  - dmas		: Generic dma devicetree binding as described in
+			  Documentation/devicetree/bindings/dma/dma.txt.
+
+  - dma-names		: Two dmas have to be defined, "tx" and "rx".
+
+  - clocks		: Contains an entry for each entry in clock-names.
+
+  - clock-names		: Includes the following entries:
+	"apb"		  clock for the spdif bus.
+	"audio"		  clock from the audio pll.
+	"spdif"		  clock for spdif controller.
+
+Optional:
+
+  - spdif-in		: Enable block for capturing an SPDIF signal.
+
+  - spdif-out		: Enable block for transmitting an SPDIF signal.
+
+Example:
+
+spdif: spdif@01c21000 {
+	compatible = "allwinner,sun4i-a10-spdif";
+	reg = <0x01c21000 0x40>;
+	interrupts = <13>;
+	clocks = <&apb0_gates 1>, <&pll2 0>, <&spdif_clk>;
+	clock-names = "apb", "audio", "spdif";
+	dmas = <&dma 0 2>, <&dma 0 2>;
+	dma-names = "rx", "tx";
+	spdif-in = "disabled";
+	spdif-out = "okay";
+	status = "okay";
+};
