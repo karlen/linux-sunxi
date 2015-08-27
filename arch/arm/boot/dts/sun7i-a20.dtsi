@@ -1355,7 +1355,7 @@
 
 		i2s0: i2s@01c22400 {
 			#sound-dai-cells = <0>;
-			compatible = "allwinner,sun4i-a10-i2s";
+			compatible = "allwinner,sun4i-a10-dai";
 			reg = <0x01c22400 0x40>;
 			interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&apb0_gates 3>, <&pll2 3>, <&i2s0_clk>;
