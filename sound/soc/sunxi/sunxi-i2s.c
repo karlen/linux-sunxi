@@ -1016,21 +1016,23 @@ out:
 * TODO: Function description.
 */
 //static s32 get_clock_divder(u32 sample_rate, u32 sample_width, u32 * mclk_div, u32* mpll, u32* bclk_div, u32* mult_fs)
-static s32 sunxi_i2s_divisor_values(u32 ws_size, u32 * mclk_div, u32* bclk_div, u32* mclk)
+static s32 sunxi_i2s_divisor_values(struct sunxi_i2s_info *i2s_info, u32 * mclk_div, u32* bclk_div, u32* mclk)
 {
 	u32 i, j, ret = -EINVAL;
 
 	printk("[I2S]Entered %s\n", __func__);
+	printk("[I2S]priv->samp_fs = %d\n", i2s_info->samp_fs);
+	printk("[I2S]priv->samp_res = %d\n", i2s_info->samp_res);
 
 	for(i=0; i< ARRAY_SIZE(MCLK_INF); i++) {
-		if((MCLK_INF[i].samp_rate == sunxi_iis.samp_fs) && ((MCLK_INF[i].mult_fs == 256) || (MCLK_INF[i].mult_fs == 128))) {
+        if((MCLK_INF[i].samp_rate == i2s_info->samp_fs) && ((MCLK_INF[i].mult_fs == 256) || (MCLK_INF[i].mult_fs == 128))) {
 			for(j=0; j<ARRAY_SIZE(BCLK_INF); j++) {
-				if((BCLK_INF[j].bitpersamp == ws_size) && (BCLK_INF[j].mult_fs == MCLK_INF[i].mult_fs)) {
+                if((BCLK_INF[j].bitpersamp == i2s_info->samp_res) && (BCLK_INF[j].mult_fs == MCLK_INF[i].mult_fs)) {
 					//set mclk and bclk division
 					*mclk_div = MCLK_INF[i].clk_div;
 					*mclk = MCLK_INF[i].mclk;
 					*bclk_div = BCLK_INF[j].clk_div;
-					sunxi_iis.mclk_rate = MCLK_INF[i].mult_fs;
+					i2s_info->mclk_rate = MCLK_INF[i].mult_fs;
 					ret = 0;
 					break;
 				}
@@ -1210,7 +1212,7 @@ static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigne
 	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(cpu_dai);
 
 	printk("[I2S]Entered %s\n", __func__);
-	if(!sunxi_iis.slave) {
+	if(!priv->slave) {
 		switch(clk_id) {
 			case SUNXI_SET_MCLK:
 				/* TODO - Check if the master clock is needed when slave mode is selected. */
@@ -1262,17 +1264,17 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int val
 			regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0x7 << SUNXI_I2SCLKD_BCLKDIV, (value & 0x7) << SUNXI_I2SCLKD_BCLKDIV);
 			break;
 		case SUNXI_SAMPLING_FREQ:
-			if (!sunxi_iis.slave) {
-				reg_bk = sunxi_iis.samp_fs;
-				sunxi_iis.samp_fs = (u32)value;
-				ret = sunxi_i2s_divisor_values(priv->ws_size, &mclk_div, &bclk_div, &mclk); /* Get the register values */
-				printk("[I2S]Sampling rate is %d; selected MCLK: %d, MCLK_DIV: %d, BCLKDIV: %d\n", sunxi_iis.samp_fs, mclk, mclk_div, bclk_div);
+			if (!priv->slave) {
+				reg_bk = priv->samp_fs;
+				priv->samp_fs = (u32)value;
+				ret = sunxi_i2s_divisor_values(priv, &mclk_div, &bclk_div, &mclk); /* Get the register values */
+				printk("[I2S]Sampling rate is %d; selected MCLK: %d, MCLK_DIV: %d, BCLKDIV: %d\n", priv->samp_fs, mclk, mclk_div, bclk_div);
 				if(ret != 0) {
-					printk("[I2S]Sampling rate %d frequency not supported, turning to backup: %d.", sunxi_iis.samp_fs, reg_bk);
-					sunxi_iis.samp_fs = reg_bk;
+					printk("[I2S]Sampling rate %d frequency not supported, turning to backup: %d.", priv->samp_fs, reg_bk);
+					priv->samp_fs = reg_bk;
 					return ret;
 				} else {
-					sunxi_iis.samp_fs = (u32)value;
+					priv->samp_fs = (u32)value;
 					sunxi_i2s_set_sysclk(cpu_dai, SUNXI_SET_MCLK, mclk, 0); /* Set the master clock. */
 					/* AV for BCLK_DIV and MCLK_DIV, need to find the index from divisor value.. */
 					switch (mclk_div) {
@@ -1311,7 +1313,7 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int val
 					printk("DEB: DA I2S internal CLKD (MCLK / BCLK): 0x%02x\n", reg_val);
 				}
 			} else {
-				sunxi_iis.samp_fs = (u32)value;
+				priv->samp_fs = (u32)value;
 			}
 			break;
 		default:
@@ -1374,34 +1376,34 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
 			reg_val2 |= SUNXI_I2SFAT0_FMT_I2S;
 			printk("[I2S]sunxi_i2s_set_fmt: Set I2S mode\n");
-			sunxi_iis.samp_format = SND_SOC_DAIFMT_I2S;
+			priv->samp_format = SND_SOC_DAIFMT_I2S;
 			break;
 		case SND_SOC_DAIFMT_RIGHT_J:    /* Right Justified mode */
 			reg_val1 &= ~SUNXI_I2SCTL_PCM;
 			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
 			reg_val2 |= SUNXI_I2SFAT0_FMT_RGT;
 			printk("[I2S]sunxi_i2s_set_fmt: Set Right Justified mode\n");
-			sunxi_iis.samp_format = SND_SOC_DAIFMT_RIGHT_J;
+			priv->samp_format = SND_SOC_DAIFMT_RIGHT_J;
 			break;
 		case SND_SOC_DAIFMT_LEFT_J:     /* Left Justified mode */
 			reg_val1 &= ~SUNXI_I2SCTL_PCM;
 			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
 			reg_val2 |= SUNXI_I2SFAT0_FMT_LFT;
 			printk("[I2S]sunxi_i2s_set_fmt: Set Left Justified mode\n");
-			sunxi_iis.samp_format = SND_SOC_DAIFMT_LEFT_J;
+			priv->samp_format = SND_SOC_DAIFMT_LEFT_J;
 			break;
 		case SND_SOC_DAIFMT_DSP_A:      /* L data msb after FRM LRC */
 			reg_val1 &= ~SUNXI_I2SCTL_PCM;
 			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
 			reg_val2 |= SUNXI_I2SFAT0_FMT_LFT;
-			sunxi_iis.samp_format = SND_SOC_DAIFMT_DSP_A;
+			priv->samp_format = SND_SOC_DAIFMT_DSP_A;
 			printk("[I2S]sunxi_i2s_set_fmt: Set L data msb after FRM LRC mode\n");
 			break;
 		case SND_SOC_DAIFMT_DSP_B:      /* L data msb during FRM LRC */
 			reg_val1 |= SUNXI_I2SCTL_PCM;
 			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
 			reg_val2 |= SUNXI_I2SFAT0_LRCP;
-			sunxi_iis.samp_format = SND_SOC_DAIFMT_DSP_B;
+			priv->samp_format = SND_SOC_DAIFMT_DSP_B;
 			printk("[I2S]sunxi_i2s_set_fmt: Set L data msb during FRM LRC mode\n");
 			break;
 		default:
@@ -1417,25 +1419,25 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_16BCLK:
 			reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
 			reg_val1 |= SUNXI_I2SFAT0_WSS_16BCLK;
-			sunxi_iis.ws_size = 16;
+			priv->ws_size = 16;
 			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 16.\n");
 			break;
 		case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_20BCLK:
 			reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
 			reg_val1 |= SUNXI_I2SFAT0_WSS_20BCLK;
-			sunxi_iis.ws_size = 20;
+			priv->ws_size = 20;
 			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 20.\n");
 			break;
 		case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_24BCLK:
 			reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
 			reg_val1 |= SUNXI_I2SFAT0_WSS_24BCLK;
-			sunxi_iis.ws_size = 24;
+			priv->ws_size = 24;
 			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 24.\n");
 			break;
 		case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_32BCLK:
 			reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
 			reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
-			sunxi_iis.ws_size = 32;
+			priv->ws_size = 32;
 			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 32.\n");
 			break;
 		default:
@@ -1450,29 +1452,29 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		case SND_SOC_DAIFMT_NB_NF:     /* normal bit clock + frame */
 			reg_val1 &= ~SUNXI_I2SFAT0_LRCP;
 			reg_val1 &= ~SUNXI_I2SFAT0_BCP;
-			sunxi_iis.bclk_pol = 0;
-			sunxi_iis.lrc_pol = 0;
+			priv->bclk_pol = 0;
+			priv->lrc_pol = 0;
 			printk("[I2S]sunxi_i2s_set_fmt: Normal bit clock + frame\n");
 			break;
 		case SND_SOC_DAIFMT_NB_IF:     /* normal bclk + inverted frame */
 			reg_val1 |= SUNXI_I2SFAT0_LRCP;
 			reg_val1 &= ~SUNXI_I2SFAT0_BCP;
-			sunxi_iis.bclk_pol = 0;
-			sunxi_iis.lrc_pol = 1;
+			priv->bclk_pol = 0;
+			priv->lrc_pol = 1;
 			printk("[I2S]sunxi_i2s_set_fmt: Normal bclk + inverted frame\n");
 			break;
 		case SND_SOC_DAIFMT_IB_NF:     /* inverted bclk + normal frame */
 			reg_val1 &= ~SUNXI_I2SFAT0_LRCP;
 			reg_val1 |= SUNXI_I2SFAT0_BCP;
-			sunxi_iis.bclk_pol = 1;
-			sunxi_iis.lrc_pol = 0;
+			priv->bclk_pol = 1;
+			priv->lrc_pol = 0;
 			printk("[I2S]sunxi_i2s_set_fmt: Inverted bclk + normal frame\n");
 			break;
 		case SND_SOC_DAIFMT_IB_IF:     /* inverted bclk + frame */
 			reg_val1 |= SUNXI_I2SFAT0_LRCP;;
 			reg_val1 |= SUNXI_I2SFAT0_BCP;
-			sunxi_iis.bclk_pol = 1;
-			sunxi_iis.lrc_pol = 1;
+			priv->bclk_pol = 1;
+			priv->lrc_pol = 1;
 			printk("[I2S]sunxi_i2s_set_fmt: Inverted bclk + frame\n");
 			break;
 		default:
@@ -1593,10 +1595,10 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	/* Sample Rate. */
-	if(sunxi_iis.slave == 0) {
+	if(priv->slave == 0) {
 		/* Only master has to configure the clock registers for sample rate setting.*/
-		sunxi_iis.samp_fs = params_rate(params);
-		sunxi_i2s_set_clkdiv(dai, SUNXI_SAMPLING_FREQ, sunxi_iis.samp_fs);
+		priv->samp_fs = params_rate(params);
+		sunxi_i2s_set_clkdiv(dai, SUNXI_SAMPLING_FREQ, priv->samp_fs);
 	}
 
 	/* Sample Format. */
@@ -1605,26 +1607,26 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	switch (params_format(params)) {
 		case SNDRV_PCM_FORMAT_S16_LE:
 			reg_val1 |= SUNXI_I2SFAT0_SR_16BIT | SUNXI_I2SFAT0_WSS_16BCLK;
-			sunxi_iis.samp_res = 16;
+			priv->samp_res = 16;
 			printk("[I2S] %s: SNDRV_PCM_FORMAT_S16_LE.\n", __func__);
 			break;
 
 		case SNDRV_PCM_FORMAT_S24_3LE:
 			reg_val1 |= SUNXI_I2SFAT0_SR_24BIT;
-			sunxi_iis.samp_res = 24;
-			if(sunxi_iis.ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
+			priv->samp_res = 24;
+			if(priv->ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
 				reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
-				sunxi_iis.ws_size = 32;
+				priv->ws_size = 32;
 				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
 			}
 			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S24_3LE.\n");
 			break;
 		case SNDRV_PCM_FORMAT_S24_LE:
 			reg_val1 |= SUNXI_I2SFAT0_SR_24BIT;
-			sunxi_iis.samp_res = 24;
-			if(sunxi_iis.ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
+			priv->samp_res = 24;
+			if(priv->ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
 				reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
-				sunxi_iis.ws_size = 32;
+				priv->ws_size = 32;
 				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
 			}
 			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S24_LE.\n");
@@ -1632,8 +1634,8 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 		default:
 			printk("[I2S] sunxi_i2s_hw_params: Unsupported format (%d).\n", (int)params_format(params));
 			reg_val1 |= SUNXI_I2SFAT0_SR_24BIT | SUNXI_I2SFAT0_WSS_32BCLK;
-			sunxi_iis.samp_res = 24;
-			sunxi_iis.ws_size = 32;
+			priv->samp_res = 24;
+			priv->ws_size = 32;
 			printk("[I2S] sunxi_i2s_hw_params: Setting 24 bit format and changing word slect size to 32bit.\n");
 			break;
 	}
@@ -1758,7 +1760,7 @@ static int sunxi_i2s_suspend(struct snd_soc_dai *cpu_dai)
 
 	iisregsave(priv);
 
-	if(!sunxi_iis.slave) {
+	if(!priv->slave) {
 		/* release the module clock, only for master mode */
 		clk_disable(priv->clk_module);
 	}
@@ -1780,7 +1782,7 @@ static int sunxi_i2s_resume(struct snd_soc_dai *cpu_dai)
 	/* enable the module clock */
 	clk_enable(priv->clk_apb);
 
-	if (!sunxi_iis.slave) {
+	if (!priv->slave) {
 		/* enable the module clock */
 		clk_enable(priv->clk_module);
 	}
