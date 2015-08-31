@@ -46,6 +46,7 @@
 
 #include "sun5i.dtsi"
 
+#include <dt-bindings/clock/sun4i-a10-pll2.h>
 #include <dt-bindings/dma/sun4i-a10.h>
 #include <dt-bindings/pinctrl/sun4i-a10.h>
 
@@ -145,6 +146,17 @@
 					     "apb1_uart1", "apb1_uart2",
 					     "apb1_uart3";
 		};
+
+		i2s_clk: clk@01c200b8 {
+			#clock-cells = <0>;
+			compatible = "allwinner,sun4i-a10-mod1-clk";
+			reg = <0x01c200b8 0x4>;
+			clocks = <&pll2 SUN4I_A10_PLL2_8X>,
+				 <&pll2 SUN4I_A10_PLL2_4X>,
+				 <&pll2 SUN4I_A10_PLL2_2X>,
+				 <&pll2 SUN4I_A10_PLL2_1X>;
+			clock-output-names = "i2s";
+		};
 	};
 
 	soc@01c00000 {
@@ -190,6 +202,18 @@
 			reg-shift = <2>;
 			reg-io-width = <4>;
 			clocks = <&apb1_gates 18>;
+			status = "disabled";
+		};
+
+		i2s: i2s@01c22400 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun7i-a20-i2s";
+			reg = <0x01c22400 0x40>;
+			interrupts = <16>;
+			clocks = <&apb0_gates 3>, <&pll2 3>, <&i2s_clk>;
+			clock-names = "apb", "audio", "i2s";
+			dmas = <&dma 0 3>, <&dma 0 3>;
+			dma-names = "rx", "tx";
 			status = "disabled";
 		};
 	};
@@ -239,6 +263,40 @@
 				 "PG6", "PG7", "PG8";
 		allwinner,function = "mmc1";
 		allwinner,drive = <SUN4I_PINCTRL_30_MA>;
+		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+	};
+
+	i2s_mclk: i2s0@0 {
+		allwinner,pins = "PB5";
+		allwinner,function = "i2s";
+		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+	};
+
+	i2s_bclk: i2s0@1 {
+		allwinner,pins = "PB6";
+		allwinner,function = "i2s";
+		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+	};
+
+	i2s_lrclk: i2s0@2 {
+		allwinner,pins = "PB7";
+		allwinner,function = "i2s";
+		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+	};
+
+	i2s_sdo0: i2s0@3 {
+		allwinner,pins = "PB8";
+		allwinner,function = "i2s";
+		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+	};
+
+	i2s_sdi: i2s0@4 {
+		allwinner,pins = "PB9";
+		allwinner,function = "i2s";
 		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
 	};
 };
