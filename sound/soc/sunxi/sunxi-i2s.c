@@ -568,11 +568,11 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 
 	if (i2s->pcm_sync_type) {
 		val |= SUNXI_I2SFAT1_SSYNC;	/* short sync */
-		printk("[IIS-0] %s: pcm_sync_type = short sync\n", __func__);
+		printk("[I2S] %s: pcm_sync_type = short sync\n", __func__);
 	}
 	if (i2s->pcm_sw == 16) {
 		val |= SUNXI_I2SFAT1_SW;
-		printk("[IIS-0] %s: pcm_sw == 16\n", __func__);
+		printk("[I2S] %s: pcm_sw == 16\n", __func__);
 	}
 
 	/* start slot index */
@@ -883,7 +883,7 @@ static int regsave[8];
 
 /* TODO: Initialize structure on probe, after register default configuration */
 /* NOT USED NOW */
-static struct sunxi_i2s_info sunxi_iis = {
+static struct sunxi_i2s_info sunxi_i2s = {
 	.slave = 0,
 	.samp_fs = 48000,
 	.samp_res = 24,
@@ -1191,7 +1191,7 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 
 /*
 * TODO: Function Description
-* Saved in snd_soc_dai_ops sunxi_iis_dai_ops.
+* Saved in snd_soc_dai_ops sunxi_i2s_dai_ops.
 * Function called internally. The Machine Driver doesn't need to call this function because it is called whenever sunxi_i2s_set_clkdiv is called.
 * The master clock in Allwinner SoM depends on the sampling frequency.
 */
@@ -1229,7 +1229,7 @@ static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigne
 
 /*
 * TODO: Function Description
-* Saved in snd_soc_dai_ops sunxi_iis_dai_ops.
+* Saved in snd_soc_dai_ops sunxi_i2s_dai_ops.
 */
 static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int value)
 {
@@ -1320,7 +1320,7 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int val
 * TODO: Function description.
 * TODO: Refactor function because the configuration is with wrong scheme. Use a 4bit mask with the configuration option and then the value?
 * TODO: Include TX and RX FIFO trigger levels.
-* Saved in snd_soc_dai_ops sunxi_iis_dai_ops.
+* Saved in snd_soc_dai_ops sunxi_i2s_dai_ops.
 * Configure:
 * - Master/Slave.
 * - I2S/PCM mode.
@@ -1638,7 +1638,7 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 
 /*
 * TODO: Function Description.
-* Saved in snd_soc_dai_driver sunxi_iis_dai.
+* Saved in snd_soc_dai_driver sunxi_i2s_dai.
 */
 static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 {
@@ -1678,7 +1678,7 @@ static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 
 	/* enable MCLK output */
 	regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, SUNXI_I2SCLKD_MCLKOEN, SUNXI_I2SCLKD_MCLKOEN);
-	printk("[IIS-0] sunxi_i2s_set_clkdiv: enable MCLK\n");
+	printk("[I2S] sunxi_i2s_set_clkdiv: enable MCLK\n");
 
 	printk("[I2S]I2S default register configuration complete.\n");
 
@@ -1687,7 +1687,7 @@ static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 
 /*
 * TODO: Function Description.
-* Saved in snd_soc_dai_driver sunxi_iis_dai.
+* Saved in snd_soc_dai_driver sunxi_i2s_dai.
 */
 static int sunxi_i2s_dai_remove(struct snd_soc_dai *dai)
 {
@@ -1703,7 +1703,7 @@ static int sunxi_i2s_dai_remove(struct snd_soc_dai *dai)
 /*
 * TODO: Function description.
 */
-static void iisregsave(struct sunxi_i2s_info *priv)
+static void i2sregsave(struct sunxi_i2s_info *priv)
 {
 	printk("[I2S]Entered %s\n", __func__);
 
@@ -1720,7 +1720,7 @@ static void iisregsave(struct sunxi_i2s_info *priv)
 /*
 * TODO: Function description.
 */
-static void iisregrestore(struct sunxi_i2s_info *priv)
+static void i2sregrestore(struct sunxi_i2s_info *priv)
 {
 	printk("[I2S]Entered %s\n", __func__);
 
@@ -1736,7 +1736,7 @@ static void iisregrestore(struct sunxi_i2s_info *priv)
 
 /*
 * TODO: Function Description.
-* Saved in snd_soc_dai_driver sunxi_iis_dai.
+* Saved in snd_soc_dai_driver sunxi_i2s_dai.
 */
 static int sunxi_i2s_suspend(struct snd_soc_dai *cpu_dai)
 {
@@ -1747,7 +1747,7 @@ static int sunxi_i2s_suspend(struct snd_soc_dai *cpu_dai)
 	/* Global Disable Digital Audio Interface */
 	regmap_update_bits(priv->regmap, SUNXI_I2SCTL, SUNXI_I2SCTL_GEN, 0x0 );
 
-	iisregsave(priv);
+	i2sregsave(priv);
 
 	if(!priv->slave) {
 		/* release the module clock, only for master mode */
@@ -1760,7 +1760,7 @@ static int sunxi_i2s_suspend(struct snd_soc_dai *cpu_dai)
 
 /*
 * TODO: Function Description.
-* Saved in snd_soc_dai_driver sunxi_iis_dai.
+* Saved in snd_soc_dai_driver sunxi_i2s_dai.
 */
 static int sunxi_i2s_resume(struct snd_soc_dai *cpu_dai)
 {
@@ -1776,7 +1776,7 @@ static int sunxi_i2s_resume(struct snd_soc_dai *cpu_dai)
 		clk_enable(priv->clk_module);
 	}
 
-	iisregrestore(priv);
+	i2sregrestore(priv);
 
 	/* Global Enable Digital Audio Interface */
 	regmap_update_bits(priv->regmap, SUNXI_I2SCTL, SUNXI_I2SCTL_GEN, SUNXI_I2SCTL_GEN);
