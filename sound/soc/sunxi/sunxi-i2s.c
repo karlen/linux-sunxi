@@ -1189,20 +1189,6 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 
 }
 
-static int sunxi_i2s_init(struct sunxi_i2s_info *priv)
-{
-	printk("[I2S]Entered %s\n", __func__);
-	/*
-	 * was used for parsing FEX file, and, is suffesful:
-	 * - setting slave or master
-	 * - requesting GPIO of I2S ctrl
-	 * - registering platform driver
-	 */
-
-	return 0;
-
-}
-
 /*
 * TODO: Function Description
 * Saved in snd_soc_dai_ops sunxi_iis_dai_ops.
@@ -1982,7 +1968,6 @@ static int sunxi_digitalaudio_probe(struct platform_device *pdev)
 		goto err_clk_disable;
 	}
 
-	sunxi_i2s_init(priv);
 	return 0;
 
 err_platform:
