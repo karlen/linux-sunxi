@@ -882,6 +882,7 @@ MODULE_ALIAS("platform:sunxi-i2s");
 static int regsave[8];
 
 /* TODO: Initialize structure on probe, after register default configuration */
+/* NOT USED NOW */
 static struct sunxi_i2s_info sunxi_iis = {
 	.slave = 0,
 	.samp_fs = 48000,
@@ -1661,21 +1662,21 @@ static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 	printk("[I2S]Entered %s\n", __func__);
 
 	/* I2S Default Register Configuration */
-	sunxi_iis.slave = 0, /* put as default Master */
-	sunxi_iis.samp_fs = 48000,
-	sunxi_iis.samp_res = 24,
-	sunxi_iis.samp_format = SND_SOC_DAIFMT_I2S,
-	sunxi_iis.ws_size = 32,
-	sunxi_iis.mclk_rate = 512,
-	sunxi_iis.lrc_pol = 0,
-	sunxi_iis.bclk_pol = 0,
-	sunxi_iis.pcm_datamode = 0,
-	sunxi_iis.pcm_sw = 0,
-	sunxi_iis.pcm_sync_period = 0,
-	sunxi_iis.pcm_sync_type = 0,
-	sunxi_iis.pcm_start_slot = 0,
-	sunxi_iis.pcm_lsb_first = 0,
-	sunxi_iis.pcm_ch_num = 2,
+	priv->slave = 0, /* put as default Master */
+	priv->samp_fs = 48000,
+	priv->samp_res = 24,
+	priv->samp_format = SND_SOC_DAIFMT_I2S,
+	priv->ws_size = 32,
+	priv->mclk_rate = 512,
+	priv->lrc_pol = 0,
+	priv->bclk_pol = 0,
+	priv->pcm_datamode = 0,
+	priv->pcm_sw = 0,
+	priv->pcm_sync_period = 0,
+	priv->pcm_sync_type = 0,
+	priv->pcm_start_slot = 0,
+	priv->pcm_lsb_first = 0,
+	priv->pcm_ch_num = 1,
 
 	/* Digital Audio Register Default Values */
 	/* DIGITAL AUDIO CONTROL REGISTER DEF */
