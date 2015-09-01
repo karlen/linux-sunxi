@@ -1838,6 +1838,7 @@ static struct snd_soc_dai_driver sunxi_i2s_dai = {
 #ifdef CONFIG_OF
 static const struct of_device_id sunxi_i2s_of_match[] = {
 	{ .compatible = "allwinner,sun4i-a10-i2s" },
+	{ .compatible = "allwinner,sun5i-a10s-i2s" },
 	{ .compatible = "allwinner,sun7i-a20-i2s" },
 	{ }
 };
