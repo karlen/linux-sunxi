@@ -1504,6 +1504,16 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	printk("[I2S]Entered %s\n", __func__);
 	switch (rate) {
+	case 192000:
+	case 96000:
+	case 48000:
+	case 32000:
+	case 24000:
+	case 16000:
+	case 12000:
+	case 8000:
+		clk_set_rate(priv->clk_module, 24576000);
+		break;
 	case 176400:
 	case 88200:
 	case 44100:
@@ -1514,16 +1524,6 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	case 7350:
 	default:
 		clk_set_rate(priv->clk_module, 22579200);
-		break;
-	case 192000:
-	case 96000:
-	case 48000:
-	case 32000:
-	case 24000:
-	case 16000:
-	case 12000:
-	case 8000:
-		clk_set_rate(priv->clk_module, 24576000);
 		break;
 	}
 
