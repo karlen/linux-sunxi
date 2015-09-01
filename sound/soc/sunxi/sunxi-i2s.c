@@ -1484,7 +1484,6 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(dai);
 	int is_24bit = !!(hw_param_interval(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS)->min == 32);
 	unsigned int rate = params_rate(params);
-	unsigned int hwrate;
 	unsigned int tmp;
 	unsigned int reg_val1;
 
@@ -1510,42 +1509,6 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	case 7350:
 	default:
 		clk_set_rate(priv->clk_module, 22579200);
-		break;
-	}
-
-	switch (rate) {
-	case 192000:
-	case 176400:
-		hwrate = 6;
-		break;
-	case 96000:
-	case 88200:
-		hwrate = 7;
-		break;
-	default:
-	case 48000:
-	case 44100:
-		hwrate = 0;
-		break;
-	case 32000:
-	case 33075:
-		hwrate = 1;
-		break;
-	case 24000:
-	case 22050:
-		hwrate = 2;
-		break;
-	case 16000:
-	case 14700:
-		hwrate = 3;
-		break;
-	case 12000:
-	case 11025:
-		hwrate = 4;
-		break;
-	case 8000:
-	case 7350:
-		hwrate = 5;
 		break;
 	}
 
