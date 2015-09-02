@@ -140,9 +140,8 @@ static u8 sun4i_dai_params_to_wss(struct snd_pcm_hw_params *params)
 	return 0;
 }
 
-static int sun4i_dai_get_bclk_div(struct sun4i_dai *sdai,
-				  unsigned int oversample_rate,
-				  unsigned int word_size)
+static int sun4i_dai_get_bclk_div(unsigned int oversample_rate,
+					unsigned int word_size)
 {
 	int div = oversample_rate / word_size / 2;
 	int i;
@@ -157,10 +156,9 @@ static int sun4i_dai_get_bclk_div(struct sun4i_dai *sdai,
 	return -EINVAL;
 }
 
-static int sun4i_dai_get_mclk_div(struct sun4i_dai *sdai,
-				  unsigned int oversample_rate,
-				  unsigned int module_rate,
-				  unsigned int sampling_rate)
+static int sun4i_dai_get_mclk_div(unsigned int oversample_rate,
+					unsigned int module_rate,
+					unsigned int sampling_rate)
 {
 	int div = module_rate / sampling_rate / oversample_rate;
 	int i;
@@ -178,38 +176,38 @@ static int sun4i_dai_get_mclk_div(struct sun4i_dai *sdai,
 static int sun4i_dai_oversample_rates[] = { 128, 192, 256, 384, 512, 768 };
 
 static int sun4i_dai_set_clk_rate(struct sun4i_dai *sdai,
-				  unsigned int rate,
-				  unsigned int word_size)
+					unsigned int rate,
+					unsigned int word_size)
 {
 	unsigned int clk_rate;
 	int bclk_div, mclk_div;
 	int i;
 
 	switch (rate) {
-        case 176400:
-        case 88200:
-        case 44100:
-        case 22050:
-        case 11025:
-                clk_rate = 22579200;
-                break;
+	case 176400:
+	case 88200:
+	case 44100:
+	case 22050:
+	case 11025:
+		clk_rate = 22579200;
+		break;
 
-        case 192000:
-        case 128000:
-        case 96000:
-        case 64000:
-        case 48000:
-        case 32000:
-        case 24000:
-        case 16000:
-        case 12000:
-        case 8000:
+	case 192000:
+	case 128000:
+	case 96000:
+	case 64000:
+	case 48000:
+	case 32000:
+	case 24000:
+	case 16000:
+	case 12000:
+	case 8000:
 		clk_rate = 24576000;
-                break;
+		break;
 
-        default:
+	default:
 		return -EINVAL;
-        }
+	}
 
 	clk_set_rate(sdai->mod_clk, clk_rate);
 
@@ -217,11 +215,9 @@ static int sun4i_dai_set_clk_rate(struct sun4i_dai *sdai,
 	for (i = (ARRAY_SIZE(sun4i_dai_oversample_rates) - 1); i >= 0; i--) {
 		unsigned int oversample_rate = sun4i_dai_oversample_rates[i];
 
-		bclk_div = sun4i_dai_get_bclk_div(sdai, oversample_rate,
-						  word_size);
-		mclk_div = sun4i_dai_get_mclk_div(sdai, oversample_rate,
-						  clk_rate,
-						  rate);
+		bclk_div = sun4i_dai_get_bclk_div(oversample_rate, word_size);
+		mclk_div = sun4i_dai_get_mclk_div(oversample_rate, clk_rate,
+									rate);
 
 		if (bclk_div > 0 || mclk_div > 0)
 			break;
@@ -231,17 +227,17 @@ static int sun4i_dai_set_clk_rate(struct sun4i_dai *sdai,
 		return -EINVAL;
 
 	regmap_update_bits(sdai->regmap, SUN4I_DAI_CLK_DIV_REG,
-			   SUN4I_DAI_CLK_DIV_BCLK_MASK |
-			   SUN4I_DAI_CLK_DIV_MCLK_MASK,
-			   SUN4I_DAI_CLK_DIV_BCLK(bclk_div) |
-			   SUN4I_DAI_CLK_DIV_MCLK(mclk_div));
+					SUN4I_DAI_CLK_DIV_BCLK_MASK |
+					SUN4I_DAI_CLK_DIV_MCLK_MASK,
+					SUN4I_DAI_CLK_DIV_BCLK(bclk_div) |
+					SUN4I_DAI_CLK_DIV_MCLK(mclk_div));
 
 	return 0;
 }
 
 static int sun4i_dai_hw_params(struct snd_pcm_substream *substream,
-			       struct snd_pcm_hw_params *params,
-			       struct snd_soc_dai *dai)
+					struct snd_pcm_hw_params *params,
+					struct snd_soc_dai *dai)
 {
 	struct sun4i_dai *sdai = snd_soc_dai_get_drvdata(dai);
 	u32 width;
@@ -252,16 +248,16 @@ static int sun4i_dai_hw_params(struct snd_pcm_substream *substream,
 
 	/* Enable the first output line */
 	regmap_update_bits(sdai->regmap, SUN4I_DAI_CTRL_REG,
-			   SUN4I_DAI_CTRL_SDO_EN_MASK,
-			   SUN4I_DAI_CTRL_SDO_EN(0));
+				SUN4I_DAI_CTRL_SDO_EN_MASK,
+				SUN4I_DAI_CTRL_SDO_EN(0));
 
 	/* Enable the first two channels */
 	regmap_write(sdai->regmap, SUN4I_DAI_TX_CHAN_SEL_REG,
-		     SUN4I_DAI_TX_CHAN_SEL(2));
+						SUN4I_DAI_TX_CHAN_SEL(2));
 
 	/* Map them to the two first samples coming in */
 	regmap_write(sdai->regmap, SUN4I_DAI_TX_CHAN_MAP_REG,
-		     SUN4I_DAI_TX_CHAN_MAP(0, 0) | SUN4I_DAI_TX_CHAN_MAP(1, 1));
+		SUN4I_DAI_TX_CHAN_MAP(0, 0) | SUN4I_DAI_TX_CHAN_MAP(1, 1));
 
 	switch (params_physical_width(params)) {
 	case 32:
@@ -275,16 +271,16 @@ static int sun4i_dai_hw_params(struct snd_pcm_substream *substream,
 	sr = sun4i_dai_params_to_sr(params);
 	wss = sun4i_dai_params_to_wss(params);
 	regmap_update_bits(sdai->regmap, SUN4I_DAI_FMT0_REG,
-			   SUN4I_DAI_FMT0_WSS_MASK | SUN4I_DAI_FMT0_SR_MASK,
-			   SUN4I_DAI_FMT0_WSS(wss) | SUN4I_DAI_FMT0_SR(sr));
+			SUN4I_DAI_FMT0_WSS_MASK | SUN4I_DAI_FMT0_SR_MASK,
+			SUN4I_DAI_FMT0_WSS(wss) | SUN4I_DAI_FMT0_SR(sr));
 
 	return sun4i_dai_set_clk_rate(sdai, params_rate(params),
-				      params_width(params));
+						params_width(params));
 }
 
 static int sun4i_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 {
-        struct sun4i_dai *sdai = snd_soc_dai_get_drvdata(dai);
+	struct sun4i_dai *sdai = snd_soc_dai_get_drvdata(dai);
 	u32 val;
 
 	/* DAI Mode */
@@ -303,8 +299,7 @@ static int sun4i_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	}
 
 	regmap_update_bits(sdai->regmap, SUN4I_DAI_FMT0_REG,
-			   SUN4I_DAI_FMT0_FMT_MASK,
-			   val);
+				SUN4I_DAI_FMT0_FMT_MASK, val);
 
 	/* DAI clock polarity */
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -315,7 +310,7 @@ static int sun4i_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	case SND_SOC_DAIFMT_IB_NF:
 		/* Invert bit clock */
-		val = SUN4I_DAI_FMT0_BCLK_POLARITY_INVERTED | 
+		val = SUN4I_DAI_FMT0_BCLK_POLARITY_INVERTED |
 			SUN4I_DAI_FMT0_LRCLK_POLARITY_NORMAL;
 		break;
 	case SND_SOC_DAIFMT_NB_IF:
@@ -333,9 +328,8 @@ static int sun4i_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	}
 
 	regmap_update_bits(sdai->regmap, SUN4I_DAI_FMT0_REG,
-			   SUN4I_DAI_FMT0_BCLK_POLARITY_MASK |
-			   SUN4I_DAI_FMT0_LRCLK_POLARITY_MASK,
-			   val);
+				SUN4I_DAI_FMT0_BCLK_POLARITY_MASK |
+				SUN4I_DAI_FMT0_LRCLK_POLARITY_MASK, val);
 
 	/* DAI clock master masks */
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -352,49 +346,45 @@ static int sun4i_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	}
 
 	regmap_update_bits(sdai->regmap, SUN4I_DAI_CTRL_REG,
-			   SUN4I_DAI_CTRL_MODE_MASK,
-			   val);
-
+				SUN4I_DAI_CTRL_MODE_MASK, val);
 	return 0;
 }
 
 static void sun4i_dai_start_playback(struct sun4i_dai *sdai)
 {
 	/* Flush TX FIFO */
-        regmap_update_bits(sdai->regmap, SUN4I_DAI_FIFO_CTRL_REG,
-			   SUN4I_DAI_FIFO_CTRL_FLUSH_TX,
-			   SUN4I_DAI_FIFO_CTRL_FLUSH_TX);
+	regmap_update_bits(sdai->regmap, SUN4I_DAI_FIFO_CTRL_REG,
+				SUN4I_DAI_FIFO_CTRL_FLUSH_TX,
+				SUN4I_DAI_FIFO_CTRL_FLUSH_TX);
 
-        /* Clear TX counter */
+	/* Clear TX counter */
 	regmap_write(sdai->regmap, SUN4I_DAI_TX_CNT_REG, 0);
 
-        /* Enable TX Block */
-        regmap_update_bits(sdai->regmap, SUN4I_DAI_CTRL_REG,
-			   SUN4I_DAI_CTRL_TX_EN,
-			   SUN4I_DAI_CTRL_TX_EN);
+	/* Enable TX Block */
+	regmap_update_bits(sdai->regmap, SUN4I_DAI_CTRL_REG,
+				SUN4I_DAI_CTRL_TX_EN,
+				SUN4I_DAI_CTRL_TX_EN);
 
-        /* Enable TX DRQ */
-        regmap_update_bits(sdai->regmap, SUN4I_DAI_DMA_INT_CTRL_REG,
-			   SUN4I_DAI_DMA_INT_CTRL_TX_DRQ_EN,
-			   SUN4I_DAI_DMA_INT_CTRL_TX_DRQ_EN);
+	/* Enable TX DRQ */
+	regmap_update_bits(sdai->regmap, SUN4I_DAI_DMA_INT_CTRL_REG,
+				SUN4I_DAI_DMA_INT_CTRL_TX_DRQ_EN,
+				SUN4I_DAI_DMA_INT_CTRL_TX_DRQ_EN);
 }
 
 
 static void sun4i_dai_stop_playback(struct sun4i_dai *sdai)
 {
-        /* Disable TX Block */
-        regmap_update_bits(sdai->regmap, SUN4I_DAI_CTRL_REG,
-			   SUN4I_DAI_CTRL_TX_EN,
-			   0);
+	/* Disable TX Block */
+	regmap_update_bits(sdai->regmap, SUN4I_DAI_CTRL_REG,
+				SUN4I_DAI_CTRL_TX_EN, 0);
 
-        /* Disable TX DRQ */
-        regmap_update_bits(sdai->regmap, SUN4I_DAI_DMA_INT_CTRL_REG,
-			   SUN4I_DAI_DMA_INT_CTRL_TX_DRQ_EN,
-			   0);
+	/* Disable TX DRQ */
+	regmap_update_bits(sdai->regmap, SUN4I_DAI_DMA_INT_CTRL_REG,
+				SUN4I_DAI_DMA_INT_CTRL_TX_DRQ_EN, 0);
 }
 
 static int sun4i_dai_trigger(struct snd_pcm_substream *substream, int cmd,
-			     struct snd_soc_dai *dai)
+						struct snd_soc_dai *dai)
 {
 	struct sun4i_dai *sdai = snd_soc_dai_get_drvdata(dai);
 
@@ -435,8 +425,7 @@ static int sun4i_dai_dai_probe(struct snd_soc_dai *dai)
 	struct sun4i_dai *sdai = snd_soc_dai_get_drvdata(dai);
 
 	/* Enable the whole hardware block */
-	regmap_write(sdai->regmap, SUN4I_DAI_CTRL_REG,
-		     SUN4I_DAI_CTRL_GL_EN);
+	regmap_write(sdai->regmap, SUN4I_DAI_CTRL_REG, SUN4I_DAI_CTRL_GL_EN);
 
 	snd_soc_dai_init_dma_data(dai, &sdai->playback_dma_data, NULL);
 
@@ -513,9 +502,8 @@ static int sun4i_dai_probe(struct platform_device *pdev)
 	sdai->playback_dma_data.addr = res->start + SUN4I_DAI_FIFO_TX_REG;
 	sdai->playback_dma_data.maxburst = 4;
 
-	ret = devm_snd_soc_register_component(&pdev->dev,
-					      &sun4i_dai_component,
-					      &sun4i_dai_dai, 1);
+	ret = devm_snd_soc_register_component(&pdev->dev, &sun4i_dai_component,
+							&sun4i_dai_dai, 1);
 	if (ret) {
 		dev_err(&pdev->dev, "Could not register DAI\n");
 		return ret;
