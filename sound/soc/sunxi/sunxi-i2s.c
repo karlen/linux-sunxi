@@ -8,6 +8,7 @@
  * warranty of any kind, whether express or implied.
  */
 #define DEBUG
+#define USE_DAI_CODE	1
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>
@@ -140,6 +141,10 @@
 	#define SUNXI_I2SCLKD_MCLKDIV_64	(10 << 0)
 	#define SUNXI_I2SCLKD_MCLKDIV		(0)
 	#define SUNXI_I2SCLKD_BCLKDIV		(4)
+	#define SUNXI_I2SCLKD_BCLK_MASK	GENMASK	(6, 4)
+	#define SUNXI_I2SCLKD_BCLK(bclk)	((bclk) << 4)
+	#define SUNXI_I2SCLKD_MCLK_MASK	GENMASK	(3, 0)
+	#define SUNXI_I2SCLKD_MCLK(mclk)	((mclk) << 0)
 
 #define SUNXI_I2STXCNT		(0x28)
 
@@ -907,6 +912,7 @@ static struct sunxi_i2s_info sunxi_i2s = {
  * 96kHz. For different sampling frequencies, these tables list the coefficient
  * value of MCLKDIV and BCLKDIV.
  */
+#ifndef USE_DAI_CODE
 typedef struct __MCLK_SET_INF {
 	__u32	samp_rate;	/* sample rate */
 	__u16	mult_fs;	/* multiply of sample rate */
@@ -993,28 +999,6 @@ static __bclk_set_inf BCLK_INF[] = {
 	{0xff, 0, 0},
 };
 
-static irqreturn_t sunxi_dai_isr(int irq, void *devid)
-{
-	struct sunxi_i2s_info *dai = (struct sunxi_i2s_info *)devid;
-	struct device *dev = &dai->pdev->dev;
-	u32 flags, xcsr, mask;
-	bool irq_none = true;
-
-	dev_dbg(dev, "isr: got an IRQ, need to manage\n");
-
-	/*
-	 * TODO: manage the IRQ from DAI I2S!
-	 *	look for hint in sound/soc/fsl/fsl_sai.c
-	 */
-
-out:
-	if (irq_none)
-		return IRQ_NONE;
-	else
-		return IRQ_HANDLED;
-}
-
-
 /*
 * TODO: Function description.
 */
@@ -1044,6 +1028,28 @@ static s32 sunxi_i2s_divisor_values(struct sunxi_i2s_info *i2s_info, u32 * mclk_
 			break;
 	}
 	return ret;
+}
+#endif
+
+static irqreturn_t sunxi_dai_isr(int irq, void *devid)
+{
+	struct sunxi_i2s_info *dai = (struct sunxi_i2s_info *)devid;
+	struct device *dev = &dai->pdev->dev;
+	u32 flags, xcsr, mask;
+	bool irq_none = true;
+
+	dev_dbg(dev, "isr: got an IRQ, need to manage\n");
+
+	/*
+	 * TODO: manage the IRQ from DAI I2S!
+	 *	look for hint in sound/soc/fsl/fsl_sai.c
+	 */
+
+out:
+	if (irq_none)
+		return IRQ_NONE;
+	else
+		return IRQ_HANDLED;
 }
 
 static int sunxi_i2s_startup(struct snd_pcm_substream *substream,
@@ -1195,6 +1201,129 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 * Function called internally. The Machine Driver doesn't need to call this function because it is called whenever sunxi_i2s_set_clkdiv is called.
 * The master clock in Allwinner SoM depends on the sampling frequency.
 */
+/* From Maxime's DAI code */
+struct sun4i_dai_clk_div {
+	u8	div;
+	u8	val;
+};
+
+static const struct sun4i_dai_clk_div sun4i_dai_bclk_div[] = {
+	{ .div = 2, .val = 0 },
+	{ .div = 4, .val = 1 },
+	{ .div = 6, .val = 2 },
+	{ .div = 8, .val = 3 },
+	{ .div = 12, .val = 4 },
+	{ .div = 16, .val = 5 },
+	{ /* Sentinel */ },
+};
+
+static const struct sun4i_dai_clk_div sun4i_dai_mclk_div[] = {
+	{ .div = 1, .val = 0 },
+	{ .div = 2, .val = 1 },
+	{ .div = 4, .val = 2 },
+	{ .div = 6, .val = 3 },
+	{ .div = 8, .val = 4 },
+	{ .div = 12, .val = 5 },
+	{ .div = 16, .val = 6 },
+	{ .div = 24, .val = 7 },
+	{ /* Sentinel */ },
+};
+
+static int sun4i_dai_get_bclk_div(unsigned int oversample_rate,
+				  unsigned int word_size)
+{
+	int div = oversample_rate / word_size / 2;
+	int i;
+
+	for (i = 0; sun4i_dai_bclk_div[i].div; i++) {
+		const struct sun4i_dai_clk_div *bdiv = sun4i_dai_bclk_div + i;
+
+		if (bdiv->div == div)
+			return bdiv->val;
+	}
+
+	return -EINVAL;
+}
+
+static int sun4i_dai_get_mclk_div(unsigned int oversample_rate,
+				  unsigned int module_rate,
+				  unsigned int sampling_rate)
+{
+	int div = module_rate / sampling_rate / oversample_rate;
+	int i;
+
+	for (i = 0; sun4i_dai_mclk_div[i].div; i++) {
+		const struct sun4i_dai_clk_div *mdiv = sun4i_dai_mclk_div + i;
+
+		if (mdiv->div == div)
+			return mdiv->val;
+	}
+
+	return -EINVAL;
+}
+
+static int sun4i_dai_oversample_rates[] = { 128, 192, 256, 384, 512, 768 };
+
+static int sun4i_dai_set_clk_rate(struct sunxi_i2s_info *priv,
+				  unsigned int rate,
+				  unsigned int word_size)
+{
+	unsigned int clk_rate;
+	int bclk_div, mclk_div;
+	int i;
+
+	switch (rate) {
+        case 176400:
+        case 88200:
+        case 44100:
+        case 22050:
+        case 11025:
+                clk_rate = 22579200;
+                break;
+
+        case 192000:
+        case 128000:
+        case 96000:
+        case 64000:
+        case 48000:
+        case 32000:
+        case 24000:
+        case 16000:
+        case 12000:
+        case 8000:
+		clk_rate = 24576000;
+                break;
+
+        default:
+		return -EINVAL;
+        }
+
+	clk_set_rate(priv->clk_module, 24576000);
+
+	/* Always favor the highest oversampling rate */
+	for (i = (ARRAY_SIZE(sun4i_dai_oversample_rates) - 1); i >= 0; i--) {
+		unsigned int oversample_rate = sun4i_dai_oversample_rates[i];
+
+		bclk_div = sun4i_dai_get_bclk_div(oversample_rate, word_size);
+		mclk_div = sun4i_dai_get_mclk_div(oversample_rate, clk_rate,
+									rate);
+
+		if (bclk_div > 0 || mclk_div > 0)
+			break;
+	}
+
+	if (bclk_div <= 0 || mclk_div <= 0)
+		return -EINVAL;
+
+	regmap_update_bits(priv->regmap, SUNXI_I2SCLKD,
+			   SUNXI_I2SCLKD_BCLK_MASK |
+			   SUNXI_I2SCLKD_MCLK_MASK,
+			   SUNXI_I2SCLKD_BCLK(bclk_div) |
+			   SUNXI_I2SCLKD_MCLK(mclk_div));
+
+	return 0;
+}
+
 static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigned int freq, int dir)
 {
 	u32 reg_val;
@@ -1227,6 +1356,8 @@ static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigne
 	return 0;
 }
 
+
+#ifndef USE_DAI_CODE
 /*
 * TODO: Function Description
 * Saved in snd_soc_dai_ops sunxi_i2s_dai_ops.
@@ -1315,7 +1446,7 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int val
 		printk("DEB: DA I2S CLKD (MCLK / BCLK): 0x%02x\n", reg_val);
 	return 0;
 }
-
+#endif
 /*
 * TODO: Function description.
 * TODO: Refactor function because the configuration is with wrong scheme. Use a 4bit mask with the configuration option and then the value?
@@ -1546,6 +1677,9 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	}
 
+#ifdef USE_DAI_CODE
+	sun4i_dai_set_clk_rate(priv, params_rate(params), params_format(params));
+#else
 	/* Sample Rate. */
 	if(priv->slave == 0) {
 		/* Only master has to configure the clock registers for sample rate setting.*/
@@ -1594,7 +1728,7 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	regmap_update_bits(priv->regmap, SUNXI_I2SFAT0, SUNXI_I2SFAT0_WSS_32BCLK|SUNXI_I2SFAT0_SR_RVD, reg_val1);
 	regmap_read(priv->regmap, SUNXI_I2SFAT0, &tmp);
 		printk("DEB %s: DA FAT0 register: %x\n",  __func__, tmp);
-
+#endif
 	return 0;
 }
 
@@ -1762,8 +1896,10 @@ static const struct snd_soc_component_driver sunxi_i2s_component = {
 static struct snd_soc_dai_ops sunxi_i2s_dai_ops = {
 	.startup    = sunxi_i2s_startup,
 	.shutdown   = sunxi_i2s_shutdown,
+#ifndef USE_DAI_CODE
 	.set_sysclk = sunxi_i2s_set_sysclk,
 	.set_clkdiv = sunxi_i2s_set_clkdiv,
+#endif
 	.set_fmt    = sunxi_i2s_set_fmt,
 	.hw_params  = sunxi_i2s_hw_params,
 	.trigger    = sunxi_i2s_trigger,
