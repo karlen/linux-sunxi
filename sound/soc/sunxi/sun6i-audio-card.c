@@ -37,7 +37,7 @@ static const struct snd_soc_dapm_route sun6i_card_route[] = {
 static int sun6i_dai_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_codec *codec = rtd->codec;
-	struct snd_soc_dapm_context *dapm = &codec->dapm;
+	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
 
 	snd_soc_dapm_enable_pin(dapm, "Headphone Jack");
 
