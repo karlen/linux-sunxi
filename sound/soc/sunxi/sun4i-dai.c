@@ -119,6 +119,8 @@ static const struct sun4i_dai_clk_div sun4i_dai_mclk_div[] = {
 static u8 sun4i_dai_params_to_sr(struct snd_pcm_hw_params *params)
 {
 	switch (params_width(params)) {
+	case 16:
+		return 0;
 	case 24:
 		return 2;
 	}
@@ -129,6 +131,8 @@ static u8 sun4i_dai_params_to_sr(struct snd_pcm_hw_params *params)
 static u8 sun4i_dai_params_to_wss(struct snd_pcm_hw_params *params)
 {
 	switch (params_width(params)) {
+	case 16:
+		return 0;
 	case 24:
 		return 2;
 	}
@@ -441,6 +445,9 @@ static int sun4i_dai_dai_probe(struct snd_soc_dai *dai)
 	return 0;
 }
 
+#define SUN4I_DAI_FMTBIT \
+	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE)
+
 static struct snd_soc_dai_driver sun4i_dai_dai = {
 	.probe = sun4i_dai_dai_probe,
 	.playback = {
@@ -448,7 +455,7 @@ static struct snd_soc_dai_driver sun4i_dai_dai = {
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
-		.formats = SNDRV_PCM_FMTBIT_S24_LE,
+		.formats = SUN4I_DAI_FMTBIT,
 	},
 	.ops = &sun4i_dai_dai_ops,
 	.symmetric_rates = 1,
