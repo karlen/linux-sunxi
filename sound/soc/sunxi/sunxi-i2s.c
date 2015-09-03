@@ -210,29 +210,29 @@ enum sunxi_soc_family {
 struct sunxi_i2s_info {
 	struct platform_device			*pdev;
 	struct regmap				*regmap;
-	void __iomem				*reg_base;
+	void __iomem				*reg_base; //not used!
 	enum sunxi_soc_family			revision;
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 	struct clk				*clk_apb;
 	struct clk				*clk_pll2;
 	struct clk				*clk_module;
-	struct clk				*dai_clk;
-	int					master;
-	resource_size_t				mapbase;
-	int					mclk_rate;
-	int					ws_size;
-	int					lrc_pol;
-	int					bclk_pol;
-	int					pcm_datamode;
-	int					pcm_ch_num;
-	int					pcm_txtype;
-	int					pcm_rxtype;
-	int					pcm_sync_type;
-	int					pcm_sw;
-	int					pcm_start_slot;
-	int					pcm_lsb_first;
-	int					pcm_sync_period;
+	struct clk				*dai_clk; //not used!
+	int					master; //not used!
+	resource_size_t				mapbase;//not used!
+	int					mclk_rate;//set but not used!
+	int					ws_size;//ditto
+	int					lrc_pol;//ditto
+	int					bclk_pol;//ditto
+	int					pcm_datamode;//set but not used
+	int					pcm_ch_num;//ditto
+	int					pcm_txtype;//never used
+	int					pcm_rxtype;//never used
+	int					pcm_sync_type;//never set
+	int					pcm_sw;//ditto
+	int					pcm_start_slot;//ditto
+	int					pcm_lsb_first;//ditto
+	int					pcm_sync_period;//never used
 	int					samp_fs;
 	int					samp_res;
 	int					samp_format;
