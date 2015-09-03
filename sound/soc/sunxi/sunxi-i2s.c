@@ -201,17 +201,17 @@
 
 /* Supported SoC families - used for quirks */
 enum sunxi_soc_family {
-        SUN4IA, /* A10 SoC - revision A */
-        SUN4I,  /* A10 SoC - later revisions */
-        SUN5I,  /* A10S/A13 SoCs */
-        SUN7I,  /* A20 SoC */
+		SUN4IA,	/* A10 SoC - revision A */
+		SUN4I,	/* A10 SoC - later revisions */
+		SUN5I,	/* A10S/A13 SoCs */
+		SUN7I,	/* A20 SoC */
 };
 
 struct sunxi_i2s_info {
 	struct platform_device			*pdev;
-        struct regmap				*regmap;
+	struct regmap				*regmap;
 	void __iomem				*reg_base;
-        enum sunxi_soc_family			revision;
+	enum sunxi_soc_family			revision;
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 	struct clk				*clk_apb;
@@ -921,7 +921,7 @@ typedef struct __MCLK_SET_INF {
 	__u32	mclk;		/* 24.576 Mhz or 22.5792 Mhz */
 } __mclk_set_inf;
 
-static __mclk_set_inf  MCLK_INF[] =
+static __mclk_set_inf MCLK_INF[] =
 {
 	// 8k bitrate
 	{  8000, 128, 24, 24576000}, {  8000, 192, 16, 24576000}, {  8000, 256, 12, 24576000},
@@ -1012,9 +1012,11 @@ static s32 sunxi_i2s_divisor_values(struct sunxi_i2s_info *i2s_info, u32 * mclk_
 	printk("[I2S]priv->samp_res = %d\n", i2s_info->samp_res);
 
 	for(i=0; i< ARRAY_SIZE(MCLK_INF); i++) {
-        if((MCLK_INF[i].samp_rate == i2s_info->samp_fs) && ((MCLK_INF[i].mult_fs == 256) || (MCLK_INF[i].mult_fs == 128))) {
+		if((MCLK_INF[i].samp_rate == i2s_info->samp_fs) &&
+		((MCLK_INF[i].mult_fs == 256) || (MCLK_INF[i].mult_fs == 128))) {
 			for(j=0; j<ARRAY_SIZE(BCLK_INF); j++) {
-                if((BCLK_INF[j].bitpersamp == i2s_info->samp_res) && (BCLK_INF[j].mult_fs == MCLK_INF[i].mult_fs)) {
+				if((BCLK_INF[j].bitpersamp == i2s_info->samp_res)
+					&& (BCLK_INF[j].mult_fs == MCLK_INF[i].mult_fs)) {
 					//set mclk and bclk division
 					*mclk_div = MCLK_INF[i].clk_div;
 					*mclk = MCLK_INF[i].mclk;
@@ -1120,7 +1122,7 @@ static void sunxi_i2s_play_start(struct sunxi_i2s_info *priv)
 	printk("[I2S]Entered %s\n", __func__);
 
 	regmap_read(priv->regmap, SUNXI_I2SCTL, &tmp);
-	printk("DEB %s: DA CTL register: 0x%08x\n",  __func__, tmp);
+	printk("DEB %s: DA CTL register: 0x%08x\n", __func__, tmp);
 
 	/* flush TX FIFO */
 	regmap_update_bits(priv->regmap, SUNXI_I2SFCTL, SUNXI_I2SFCTL_FTX, SUNXI_I2SFCTL_FTX);
@@ -1129,22 +1131,22 @@ static void sunxi_i2s_play_start(struct sunxi_i2s_info *priv)
 	regmap_update_bits(priv->regmap, SUNXI_I2STXCNT, 0xffffffff, 0x0);
 
 	regmap_read(priv->regmap, SUNXI_I2STXCNT, &tmp);
-	printk("DEB %s: sample counter: 0x%08x\n",  __func__, tmp);
+	printk("DEB %s: sample counter: 0x%08x\n", __func__, tmp);
 
 	/* enable DA_CTL TXEN */
 	regmap_update_bits(priv->regmap, SUNXI_I2SCTL, SUNXI_I2SCTL_TXEN, SUNXI_I2SCTL_TXEN);
 
 	regmap_read(priv->regmap, SUNXI_I2SCTL, &tmp);
-	printk("DEB %s: DA CTL registers after cfg: 0x%08x\n",  __func__, tmp);
+	printk("DEB %s: DA CTL registers after cfg: 0x%08x\n", __func__, tmp);
 	regmap_read(priv->regmap, SUNXI_I2SCLKD, &tmp);
-	printk("DEB %s: DA CLKD registers: 0x%08x\n",  __func__, tmp);
+	printk("DEB %s: DA CLKD registers: 0x%08x\n", __func__, tmp);
 	regmap_read(priv->regmap, SUNXI_I2SFAT0, &tmp);
-	printk("DEB %s: DA FAT0 registers: 0x%08x\n",  __func__, tmp);
+	printk("DEB %s: DA FAT0 registers: 0x%08x\n", __func__, tmp);
 
 	/* enable DA TX_DRQ */
 	regmap_update_bits(priv->regmap, SUNXI_I2SINT, SUNXI_I2SINT_TXDRQEN, SUNXI_I2SINT_TXDRQEN);
 	regmap_read(priv->regmap, SUNXI_I2SINT, &tmp);
-	printk("DEB %s: DA INT registers: 0x%08x\n",  __func__, tmp);
+	printk("DEB %s: DA INT registers: 0x%08x\n", __func__, tmp);
 
 }
 static void sunxi_i2s_play_stop(struct sunxi_i2s_info *priv)
@@ -1153,7 +1155,7 @@ static void sunxi_i2s_play_stop(struct sunxi_i2s_info *priv)
 	/* TODO: see if we need to drive PA GPIO low */
 
 	regmap_read(priv->regmap, SUNXI_I2STXCNT, &tx_counter);
-	printk("DEB %s: sample counter: 0x%08x\n",  __func__, tx_counter);
+	printk("DEB %s: sample counter: 0x%08x\n", __func__, tx_counter);
 
 	/* disable DA_CTL TXEN */
 	regmap_update_bits(priv->regmap, SUNXI_I2SCTL, SUNXI_I2SCTL_TXEN, 0x0 );
@@ -1230,7 +1232,7 @@ static const struct sun4i_dai_clk_div sun4i_dai_mclk_div[] = {
 };
 
 static int sun4i_dai_get_bclk_div(unsigned int oversample_rate,
-				  unsigned int word_size)
+					unsigned int word_size)
 {
 	int div = oversample_rate / word_size / 2;
 	int i;
@@ -1246,8 +1248,8 @@ static int sun4i_dai_get_bclk_div(unsigned int oversample_rate,
 }
 
 static int sun4i_dai_get_mclk_div(unsigned int oversample_rate,
-				  unsigned int module_rate,
-				  unsigned int sampling_rate)
+					unsigned int module_rate,
+					unsigned int sampling_rate)
 {
 	int div = module_rate / sampling_rate / oversample_rate;
 	int i;
@@ -1265,38 +1267,38 @@ static int sun4i_dai_get_mclk_div(unsigned int oversample_rate,
 static int sun4i_dai_oversample_rates[] = { 128, 192, 256, 384, 512, 768 };
 
 static int sun4i_dai_set_clk_rate(struct sunxi_i2s_info *priv,
-				  unsigned int rate,
-				  unsigned int word_size)
+					unsigned int rate,
+					unsigned int word_size)
 {
 	unsigned int clk_rate;
 	int bclk_div, mclk_div;
 	int i;
 
 	switch (rate) {
-        case 176400:
-        case 88200:
-        case 44100:
-        case 22050:
-        case 11025:
-                clk_rate = 22579200;
-                break;
+	case 176400:
+	case 88200:
+	case 44100:
+	case 22050:
+	case 11025:
+		clk_rate = 22579200;
+		break;
 
-        case 192000:
-        case 128000:
-        case 96000:
-        case 64000:
-        case 48000:
-        case 32000:
-        case 24000:
-        case 16000:
-        case 12000:
-        case 8000:
+	case 192000:
+	case 128000:
+	case 96000:
+	case 64000:
+	case 48000:
+	case 32000:
+	case 24000:
+	case 16000:
+	case 12000:
+	case 8000:
 		clk_rate = 24576000;
-                break;
+		break;
 
-        default:
+	default:
 		return -EINVAL;
-        }
+	}
 
 	clk_set_rate(priv->clk_module, 24576000);
 
@@ -1316,10 +1318,10 @@ static int sun4i_dai_set_clk_rate(struct sunxi_i2s_info *priv,
 		return -EINVAL;
 
 	regmap_update_bits(priv->regmap, SUNXI_I2SCLKD,
-			   SUNXI_I2SCLKD_BCLK_MASK |
-			   SUNXI_I2SCLKD_MCLK_MASK,
-			   SUNXI_I2SCLKD_BCLK(bclk_div) |
-			   SUNXI_I2SCLKD_MCLK(mclk_div));
+				SUNXI_I2SCLKD_BCLK_MASK |
+				SUNXI_I2SCLKD_MCLK_MASK,
+				SUNXI_I2SCLKD_BCLK(bclk_div) |
+				SUNXI_I2SCLKD_MCLK(mclk_div));
 
 	return 0;
 }
@@ -1332,30 +1334,28 @@ static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigne
 	printk("[I2S]Entered %s\n", __func__);
 	if(!priv->slave) {
 		switch(clk_id) {
-			case SUNXI_SET_MCLK:
-				/* TODO - Check if the master clock is needed when slave mode is selected. */
-				if (clk_set_rate(priv->clk_pll2, freq)) {
-					pr_err("Try to set the i2s pll2 clock failed!\n");
-					return -EINVAL;
-				}
-				break;
-			case SUNXI_MCLKO_EN:    /* Master clock output */
-				if(dir == 1)    /* Enable */
-					regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, SUNXI_I2SCLKD_MCLKOEN, SUNXI_I2SCLKD_MCLKOEN);
-				if(dir == 0)    /* Disable */
-					regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, SUNXI_I2SCLKD_MCLKOEN, 0x0);
-				break;
-			default:
-				pr_err("Try to set unknown clkid: %d\n", clk_id);
+		case SUNXI_SET_MCLK:
+			/* TODO - Check if the master clock is needed when slave mode is selected. */
+			if (clk_set_rate(priv->clk_pll2, freq)) {
+				pr_err("Try to set the i2s pll2 clock failed!\n");
 				return -EINVAL;
-
+			}
+			break;
+		case SUNXI_MCLKO_EN:	/* Master clock output */
+			if(dir == 1)	/* Enable */
+				regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, SUNXI_I2SCLKD_MCLKOEN, SUNXI_I2SCLKD_MCLKOEN);
+			if(dir == 0)	/* Disable */
+				regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, SUNXI_I2SCLKD_MCLKOEN, 0x0);
+			break;
+		default:
+			pr_err("Try to set unknown clkid: %d\n", clk_id);
+			return -EINVAL;
 		}
 		regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
 		printk("DEB: DA I2S CLKD: 0x%08x\n", reg_val);
 	}
 	return 0;
 }
-
 
 #ifndef USE_DAI_CODE
 /*
@@ -1377,70 +1377,68 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int val
 	printk("[I2S]Entered %s, div_id is %d\n", __func__, div_id);
 
 	switch (div_id) {
-		case SUNXI_DIV_MCLK:
-			regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0xf << SUNXI_I2SCLKD_MCLKDIV, (value & 0xf) << SUNXI_I2SCLKD_MCLKDIV);
-			break;
-		case SUNXI_DIV_BCLK:
-			regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0x7 << SUNXI_I2SCLKD_BCLKDIV, (value & 0x7) << SUNXI_I2SCLKD_BCLKDIV);
-			break;
-		case SUNXI_SAMPLING_FREQ:
-			if (!priv->slave) {
-				reg_bk = priv->samp_fs;
-				priv->samp_fs = (u32)value;
-				ret = sunxi_i2s_divisor_values(priv, &mclk_div, &bclk_div, &mclk); /* Get the register values */
-				printk("[I2S]Sampling rate is %d; selected MCLK: %d, MCLK_DIV: %d, BCLKDIV: %d\n", priv->samp_fs, mclk, mclk_div, bclk_div);
-				if(ret != 0) {
-					printk("[I2S]Sampling rate %d frequency not supported, turning to backup: %d.", priv->samp_fs, reg_bk);
-					priv->samp_fs = reg_bk;
-					return ret;
-				} else {
-					priv->samp_fs = (u32)value;
-					sunxi_i2s_set_sysclk(cpu_dai, SUNXI_SET_MCLK, mclk, 0); /* Set the master clock. */
-					/* AV for BCLK_DIV and MCLK_DIV, need to find the index from divisor value.. */
-					switch (mclk_div) {
-						case 1: mclk_divreg=0; break;
-						case 2: mclk_divreg=1; break;
-						case 4: mclk_divreg=2; break;
-						case 6: mclk_divreg=3; break;
-						case 8: mclk_divreg=4; break;
-						case 12: mclk_divreg=5; break;
-						case 16: mclk_divreg=6; break;
-						case 24: mclk_divreg=7; break;
-						case 32: mclk_divreg=8; break;
-						case 48: mclk_divreg=9; break;
-						case 64: mclk_divreg=10; break;
-						default:
-							printk("[I2S] %s: MCLK div unsupported %d, putting %d\n", __func__, mclk_div, mclk_divreg);
-					}
-					switch (bclk_div) {
-						case 2: bclk_divreg=0; break;
-						case 4: bclk_divreg=1; break;
-						case 6: bclk_divreg=2; break;
-						case 8: bclk_divreg=3; break;
-						case 12: bclk_divreg=4; break;
-						case 16: bclk_divreg=5; break;
-						case 32: bclk_divreg=6; break;
-						case 64: bclk_divreg=7; break;
-						default:
-							printk("[I2S] %s: BCLK div unsupported %d, putting %d\n", __func__, bclk_div, bclk_divreg);
-
-					}
-					/*regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, (0xf << SUNXI_I2SCLKD_MCLKDIV)|(0x7 << SUNXI_I2SCLKD_BCLKDIV),
-							((mclk_div & 0xf) << SUNXI_I2SCLKD_MCLKDIV)|((bclk_div & 0x7) << SUNXI_I2SCLKD_BCLKDIV));*/
-					regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0xf << SUNXI_I2SCLKD_MCLKDIV, (mclk_divreg & 0xf) << SUNXI_I2SCLKD_MCLKDIV);
-					regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0x7 << SUNXI_I2SCLKD_BCLKDIV, (bclk_divreg & 0x7) << SUNXI_I2SCLKD_BCLKDIV);
-					regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
-					printk("DEB: DA I2S internal CLKD (MCLK / BCLK): 0x%02x\n", reg_val);
-				}
+	case SUNXI_DIV_MCLK:
+		regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0xf << SUNXI_I2SCLKD_MCLKDIV, (value & 0xf) << SUNXI_I2SCLKD_MCLKDIV);
+		break;
+	case SUNXI_DIV_BCLK:
+		regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0x7 << SUNXI_I2SCLKD_BCLKDIV, (value & 0x7) << SUNXI_I2SCLKD_BCLKDIV);
+		break;
+	case SUNXI_SAMPLING_FREQ:
+		if (!priv->slave) {
+			reg_bk = priv->samp_fs;
+			priv->samp_fs = (u32)value;
+			ret = sunxi_i2s_divisor_values(priv, &mclk_div, &bclk_div, &mclk); /* Get the register values */
+			printk("[I2S]Sampling rate is %d; selected MCLK: %d, MCLK_DIV: %d, BCLKDIV: %d\n", priv->samp_fs, mclk, mclk_div, bclk_div);
+			if(ret != 0) {
+				printk("[I2S]Sampling rate %d frequency not supported, turning to backup: %d.", priv->samp_fs, reg_bk);
+				priv->samp_fs = reg_bk;
+				return ret;
 			} else {
 				priv->samp_fs = (u32)value;
-			}
-			break;
-		default:
+				sunxi_i2s_set_sysclk(cpu_dai, SUNXI_SET_MCLK, mclk, 0); /* Set the master clock. */
+				/* AV for BCLK_DIV and MCLK_DIV, need to find the index from divisor value.. */
+				switch (mclk_div) {
+				case 1: mclk_divreg=0; break;
+				case 2: mclk_divreg=1; break;
+				case 4: mclk_divreg=2; break;
+				case 6: mclk_divreg=3; break;
+				case 8: mclk_divreg=4; break;
+				case 12: mclk_divreg=5; break;
+				case 16: mclk_divreg=6; break;
+				case 24: mclk_divreg=7; break;
+				case 32: mclk_divreg=8; break;
+				case 48: mclk_divreg=9; break;
+				case 64: mclk_divreg=10; break;
+				default:
+					printk("[I2S] %s: MCLK div unsupported %d, putting %d\n", __func__, mclk_div, mclk_divreg);
+				}
+				switch (bclk_div) {
+				case 2: bclk_divreg=0; break;
+				case 4: bclk_divreg=1; break;
+				case 6: bclk_divreg=2; break;
+				case 8: bclk_divreg=3; break;
+				case 12: bclk_divreg=4; break;
+				case 16: bclk_divreg=5; break;
+				case 32: bclk_divreg=6; break;
+				case 64: bclk_divreg=7; break;
+				default:
+					printk("[I2S] %s: BCLK div unsupported %d, putting %d\n", __func__, bclk_div, bclk_divreg);
+				}
+				/*regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, (0xf << SUNXI_I2SCLKD_MCLKDIV)|(0x7 << SUNXI_I2SCLKD_BCLKDIV),
+						((mclk_div & 0xf) << SUNXI_I2SCLKD_MCLKDIV)|((bclk_div & 0x7) << SUNXI_I2SCLKD_BCLKDIV));*/
+				regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0xf << SUNXI_I2SCLKD_MCLKDIV, (mclk_divreg & 0xf) << SUNXI_I2SCLKD_MCLKDIV);
+				regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0x7 << SUNXI_I2SCLKD_BCLKDIV, (bclk_divreg & 0x7) << SUNXI_I2SCLKD_BCLKDIV);
 				regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
-				printk("ERR: dev_id unknown: %d, DA I2S CLKD (MCLK / BCLK): 0x%02x\n", div_id, reg_val);
-			return -EINVAL;
-
+				printk("DEB: DA I2S internal CLKD (MCLK / BCLK): 0x%02x\n", reg_val);
+			}
+		} else {
+			priv->samp_fs = (u32)value;
+		}
+		break;
+	default:
+			regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
+			printk("ERR: dev_id unknown: %d, DA I2S CLKD (MCLK / BCLK): 0x%02x\n", div_id, reg_val);
+		return -EINVAL;
 	}
 		regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
 		printk("DEB: DA I2S CLKD (MCLK / BCLK): 0x%02x\n", reg_val);
@@ -1472,17 +1470,17 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	regmap_read(priv->regmap, SUNXI_I2SCTL, &reg_val1 );
 	printk("[I2S] %s: reg DA_CTL: 0x%08x\n", __func__, reg_val1);
 	switch(fmt & SND_SOC_DAIFMT_MASTER_MASK){
-		case SND_SOC_DAIFMT_CBS_CFS:		/* clk & frm slave */
-			reg_val1 &= ~SUNXI_I2SCTL_MS;	/* 0: I2S Master! */
-			printk("[I2S] %s, Master, so codec Slave.\n", __func__);
-			break;
-		case SND_SOC_DAIFMT_CBM_CFM:		/* clk & frm master */
-			reg_val1 |= SUNXI_I2SCTL_MS;	/* 1: I2S Slave! */
-			printk("[I2S] %s, Slave, so codec Master.\n", __func__);
-			break;
-		default:
-			printk("[I2S] %s: Master-Slave Select unknown mode: (fmt=%x)\n", __func__, fmt);
-			return -EINVAL;
+	case SND_SOC_DAIFMT_CBS_CFS:		/* clk & frm slave */
+		reg_val1 &= ~SUNXI_I2SCTL_MS;	/* 0: I2S Master! */
+		printk("[I2S] %s, Master, so codec Slave.\n", __func__);
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:		/* clk & frm master */
+		reg_val1 |= SUNXI_I2SCTL_MS;	/* 1: I2S Slave! */
+		printk("[I2S] %s, Slave, so codec Master.\n", __func__);
+		break;
+	default:
+		printk("[I2S] %s: Master-Slave Select unknown mode: (fmt=%x)\n", __func__, fmt);
+		return -EINVAL;
 	}
 	regmap_write(priv->regmap, SUNXI_I2SCTL, reg_val1 );
 
@@ -1491,115 +1489,112 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	regmap_read(priv->regmap, SUNXI_I2SFAT0, &reg_val2 );
 	printk("[I2S] %s: reg DA_FAT0: 0x%08x\n", __func__, reg_val2);
 	switch(fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-		case SND_SOC_DAIFMT_I2S:        /* I2S mode */
-			reg_val1 &= ~SUNXI_I2SCTL_PCM;
-			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
-			reg_val2 |= SUNXI_I2SFAT0_FMT_I2S;
-			printk("[I2S]sunxi_i2s_set_fmt: Set I2S mode\n");
-			priv->samp_format = SND_SOC_DAIFMT_I2S;
-			break;
-		case SND_SOC_DAIFMT_RIGHT_J:    /* Right Justified mode */
-			reg_val1 &= ~SUNXI_I2SCTL_PCM;
-			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
-			reg_val2 |= SUNXI_I2SFAT0_FMT_RGT;
-			printk("[I2S]sunxi_i2s_set_fmt: Set Right Justified mode\n");
-			priv->samp_format = SND_SOC_DAIFMT_RIGHT_J;
-			break;
-		case SND_SOC_DAIFMT_LEFT_J:     /* Left Justified mode */
-			reg_val1 &= ~SUNXI_I2SCTL_PCM;
-			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
-			reg_val2 |= SUNXI_I2SFAT0_FMT_LFT;
-			printk("[I2S]sunxi_i2s_set_fmt: Set Left Justified mode\n");
-			priv->samp_format = SND_SOC_DAIFMT_LEFT_J;
-			break;
-		case SND_SOC_DAIFMT_DSP_A:      /* L data msb after FRM LRC */
-			reg_val1 &= ~SUNXI_I2SCTL_PCM;
-			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
-			reg_val2 |= SUNXI_I2SFAT0_FMT_LFT;
-			priv->samp_format = SND_SOC_DAIFMT_DSP_A;
-			printk("[I2S]sunxi_i2s_set_fmt: Set L data msb after FRM LRC mode\n");
-			break;
-		case SND_SOC_DAIFMT_DSP_B:      /* L data msb during FRM LRC */
-			reg_val1 |= SUNXI_I2SCTL_PCM;
-			reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
-			reg_val2 |= SUNXI_I2SFAT0_LRCP;
-			priv->samp_format = SND_SOC_DAIFMT_DSP_B;
-			printk("[I2S]sunxi_i2s_set_fmt: Set L data msb during FRM LRC mode\n");
-			break;
-		default:
-			printk("[I2S]sunxi_i2s_set_fmt: Unknown mode\n");
-			return -EINVAL;
+	case SND_SOC_DAIFMT_I2S:	/* I2S mode */
+		reg_val1 &= ~SUNXI_I2SCTL_PCM;
+		reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
+		reg_val2 |= SUNXI_I2SFAT0_FMT_I2S;
+		printk("[I2S]%s: Set I2S mode\n", __func__);
+		priv->samp_format = SND_SOC_DAIFMT_I2S;
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:	/* Right Justified mode */
+		reg_val1 &= ~SUNXI_I2SCTL_PCM;
+		reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
+		reg_val2 |= SUNXI_I2SFAT0_FMT_RGT;
+		printk("[I2S]%s: Set Right Justified mode\n", __func__);
+		priv->samp_format = SND_SOC_DAIFMT_RIGHT_J;
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:	/* Left Justified mode */
+		reg_val1 &= ~SUNXI_I2SCTL_PCM;
+		reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
+		reg_val2 |= SUNXI_I2SFAT0_FMT_LFT;
+		printk("[I2S]%s: Set Left Justified mode\n");
+		priv->samp_format = SND_SOC_DAIFMT_LEFT_J;
+		break;
+	case SND_SOC_DAIFMT_DSP_A:	/* L data msb after FRM LRC */
+		reg_val1 &= ~SUNXI_I2SCTL_PCM;
+		reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
+		reg_val2 |= SUNXI_I2SFAT0_FMT_LFT;
+		priv->samp_format = SND_SOC_DAIFMT_DSP_A;
+		printk("[I2S]%s: Set L data msb after FRM LRC mode\n", __func__);
+		break;
+	case SND_SOC_DAIFMT_DSP_B:	/* L data msb during FRM LRC */
+		reg_val1 |= SUNXI_I2SCTL_PCM;
+		reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
+		reg_val2 |= SUNXI_I2SFAT0_LRCP;
+		priv->samp_format = SND_SOC_DAIFMT_DSP_B;
+		printk("[I2S]%s: Set L data msb during FRM LRC mode\n", __func__);
+		break;
+	default:
+		printk("[I2S]%s: Unknown mode\n", __func__);
+		return -EINVAL;
 	}
 	regmap_write(priv->regmap, SUNXI_I2SCTL, reg_val1 );
 	regmap_write(priv->regmap, SUNXI_I2SFAT0, reg_val2 );
 
 	/* Word select Size */
 	regmap_read(priv->regmap, SUNXI_I2SFAT0, &reg_val1 );
+	reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
 	switch(fmt & SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_MASK)/* TODO: Refactor, wrong configuration scheme.*/ {
-		case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_16BCLK:
-			reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
-			reg_val1 |= SUNXI_I2SFAT0_WSS_16BCLK;
-			priv->ws_size = 16;
-			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 16.\n");
-			break;
-		case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_20BCLK:
-			reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
-			reg_val1 |= SUNXI_I2SFAT0_WSS_20BCLK;
-			priv->ws_size = 20;
-			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 20.\n");
-			break;
-		case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_24BCLK:
-			reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
-			reg_val1 |= SUNXI_I2SFAT0_WSS_24BCLK;
-			priv->ws_size = 24;
-			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 24.\n");
-			break;
-		case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_32BCLK:
-			reg_val1 &= ~SUNXI_I2SFAT0_WSS_32BCLK; /* clear word select size */
-			reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
-			priv->ws_size = 32;
-			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 32.\n");
-			break;
-		default:
-			printk("[I2S]sunxi_i2s_set_fmt: Unknown mode.\n");
-			break;
+	case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_16BCLK:
+		reg_val1 |= SUNXI_I2SFAT0_WSS_16BCLK;
+		priv->ws_size = 16;
+		printk("[I2S]%s: Set word select size = 16.\n", __func__);
+		break;
+	case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_20BCLK:
+		reg_val1 |= SUNXI_I2SFAT0_WSS_20BCLK;
+		priv->ws_size = 20;
+		printk("[I2S]%s: Set word select size = 20.\n", __func__);
+		break;
+	case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_24BCLK:
+		reg_val1 |= SUNXI_I2SFAT0_WSS_24BCLK;
+		priv->ws_size = 24;
+		printk("[I2S]%s: Set word select size = 24.\n", __func__);
+		break;
+	case SND_SOC_DAIFMT_SUNXI_I2SFAT0_WSS_32BCLK:
+		reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
+		priv->ws_size = 32;
+		printk("[I2S]%s: Set word select size = 32.\n", __func__);
+		break;
+	default:
+		printk("[I2S]%s: Unknown mode.\n");
+		break;
 	}
 	regmap_write(priv->regmap, SUNXI_I2SFAT0, reg_val1 );
 
 	/* Signal Inversion */
 	regmap_read(priv->regmap, SUNXI_I2SFAT0, &reg_val1 );
 	switch(fmt & SND_SOC_DAIFMT_INV_MASK) {
-		case SND_SOC_DAIFMT_NB_NF:     /* normal bit clock + frame */
-			reg_val1 &= ~SUNXI_I2SFAT0_LRCP;
-			reg_val1 &= ~SUNXI_I2SFAT0_BCP;
-			priv->bclk_pol = 0;
-			priv->lrc_pol = 0;
-			printk("[I2S]sunxi_i2s_set_fmt: Normal bit clock + frame\n");
-			break;
-		case SND_SOC_DAIFMT_NB_IF:     /* normal bclk + inverted frame */
-			reg_val1 |= SUNXI_I2SFAT0_LRCP;
-			reg_val1 &= ~SUNXI_I2SFAT0_BCP;
-			priv->bclk_pol = 0;
-			priv->lrc_pol = 1;
-			printk("[I2S]sunxi_i2s_set_fmt: Normal bclk + inverted frame\n");
-			break;
-		case SND_SOC_DAIFMT_IB_NF:     /* inverted bclk + normal frame */
-			reg_val1 &= ~SUNXI_I2SFAT0_LRCP;
-			reg_val1 |= SUNXI_I2SFAT0_BCP;
-			priv->bclk_pol = 1;
-			priv->lrc_pol = 0;
-			printk("[I2S]sunxi_i2s_set_fmt: Inverted bclk + normal frame\n");
-			break;
-		case SND_SOC_DAIFMT_IB_IF:     /* inverted bclk + frame */
-			reg_val1 |= SUNXI_I2SFAT0_LRCP;;
-			reg_val1 |= SUNXI_I2SFAT0_BCP;
-			priv->bclk_pol = 1;
-			priv->lrc_pol = 1;
-			printk("[I2S]sunxi_i2s_set_fmt: Inverted bclk + frame\n");
-			break;
-		default:
-			printk("[I2S]sunxi_i2s_set_fmt: Unknown mode\n");
-			return -EINVAL;
+	case SND_SOC_DAIFMT_NB_NF:	/* normal bit clock + frame */
+		reg_val1 &= ~SUNXI_I2SFAT0_LRCP;
+		reg_val1 &= ~SUNXI_I2SFAT0_BCP;
+		priv->bclk_pol = 0;
+		priv->lrc_pol = 0;
+		printk("[I2S]%s: Normal bit clock + frame\n", __func__);
+		break;
+	case SND_SOC_DAIFMT_NB_IF:	/* normal bclk + inverted frame */
+		reg_val1 |= SUNXI_I2SFAT0_LRCP;
+		reg_val1 &= ~SUNXI_I2SFAT0_BCP;
+		priv->bclk_pol = 0;
+		priv->lrc_pol = 1;
+		printk("[I2S]%s: Normal bclk + inverted frame\n", __func__);
+		break;
+	case SND_SOC_DAIFMT_IB_NF:	/* inverted bclk + normal frame */
+		reg_val1 &= ~SUNXI_I2SFAT0_LRCP;
+		reg_val1 |= SUNXI_I2SFAT0_BCP;
+		priv->bclk_pol = 1;
+		priv->lrc_pol = 0;
+		printk("[I2S]%s: Inverted bclk + normal frame\n", __func__);
+		break;
+	case SND_SOC_DAIFMT_IB_IF:	/* inverted bclk + frame */
+		reg_val1 |= SUNXI_I2SFAT0_LRCP;
+		reg_val1 |= SUNXI_I2SFAT0_BCP;
+		priv->bclk_pol = 1;
+		priv->lrc_pol = 1;
+		printk("[I2S]%s: Inverted bclk + frame\n", __func__);
+		break;
+	default:
+		printk("[I2S]%s: Unknown mode\n", __func__);
+		return -EINVAL;
 	}
 	regmap_write(priv->regmap, SUNXI_I2SFAT0, reg_val1 );
 
@@ -1644,30 +1639,30 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		printk("[I2S]sunxi_i2s_hw_params: SNDRV_PCM_STREAM_PLAYBACK. chan: %d\n", params_channels(params));
+		printk("[I2S]%s: SNDRV_PCM_STREAM_PLAYBACK. chan: %d\n", __func__, params_channels(params));
 		switch (params_channels(params)) { /* Enables the outputs and sets the map of the samples, on crescent order. */
 		/* FIXME: always 2 channels, for draft */
 		default:
-			printk("[I2S] %s: channels selected different then 2 but not implemented\n", __func__);
+			printk("[I2S]%s: channels selected different then 2 but not implemented\n", __func__);
 		case 2:
 			regmap_update_bits(priv->regmap, SUNXI_I2SCTL, SUNXI_I2SCTL_SDO0EN|SUNXI_I2SCTL_SDO1EN|SUNXI_I2SCTL_SDO2EN|SUNXI_I2SCTL_SDO3EN, SUNXI_I2SCTL_SDO0EN);
-			printk("[I2S]sunxi_i2s_hw_params: SDO0 enabled, 2 channels selected.\n");
+			printk("[I2S]%s: SDO0 enabled, 2 channels selected.\n", __func__);
 			break;
 		}
 		if (is_24bit) /* FIXME need supporting also 20 bit properly, here it's two bytes only */
 			priv->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		else
 			priv->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-	} else  {
-		printk("[I2S]sunxi_i2s_hw_params: SNDRV_PCM_STREAM_CAPTURE.\n");
+	} else {
+		printk("[I2S]%s: SNDRV_PCM_STREAM_CAPTURE.\n", __func__);
 		switch (params_channels(params)) { /* Enables the outputs and sets the map of the samples, on crescent order.*/
 		/* FIXME: always 2 channels, for draft */
 		default:
-			printk("[I2S]sunxi_i2s_hw_params: channels selected different then 2 but...\n");
+			printk("[I2S]%s: channels selected different then 2 but...\n", __func__);
 		case 2:
 			regmap_update_bits(priv->regmap, SUNXI_RXCHSEL, 7, SUNXI_RXCHSEL_CHNUM(2)); /* mask 3 lsbs */
 			regmap_update_bits(priv->regmap, SUNXI_RXCHMAP, 0x3f, SUNXI_RXCHMAP_CH(1)|SUNXI_RXCHMAP_CH(2)); /* FIXME: ugly masks!*/
-			printk("[I2S]sunxi_i2s_hw_params: SDO0 enabled, 2 channels selected.\n");
+			printk("[I2S]%s: SDO0 enabled, 2 channels selected.\n", __func__);
 			break;
 		}
 		if (is_24bit) /* FIXME need supporting also 20 bit properly, here it's two bytes only */
@@ -1691,43 +1686,43 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	/* TODO: Support SNDRV_PCM_FORMAT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE formats. Must check the Word Size and change it for 24bits ("3LE").*/
 	reg_val1 = 0;	/* Clear sample resolution select size */
 	switch (params_format(params)) {
-		case SNDRV_PCM_FORMAT_S16_LE:
-			reg_val1 |= SUNXI_I2SFAT0_SR_16BIT | SUNXI_I2SFAT0_WSS_16BCLK;
-			priv->samp_res = 16;
-			printk("[I2S] %s: SNDRV_PCM_FORMAT_S16_LE.\n", __func__);
-			break;
+	case SNDRV_PCM_FORMAT_S16_LE:
+		reg_val1 |= SUNXI_I2SFAT0_SR_16BIT | SUNXI_I2SFAT0_WSS_16BCLK;
+		priv->samp_res = 16;
+		printk("[I2S] %s: SNDRV_PCM_FORMAT_S16_LE.\n", __func__);
+		break;
 
-		case SNDRV_PCM_FORMAT_S24_3LE:
-			reg_val1 |= SUNXI_I2SFAT0_SR_24BIT;
-			priv->samp_res = 24;
-			if(priv->ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
-				reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
-				priv->ws_size = 32;
-				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
-			}
-			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S24_3LE.\n");
-			break;
-		case SNDRV_PCM_FORMAT_S24_LE:
-			reg_val1 |= SUNXI_I2SFAT0_SR_24BIT;
-			priv->samp_res = 24;
-			if(priv->ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
-				reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
-				priv->ws_size = 32;
-				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
-			}
-			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S24_LE.\n");
-			break;
-		default:
-			printk("[I2S] sunxi_i2s_hw_params: Unsupported format (%d).\n", (int)params_format(params));
-			reg_val1 |= SUNXI_I2SFAT0_SR_24BIT | SUNXI_I2SFAT0_WSS_32BCLK;
-			priv->samp_res = 24;
+	case SNDRV_PCM_FORMAT_S24_3LE:
+		reg_val1 |= SUNXI_I2SFAT0_SR_24BIT;
+		priv->samp_res = 24;
+		if(priv->ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
+			reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
 			priv->ws_size = 32;
-			printk("[I2S] sunxi_i2s_hw_params: Setting 24 bit format and changing word slect size to 32bit.\n");
-			break;
+			printk("[I2S]%s: Changing word slect size to 32bit.\n", __func__);
+		}
+		printk("[I2S]%s: SNDRV_PCM_FORMAT_S24_3LE.\n", __func__);
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
+		reg_val1 |= SUNXI_I2SFAT0_SR_24BIT;
+		priv->samp_res = 24;
+		if(priv->ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
+			reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
+			priv->ws_size = 32;
+			printk("[I2S]%s: Changing word slect size to 32bit.\n", __func__);
+		}
+		printk("[I2S]%s: SNDRV_PCM_FORMAT_S24_LE.\n", __func__);
+		break;
+	default:
+		printk("[I2S]%s: Unsupported format (%d).\n", __func__, (int)params_format(params));
+		reg_val1 |= SUNXI_I2SFAT0_SR_24BIT | SUNXI_I2SFAT0_WSS_32BCLK;
+		priv->samp_res = 24;
+		priv->ws_size = 32;
+		printk("[I2S]%s: Setting 24 bit format and changing word slect size to 32bit.\n", __func__);
+		break;
 	}
 	regmap_update_bits(priv->regmap, SUNXI_I2SFAT0, SUNXI_I2SFAT0_WSS_32BCLK|SUNXI_I2SFAT0_SR_RVD, reg_val1);
 	regmap_read(priv->regmap, SUNXI_I2SFAT0, &tmp);
-		printk("DEB %s: DA FAT0 register: %x\n",  __func__, tmp);
+		printk("DEB %s: DA FAT0 register: %x\n", __func__, tmp);
 #endif
 	return 0;
 }
@@ -1804,14 +1799,14 @@ static void i2sregsave(struct sunxi_i2s_info *priv)
 {
 	printk("[I2S]Entered %s\n", __func__);
 
-	regmap_read(priv->regmap, SUNXI_I2SCTL,  &regsave[0]);
-	regmap_read(priv->regmap, SUNXI_I2SFAT0,  &regsave[1]);
-	regmap_read(priv->regmap, SUNXI_I2SFAT1,  &regsave[2]);
-	regmap_read(priv->regmap, SUNXI_I2SFCTL,  &regsave[3]); /*| (0x3<<24);*//* TODO: Bit 24- FRX - Write ‘1’ to flush RX FIFO, self clear to ‘0’. Really needed?*/
-	regmap_read(priv->regmap, SUNXI_I2SINT,  &regsave[4]);
-	regmap_read(priv->regmap, SUNXI_I2SCLKD,  &regsave[5]);
-	regmap_read(priv->regmap, SUNXI_TXCHSEL,  &regsave[6]);
-	regmap_read(priv->regmap, SUNXI_TXCHMAP,  &regsave[7]);
+	regmap_read(priv->regmap, SUNXI_I2SCTL, &regsave[0]);
+	regmap_read(priv->regmap, SUNXI_I2SFAT0, &regsave[1]);
+	regmap_read(priv->regmap, SUNXI_I2SFAT1, &regsave[2]);
+	regmap_read(priv->regmap, SUNXI_I2SFCTL, &regsave[3]); /*| (0x3<<24);*//* TODO: Bit 24- FRX - Write ‘1’ to flush RX FIFO, self clear to ‘0’. Really needed?*/
+	regmap_read(priv->regmap, SUNXI_I2SINT, &regsave[4]);
+	regmap_read(priv->regmap, SUNXI_I2SCLKD, &regsave[5]);
+	regmap_read(priv->regmap, SUNXI_TXCHSEL, &regsave[6]);
+	regmap_read(priv->regmap, SUNXI_TXCHMAP, &regsave[7]);
 }
 
 /*
@@ -1821,7 +1816,7 @@ static void i2sregrestore(struct sunxi_i2s_info *priv)
 {
 	printk("[I2S]Entered %s\n", __func__);
 
-	regmap_write(priv->regmap, SUNXI_I2SCTL,  regsave[0]);
+	regmap_write(priv->regmap, SUNXI_I2SCTL, regsave[0]);
 	regmap_write(priv->regmap, SUNXI_I2SFAT0, regsave[1]);
 	regmap_write(priv->regmap, SUNXI_I2SFAT1, regsave[2]);
 	regmap_write(priv->regmap, SUNXI_I2SFCTL, regsave[3]);
@@ -1894,15 +1889,15 @@ static const struct snd_soc_component_driver sunxi_i2s_component = {
 };
 
 static struct snd_soc_dai_ops sunxi_i2s_dai_ops = {
-	.startup    = sunxi_i2s_startup,
-	.shutdown   = sunxi_i2s_shutdown,
+	.startup	= sunxi_i2s_startup,
+	.shutdown	= sunxi_i2s_shutdown,
 #ifndef USE_DAI_CODE
-	.set_sysclk = sunxi_i2s_set_sysclk,
-	.set_clkdiv = sunxi_i2s_set_clkdiv,
+	.set_sysclk	= sunxi_i2s_set_sysclk,
+	.set_clkdiv	= sunxi_i2s_set_clkdiv,
 #endif
-	.set_fmt    = sunxi_i2s_set_fmt,
-	.hw_params  = sunxi_i2s_hw_params,
-	.trigger    = sunxi_i2s_trigger,
+	.set_fmt	= sunxi_i2s_set_fmt,
+	.hw_params	= sunxi_i2s_hw_params,
+	.trigger	= sunxi_i2s_trigger,
 };
 
 static struct snd_soc_dai_driver sunxi_i2s_dai = {
@@ -2103,9 +2098,9 @@ static int sunxi_digitalaudio_remove(struct platform_device *pdev)
 }
 
 static struct platform_driver sunxi_i2s_driver = {
-	.probe  = sunxi_digitalaudio_probe,
-	.remove = sunxi_digitalaudio_remove,
-	.driver = {
+	.probe	= sunxi_digitalaudio_probe,
+	.remove	= sunxi_digitalaudio_remove,
+	.driver	= {
 		.name = DRV_NAME,
 		.of_match_table = of_match_ptr(sunxi_i2s_of_match),
 	},
@@ -2119,4 +2114,3 @@ MODULE_AUTHOR("Andrea Venturi, <be17068@iperbole.bo.it>");
 MODULE_DESCRIPTION("Sunxi I2S ASoC Interface");
 MODULE_LICENSE("GPL");
 #endif
-
