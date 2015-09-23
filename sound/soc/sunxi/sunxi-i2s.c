@@ -238,7 +238,28 @@ struct sunxi_i2s_info {
 	int					samp_format;
 	int					slave;
 };
+
 #if 0
+/* TODO: Initialize structure on probe, after register default configuration */
+/* NOT USED NOW */
+static struct sunxi_i2s_info sunxi_i2s = {
+	.slave = 0,
+	.samp_fs = 48000,
+	.samp_res = 24,
+	.samp_format = 0,
+	.ws_size = 32,
+	.mclk_rate = 512,
+	.lrc_pol = 0,
+	.bclk_pol = 0,
+	.pcm_datamode = 0,
+	.pcm_sw = 0,
+	.pcm_sync_period = 0,
+	.pcm_sync_type = 0,
+	.pcm_start_slot = 0,
+	.pcm_lsb_first = 0,
+	.pcm_ch_num = 1,
+};
+
 static void sunxi_i2s_clock(struct sunxi_i2s_info *host, u32 core_freq,
 		u32 rate)
 {
@@ -886,26 +907,6 @@ MODULE_ALIAS("platform:sunxi-i2s");
 /* for suspend/resume feature */
 static int regsave[8];
 
-/* TODO: Initialize structure on probe, after register default configuration */
-/* NOT USED NOW */
-static struct sunxi_i2s_info sunxi_i2s = {
-	.slave = 0,
-	.samp_fs = 48000,
-	.samp_res = 24,
-	.samp_format = 0,
-	.ws_size = 32,
-	.mclk_rate = 512,
-	.lrc_pol = 0,
-	.bclk_pol = 0,
-	.pcm_datamode = 0,
-	.pcm_sw = 0,
-	.pcm_sync_period = 0,
-	.pcm_sync_type = 0,
-	.pcm_start_slot = 0,
-	.pcm_lsb_first = 0,
-	.pcm_ch_num = 1,
-};
-
 /*
  * The Digital Audio Interface can support sampling rates from 128fs to 768fs,
  * where fs is the audio sampling frequency typically 32kHz, 44.1kHz, 48kHz or
@@ -1037,17 +1038,10 @@ static irqreturn_t sunxi_dai_isr(int irq, void *devid)
 {
 	struct sunxi_i2s_info *dai = (struct sunxi_i2s_info *)devid;
 	struct device *dev = &dai->pdev->dev;
-	u32 flags, xcsr, mask;
 	bool irq_none = true;
 
 	dev_dbg(dev, "isr: got an IRQ, need to manage\n");
 
-	/*
-	 * TODO: manage the IRQ from DAI I2S!
-	 *	look for hint in sound/soc/fsl/fsl_sai.c
-	 */
-
-out:
 	if (irq_none)
 		return IRQ_NONE;
 	else
@@ -1168,7 +1162,6 @@ static void sunxi_i2s_play_stop(struct sunxi_i2s_info *priv)
 static int sunxi_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 				struct snd_soc_dai *dai)
 {
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(dai);
 
 	printk("DEB: %s, copy from same fmt on i2s 3.4 legacy sunxi-i2s.c\n", __func__);
@@ -1326,6 +1319,8 @@ static int sun4i_dai_set_clk_rate(struct sunxi_i2s_info *priv,
 	return 0;
 }
 
+
+#ifndef USE_DAI_CODE
 static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigned int freq, int dir)
 {
 	u32 reg_val;
@@ -1357,11 +1352,10 @@ static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigne
 	return 0;
 }
 
-#ifndef USE_DAI_CODE
 /*
-* TODO: Function Description
-* Saved in snd_soc_dai_ops sunxi_i2s_dai_ops.
-*/
+ * TODO: Function Description
+ * Saved in snd_soc_dai_ops sunxi_i2s_dai_ops.
+ */
 static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int value)
 {
 	u32 reg_bk, reg_val, ret;
@@ -1507,7 +1501,7 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		reg_val1 &= ~SUNXI_I2SCTL_PCM;
 		reg_val2 &= ~SUNXI_I2SFAT0_FMT_RVD;/* Clear FMT(Bit 1:0) */
 		reg_val2 |= SUNXI_I2SFAT0_FMT_LFT;
-		printk("[I2S]%s: Set Left Justified mode\n");
+		printk("[I2S]%s: Set Left Justified mode\n", __func__);
 		priv->samp_format = SND_SOC_DAIFMT_LEFT_J;
 		break;
 	case SND_SOC_DAIFMT_DSP_A:	/* L data msb after FRM LRC */
@@ -1556,7 +1550,7 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		printk("[I2S]%s: Set word select size = 32.\n", __func__);
 		break;
 	default:
-		printk("[I2S]%s: Unknown mode.\n");
+		printk("[I2S]%s: Unknown mode.\n", __func__);
 		break;
 	}
 	regmap_write(priv->regmap, SUNXI_I2SFAT0, reg_val1 );
@@ -1606,13 +1600,13 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 				struct snd_pcm_hw_params *params,
 				struct snd_soc_dai *dai)
 {
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(dai);
 	int is_24bit = !!(hw_param_interval(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS)->min == 32);
 	unsigned int rate = params_rate(params);
+#ifndef USE_DAI_CODE
 	unsigned int tmp;
 	unsigned int reg_val1;
-
+#endif
 	printk("[I2S]Entered %s\n", __func__);
 	switch (rate) {
 	case 192000:
@@ -1722,7 +1716,7 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	}
 	regmap_update_bits(priv->regmap, SUNXI_I2SFAT0, SUNXI_I2SFAT0_WSS_32BCLK|SUNXI_I2SFAT0_SR_RVD, reg_val1);
 	regmap_read(priv->regmap, SUNXI_I2SFAT0, &tmp);
-		printk("DEB %s: DA FAT0 register: %x\n", __func__, tmp);
+	printk("DEB %s: DA FAT0 register: %x\n", __func__, tmp);
 #endif
 	return 0;
 }
@@ -1903,12 +1897,9 @@ static struct snd_soc_dai_ops sunxi_i2s_dai_ops = {
 static struct snd_soc_dai_driver sunxi_i2s_dai = {
 	.name		= "sunxi-i2s-dai",
 	.probe		= sunxi_i2s_dai_probe,
-/* TO ADD LATER */
-/*
 	.remove		= sunxi_i2s_dai_remove,
 	.suspend	= sunxi_i2s_suspend,
 	.resume		= sunxi_i2s_resume,
-*/
 	.ops		= &sunxi_i2s_dai_ops,
 	.capture	= {
 		.stream_name = "pcm0c",
@@ -1948,7 +1939,7 @@ static int sunxi_digitalaudio_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct resource *res;
 	void __iomem *base;
-	int irq, i, tmp;
+	int irq;
 
 	int ret;
 
@@ -2060,7 +2051,7 @@ static int sunxi_digitalaudio_probe(struct platform_device *pdev)
 	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
 	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_dmaengine failed (%d)\n", ret);
-		goto err_clk_disable;
+		goto err_platform;
 	}
 
 	return 0;
