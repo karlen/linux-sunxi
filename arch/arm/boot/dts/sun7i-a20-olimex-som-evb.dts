@@ -74,7 +74,7 @@
 		};
 	};
 
-	sound {
+	sound_i2s {
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
 		simple-audio-card,routing =
@@ -103,11 +103,38 @@
 	};
 
         sound_spdif {
-                compatible = "allwinner,sunxi-spdif";
-                model = "On-board SPDIF";
-                spdif-controller = <&spdif>;
-                spdif-out;
-        };
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "On-board SPDIF";
+		simple-audio-card,dai-link@0 {
+			cpu {
+				sound-dai = <&spdif>;
+			};
+
+			codec {
+				sound-dai = <&spdif_out>;
+			};
+		};
+
+		simple-audio-card,dai-link@1 {
+			cpu {
+				sound-dai = <&spdif>;
+			};
+
+			codec {
+				sound-dai = <&spdif_in>;
+			};
+		};
+	};
+
+	spdif_in: spdif-in {
+		#sound-dai-cells = <0>;
+		compatible = "linux,spdif-dir";
+	};
+
+	spdif_out: spdif-out {
+		#sound-dai-cells = <0>;
+		compatible = "linux,spdif-dit";
+	};
 };
 
 &ahci {
@@ -355,7 +382,9 @@
 
 &spdif {
 	pinctrl-names = "default";
-	pinctrl-0 = <&spdif_tx_pins_a>;
+	pinctrl-0 = <&spdif_tx_pins_a>, <&spdif_rx_pins_a>;
+	spdif-in = "okay";
+	spdif-out = "okay";
 	status = "okay";
 };
 
