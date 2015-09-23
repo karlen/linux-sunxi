@@ -105,6 +105,7 @@
                 model = "On-board SPDIF";
                 spdif-controller = <&spdif>;
                 spdif-out;
+                spdif-in;
         };
 };
 
@@ -284,7 +285,7 @@
 
 &spdif {
 	pinctrl-names = "default";
-	pinctrl-0 = <&spdif_tx_pins_a>;
+	pinctrl-0 = <&spdif_tx_pins_a>, <&spdif_rx_pins_a>;
 	status = "okay";
 };
 
