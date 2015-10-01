@@ -503,7 +503,7 @@ static int sun4i_dai_set_clk_rate(struct sunxi_i2s_info *priv,
 		return -EINVAL;
 	}
 
-	clk_set_rate(priv->clk_module, 24576000);
+	clk_set_rate(priv->clk_module, clk_rate);
 
 	/* Always favor the highest oversampling rate */
 	for (i = (ARRAY_SIZE(sun4i_dai_oversample_rates) - 1); i >= 0; i--) {
@@ -692,9 +692,10 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 {
 	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(dai);
 	int is_24bit = !!(hw_param_interval(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS)->min == 32);
-	unsigned int rate = params_rate(params);
 
 	printk("[I2S]Entered %s\n", __func__);
+#if 0 //sun4i_dai_set_clk_rate does this
+	unsigned int rate = params_rate(params);
 	switch (rate) {
 	case 192000:
 	case 96000:
@@ -718,7 +719,7 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 		clk_set_rate(priv->clk_module, 22579200);
 		break;
 	}
-
+#endif
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		printk("[I2S]%s: SNDRV_PCM_STREAM_PLAYBACK. chan: %d\n", __func__, params_channels(params));
 		switch (params_channels(params)) { /* Enables the outputs and sets the map of the samples, on crescent order. */
