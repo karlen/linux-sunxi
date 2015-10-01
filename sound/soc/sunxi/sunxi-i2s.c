@@ -244,9 +244,6 @@ struct sunxi_i2s_info {
 		(SNDRV_PCM_FMTBIT_S16_LE | \
 			SNDRV_PCM_FMTBIT_S24_LE)
 
-/* for suspend/resume feature */
-static int regsave[8];
-
 static irqreturn_t sunxi_dai_isr(int irq, void *devid)
 {
 	struct sunxi_i2s_info *dai = (struct sunxi_i2s_info *)devid;
@@ -826,91 +823,6 @@ static int sunxi_i2s_dai_remove(struct snd_soc_dai *dai)
 	return 0;
 }
 
-/*
-* TODO: Function description.
-*/
-static void i2sregsave(struct sunxi_i2s_info *priv)
-{
-	printk("[I2S]Entered %s\n", __func__);
-
-	regmap_read(priv->regmap, SUNXI_I2SCTL, &regsave[0]);
-	regmap_read(priv->regmap, SUNXI_I2SFAT0, &regsave[1]);
-	regmap_read(priv->regmap, SUNXI_I2SFAT1, &regsave[2]);
-	regmap_read(priv->regmap, SUNXI_I2SFCTL, &regsave[3]); /*| (0x3<<24);*//* TODO: Bit 24- FRX - Write ‘1’ to flush RX FIFO, self clear to ‘0’. Really needed?*/
-	regmap_read(priv->regmap, SUNXI_I2SINT, &regsave[4]);
-	regmap_read(priv->regmap, SUNXI_I2SCLKD, &regsave[5]);
-	regmap_read(priv->regmap, SUNXI_TXCHSEL, &regsave[6]);
-	regmap_read(priv->regmap, SUNXI_TXCHMAP, &regsave[7]);
-}
-
-/*
-* TODO: Function description.
-*/
-static void i2sregrestore(struct sunxi_i2s_info *priv)
-{
-	printk("[I2S]Entered %s\n", __func__);
-
-	regmap_write(priv->regmap, SUNXI_I2SCTL, regsave[0]);
-	regmap_write(priv->regmap, SUNXI_I2SFAT0, regsave[1]);
-	regmap_write(priv->regmap, SUNXI_I2SFAT1, regsave[2]);
-	regmap_write(priv->regmap, SUNXI_I2SFCTL, regsave[3]);
-	regmap_write(priv->regmap, SUNXI_I2SINT, regsave[4]);
-	regmap_write(priv->regmap, SUNXI_I2SCLKD, regsave[5]);
-	regmap_write(priv->regmap, SUNXI_TXCHSEL, regsave[6]);
-	regmap_write(priv->regmap, SUNXI_TXCHMAP, regsave[7]);
-}
-
-/*
-* TODO: Function Description.
-* Saved in snd_soc_dai_driver sunxi_i2s_dai.
-*/
-static int sunxi_i2s_suspend(struct snd_soc_dai *cpu_dai)
-{
-	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(cpu_dai);
-
-	printk("[I2S]Entered %s\n", __func__);
-
-	/* Global Disable Digital Audio Interface */
-	regmap_update_bits(priv->regmap, SUNXI_I2SCTL, SUNXI_I2SCTL_GEN, 0x0 );
-
-	i2sregsave(priv);
-
-	if(!priv->slave) {
-		/* release the module clock, only for master mode */
-		clk_disable(priv->clk_module);
-	}
-	clk_disable(priv->clk_apb);
-
-	return 0;
-}
-
-/*
-* TODO: Function Description.
-* Saved in snd_soc_dai_driver sunxi_i2s_dai.
-*/
-static int sunxi_i2s_resume(struct snd_soc_dai *cpu_dai)
-{
-	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(cpu_dai);
-
-	printk("[I2S]Entered %s\n", __func__);
-
-	/* enable the module clock */
-	clk_enable(priv->clk_apb);
-
-	if (!priv->slave) {
-		/* enable the module clock */
-		clk_enable(priv->clk_module);
-	}
-
-	i2sregrestore(priv);
-
-	/* Global Enable Digital Audio Interface */
-	regmap_update_bits(priv->regmap, SUNXI_I2SCTL, SUNXI_I2SCTL_GEN, SUNXI_I2SCTL_GEN);
-
-	return 0;
-}
-
-
 static const struct regmap_config sunxi_i2s_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
@@ -934,8 +846,6 @@ static struct snd_soc_dai_driver sunxi_i2s_dai = {
 	.name		= "sunxi-i2s-dai",
 	.probe		= sunxi_i2s_dai_probe,
 	.remove		= sunxi_i2s_dai_remove,
-	.suspend	= sunxi_i2s_suspend,
-	.resume		= sunxi_i2s_resume,
 	.ops		= &sunxi_i2s_dai_ops,
 	.capture	= {
 		.stream_name = "pcm0c",
