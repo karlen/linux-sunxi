@@ -209,24 +209,18 @@ enum sunxi_soc_family {
 struct sunxi_i2s_info {
 	struct platform_device			*pdev;
 	struct regmap				*regmap;
-	void __iomem				*reg_base; //not used!
 	enum sunxi_soc_family			revision;
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 	struct clk				*clk_apb;
 	struct clk				*clk_pll2;
 	struct clk				*clk_module;
-	struct clk				*dai_clk; //not used!
-	int					master; //not used!
-	resource_size_t				mapbase;//not used!
 	int					mclk_rate;//set but not used!
 	int					ws_size;//ditto
 	int					lrc_pol;//ditto
 	int					bclk_pol;//ditto
 	int					pcm_datamode;//set but not used
 	int					pcm_ch_num;//ditto
-	int					pcm_txtype;//never used
-	int					pcm_rxtype;//never used
 	int					pcm_sync_type;//never set
 	int					pcm_sw;//ditto
 	int					pcm_start_slot;//ditto
