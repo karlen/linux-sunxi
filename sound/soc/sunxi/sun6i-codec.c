@@ -13,9 +13,6 @@
  *
  */
 #define DEBUG
-#ifndef CONFIG_PM
-#define CONFIG_PM
-#endif
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
@@ -26,9 +23,6 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/gpio.h>
-#ifdef CONFIG_PM
-#include <linux/pm.h>
-#endif
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
