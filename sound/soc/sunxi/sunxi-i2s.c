@@ -8,7 +8,6 @@
  * warranty of any kind, whether express or implied.
  */
 #define DEBUG
-#define USE_DAI_CODE	1
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>
@@ -907,133 +906,6 @@ MODULE_ALIAS("platform:sunxi-i2s");
 /* for suspend/resume feature */
 static int regsave[8];
 
-/*
- * The Digital Audio Interface can support sampling rates from 128fs to 768fs,
- * where fs is the audio sampling frequency typically 32kHz, 44.1kHz, 48kHz or
- * 96kHz. For different sampling frequencies, these tables list the coefficient
- * value of MCLKDIV and BCLKDIV.
- */
-#ifndef USE_DAI_CODE
-typedef struct __MCLK_SET_INF {
-	__u32	samp_rate;	/* sample rate */
-	__u16	mult_fs;	/* multiply of sample rate */
-
-	__u8	clk_div;	/* mpll division */
-	__u32	mclk;		/* 24.576 Mhz or 22.5792 Mhz */
-} __mclk_set_inf;
-
-static __mclk_set_inf MCLK_INF[] =
-{
-	// 8k bitrate
-	{  8000, 128, 24, 24576000}, {  8000, 192, 16, 24576000}, {  8000, 256, 12, 24576000},
-	{  8000, 384,  8, 24576000}, {  8000, 512,  6, 24576000}, {  8000, 768,  4, 24576000},
-
-	// 16k bitrate
-	{ 16000, 128, 12, 24576000}, { 16000, 192,  8, 24576000}, { 16000, 256,  6, 24576000},
-	{ 16000, 384,  4, 24576000}, { 16000, 768,  2, 24576000},
-
-	// 32k bitrate
-	{ 32000, 128,  6, 24576000}, { 32000, 192,  4, 24576000}, { 32000, 384,  2, 24576000},
-	{ 32000, 768,  1, 24576000},
-
-	// 64k bitrate
-	{ 64000, 192,  2, 24576000}, { 64000, 384,  1, 24576000},
-
-	//128k bitrate
-	{128000, 192,  1, 24576000},
-
-	// 12k bitrate
-	{ 12000, 128, 16, 24576000}, { 12000, 256, 8, 24576000}, { 12000, 512, 4, 24576000},
-
-	// 24k bitrate
-	{ 24000, 128,  8, 24576000}, { 24000, 256, 4, 24576000}, { 24000, 512, 2, 24576000},
-
-	// 48K bitrate
-	{ 48000, 128,  4, 24576000}, { 48000, 256,  2, 24576000}, { 48000, 512, 1, 24576000},
-
-	// 96k bitrate
-	{ 96000, 128 , 2, 24576000}, { 96000, 256,  1, 24576000},
-
-	//192k bitrate
-	{192000, 128,  1, 24576000},
-
-	//11.025k bitrate
-	{ 11025, 128, 16, 22579200}, { 11205, 256,  8, 22579200}, { 11205, 512,  4, 22579200},
-
-	//22.05k bitrate
-	{ 22050, 128,  8, 22579200}, { 22050, 256,  4, 22579200},
-	{ 22050, 512,  2, 22579200},
-
-	//44.1k bitrate
-	{ 44100, 128,  4, 22579200}, { 44100, 256,  2, 22579200}, { 44100, 512,  1, 22579200},
-
-	//88.2k bitrate
-	{ 88200, 128,  2, 22579200}, { 88200, 256,  1, 22579200},
-
-	//176.4k bitrate
-	{176400, 128, 1, 22579200},
-
-	//end flag 0xffffffff
-	{0xffffffff, 0, 0, 24576000},
-};
-
-typedef struct __BCLK_SET_INF {
-	__u8	bitpersamp;	/* bits per sample */
-	__u8	clk_div;	/* clock division */
-	__u16	mult_fs;	/* multiplay of sample rate */
-} __bclk_set_inf;
-
-
-static __bclk_set_inf BCLK_INF[] = {
-	/* 16bits per sample */
-	{16, 4, 128}, {16, 6, 192}, {16, 8, 256},
-	{16, 12, 384}, {16, 16, 512},
-
-	/* 24 bits per sample */
-	{24, 4, 192}, {24, 8, 384}, {24, 16, 768},
-
-	/* 32 bits per sample */
-	{32, 2, 128}, {32, 4, 256}, {32, 6, 384},
-	{32, 8, 512}, {32, 12, 768},
-
-	/* end flag */
-	{0xff, 0, 0},
-};
-
-/*
-* TODO: Function description.
-*/
-//static s32 get_clock_divder(u32 sample_rate, u32 sample_width, u32 * mclk_div, u32* mpll, u32* bclk_div, u32* mult_fs)
-static s32 sunxi_i2s_divisor_values(struct sunxi_i2s_info *i2s_info, u32 * mclk_div, u32* bclk_div, u32* mclk)
-{
-	u32 i, j, ret = -EINVAL;
-
-	printk("[I2S]Entered %s\n", __func__);
-	printk("[I2S]priv->samp_fs = %d\n", i2s_info->samp_fs);
-	printk("[I2S]priv->samp_res = %d\n", i2s_info->samp_res);
-
-	for(i=0; i< ARRAY_SIZE(MCLK_INF); i++) {
-		if((MCLK_INF[i].samp_rate == i2s_info->samp_fs) &&
-		((MCLK_INF[i].mult_fs == 256) || (MCLK_INF[i].mult_fs == 128))) {
-			for(j=0; j<ARRAY_SIZE(BCLK_INF); j++) {
-				if((BCLK_INF[j].bitpersamp == i2s_info->samp_res)
-					&& (BCLK_INF[j].mult_fs == MCLK_INF[i].mult_fs)) {
-					//set mclk and bclk division
-					*mclk_div = MCLK_INF[i].clk_div;
-					*mclk = MCLK_INF[i].mclk;
-					*bclk_div = BCLK_INF[j].clk_div;
-					i2s_info->mclk_rate = MCLK_INF[i].mult_fs;
-					ret = 0;
-					break;
-				}
-			}
-		} else if(MCLK_INF[i].samp_rate == 0xffffffff)
-			break;
-	}
-	return ret;
-}
-#endif
-
 static irqreturn_t sunxi_dai_isr(int irq, void *devid)
 {
 	struct sunxi_i2s_info *dai = (struct sunxi_i2s_info *)devid;
@@ -1319,126 +1191,6 @@ static int sun4i_dai_set_clk_rate(struct sunxi_i2s_info *priv,
 	return 0;
 }
 
-
-#ifndef USE_DAI_CODE
-static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigned int freq, int dir)
-{
-	u32 reg_val;
-	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(cpu_dai);
-
-	printk("[I2S]Entered %s\n", __func__);
-	if(!priv->slave) {
-		switch(clk_id) {
-		case SUNXI_SET_MCLK:
-			/* TODO - Check if the master clock is needed when slave mode is selected. */
-			if (clk_set_rate(priv->clk_pll2, freq)) {
-				pr_err("Try to set the i2s pll2 clock failed!\n");
-				return -EINVAL;
-			}
-			break;
-		case SUNXI_MCLKO_EN:	/* Master clock output */
-			if(dir == 1)	/* Enable */
-				regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, SUNXI_I2SCLKD_MCLKOEN, SUNXI_I2SCLKD_MCLKOEN);
-			if(dir == 0)	/* Disable */
-				regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, SUNXI_I2SCLKD_MCLKOEN, 0x0);
-			break;
-		default:
-			pr_err("Try to set unknown clkid: %d\n", clk_id);
-			return -EINVAL;
-		}
-		regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
-		printk("DEB: DA I2S CLKD: 0x%08x\n", reg_val);
-	}
-	return 0;
-}
-
-/*
- * TODO: Function Description
- * Saved in snd_soc_dai_ops sunxi_i2s_dai_ops.
- */
-static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int value)
-{
-	u32 reg_bk, reg_val, ret;
-	u32 mclk = 0;
-	u32 mclk_div = 0;
-	u32 bclk_div = 0;
-	u32 mclk_divreg = 0;
-	u32 bclk_divreg = 0;
-	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(cpu_dai);
-
-	/* Here i should know the sample rate and the FS multiple. */
-
-	printk("[I2S]Entered %s, div_id is %d\n", __func__, div_id);
-
-	switch (div_id) {
-	case SUNXI_DIV_MCLK:
-		regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0xf << SUNXI_I2SCLKD_MCLKDIV, (value & 0xf) << SUNXI_I2SCLKD_MCLKDIV);
-		break;
-	case SUNXI_DIV_BCLK:
-		regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0x7 << SUNXI_I2SCLKD_BCLKDIV, (value & 0x7) << SUNXI_I2SCLKD_BCLKDIV);
-		break;
-	case SUNXI_SAMPLING_FREQ:
-		if (!priv->slave) {
-			reg_bk = priv->samp_fs;
-			priv->samp_fs = (u32)value;
-			ret = sunxi_i2s_divisor_values(priv, &mclk_div, &bclk_div, &mclk); /* Get the register values */
-			printk("[I2S]Sampling rate is %d; selected MCLK: %d, MCLK_DIV: %d, BCLKDIV: %d\n", priv->samp_fs, mclk, mclk_div, bclk_div);
-			if(ret != 0) {
-				printk("[I2S]Sampling rate %d frequency not supported, turning to backup: %d.", priv->samp_fs, reg_bk);
-				priv->samp_fs = reg_bk;
-				return ret;
-			} else {
-				priv->samp_fs = (u32)value;
-				sunxi_i2s_set_sysclk(cpu_dai, SUNXI_SET_MCLK, mclk, 0); /* Set the master clock. */
-				/* AV for BCLK_DIV and MCLK_DIV, need to find the index from divisor value.. */
-				switch (mclk_div) {
-				case 1: mclk_divreg=0; break;
-				case 2: mclk_divreg=1; break;
-				case 4: mclk_divreg=2; break;
-				case 6: mclk_divreg=3; break;
-				case 8: mclk_divreg=4; break;
-				case 12: mclk_divreg=5; break;
-				case 16: mclk_divreg=6; break;
-				case 24: mclk_divreg=7; break;
-				case 32: mclk_divreg=8; break;
-				case 48: mclk_divreg=9; break;
-				case 64: mclk_divreg=10; break;
-				default:
-					printk("[I2S] %s: MCLK div unsupported %d, putting %d\n", __func__, mclk_div, mclk_divreg);
-				}
-				switch (bclk_div) {
-				case 2: bclk_divreg=0; break;
-				case 4: bclk_divreg=1; break;
-				case 6: bclk_divreg=2; break;
-				case 8: bclk_divreg=3; break;
-				case 12: bclk_divreg=4; break;
-				case 16: bclk_divreg=5; break;
-				case 32: bclk_divreg=6; break;
-				case 64: bclk_divreg=7; break;
-				default:
-					printk("[I2S] %s: BCLK div unsupported %d, putting %d\n", __func__, bclk_div, bclk_divreg);
-				}
-				/*regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, (0xf << SUNXI_I2SCLKD_MCLKDIV)|(0x7 << SUNXI_I2SCLKD_BCLKDIV),
-						((mclk_div & 0xf) << SUNXI_I2SCLKD_MCLKDIV)|((bclk_div & 0x7) << SUNXI_I2SCLKD_BCLKDIV));*/
-				regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0xf << SUNXI_I2SCLKD_MCLKDIV, (mclk_divreg & 0xf) << SUNXI_I2SCLKD_MCLKDIV);
-				regmap_update_bits(priv->regmap, SUNXI_I2SCLKD, 0x7 << SUNXI_I2SCLKD_BCLKDIV, (bclk_divreg & 0x7) << SUNXI_I2SCLKD_BCLKDIV);
-				regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
-				printk("DEB: DA I2S internal CLKD (MCLK / BCLK): 0x%02x\n", reg_val);
-			}
-		} else {
-			priv->samp_fs = (u32)value;
-		}
-		break;
-	default:
-			regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
-			printk("ERR: dev_id unknown: %d, DA I2S CLKD (MCLK / BCLK): 0x%02x\n", div_id, reg_val);
-		return -EINVAL;
-	}
-		regmap_read(priv->regmap, SUNXI_I2SCLKD, &reg_val);
-		printk("DEB: DA I2S CLKD (MCLK / BCLK): 0x%02x\n", reg_val);
-	return 0;
-}
-#endif
 /*
 * TODO: Function description.
 * TODO: Refactor function because the configuration is with wrong scheme. Use a 4bit mask with the configuration option and then the value?
@@ -1603,10 +1355,7 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	struct sunxi_i2s_info *priv = snd_soc_dai_get_drvdata(dai);
 	int is_24bit = !!(hw_param_interval(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS)->min == 32);
 	unsigned int rate = params_rate(params);
-#ifndef USE_DAI_CODE
-	unsigned int tmp;
-	unsigned int reg_val1;
-#endif
+
 	printk("[I2S]Entered %s\n", __func__);
 	switch (rate) {
 	case 192000:
@@ -1666,58 +1415,8 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	}
 
-#ifdef USE_DAI_CODE
 	sun4i_dai_set_clk_rate(priv, params_rate(params), params_format(params));
-#else
-	/* Sample Rate. */
-	if(priv->slave == 0) {
-		/* Only master has to configure the clock registers for sample rate setting.*/
-		priv->samp_fs = params_rate(params);
-		sunxi_i2s_set_clkdiv(dai, SUNXI_SAMPLING_FREQ, priv->samp_fs);
-	}
 
-	/* Sample Format. */
-	/* TODO: Support SNDRV_PCM_FORMAT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE formats. Must check the Word Size and change it for 24bits ("3LE").*/
-	reg_val1 = 0;	/* Clear sample resolution select size */
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_S16_LE:
-		reg_val1 |= SUNXI_I2SFAT0_SR_16BIT | SUNXI_I2SFAT0_WSS_16BCLK;
-		priv->samp_res = 16;
-		printk("[I2S] %s: SNDRV_PCM_FORMAT_S16_LE.\n", __func__);
-		break;
-
-	case SNDRV_PCM_FORMAT_S24_3LE:
-		reg_val1 |= SUNXI_I2SFAT0_SR_24BIT;
-		priv->samp_res = 24;
-		if(priv->ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
-			reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
-			priv->ws_size = 32;
-			printk("[I2S]%s: Changing word slect size to 32bit.\n", __func__);
-		}
-		printk("[I2S]%s: SNDRV_PCM_FORMAT_S24_3LE.\n", __func__);
-		break;
-	case SNDRV_PCM_FORMAT_S24_LE:
-		reg_val1 |= SUNXI_I2SFAT0_SR_24BIT;
-		priv->samp_res = 24;
-		if(priv->ws_size != 32) {/* If the Word Size is not equal to 32, sets word size to 32.*/
-			reg_val1 |= SUNXI_I2SFAT0_WSS_32BCLK;
-			priv->ws_size = 32;
-			printk("[I2S]%s: Changing word slect size to 32bit.\n", __func__);
-		}
-		printk("[I2S]%s: SNDRV_PCM_FORMAT_S24_LE.\n", __func__);
-		break;
-	default:
-		printk("[I2S]%s: Unsupported format (%d).\n", __func__, (int)params_format(params));
-		reg_val1 |= SUNXI_I2SFAT0_SR_24BIT | SUNXI_I2SFAT0_WSS_32BCLK;
-		priv->samp_res = 24;
-		priv->ws_size = 32;
-		printk("[I2S]%s: Setting 24 bit format and changing word slect size to 32bit.\n", __func__);
-		break;
-	}
-	regmap_update_bits(priv->regmap, SUNXI_I2SFAT0, SUNXI_I2SFAT0_WSS_32BCLK|SUNXI_I2SFAT0_SR_RVD, reg_val1);
-	regmap_read(priv->regmap, SUNXI_I2SFAT0, &tmp);
-	printk("DEB %s: DA FAT0 register: %x\n", __func__, tmp);
-#endif
 	return 0;
 }
 
@@ -1885,10 +1584,6 @@ static const struct snd_soc_component_driver sunxi_i2s_component = {
 static struct snd_soc_dai_ops sunxi_i2s_dai_ops = {
 	.startup	= sunxi_i2s_startup,
 	.shutdown	= sunxi_i2s_shutdown,
-#ifndef USE_DAI_CODE
-	.set_sysclk	= sunxi_i2s_set_sysclk,
-	.set_clkdiv	= sunxi_i2s_set_clkdiv,
-#endif
 	.set_fmt	= sunxi_i2s_set_fmt,
 	.hw_params	= sunxi_i2s_hw_params,
 	.trigger	= sunxi_i2s_trigger,
