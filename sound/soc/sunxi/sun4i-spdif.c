@@ -182,29 +182,19 @@ struct sun4i_spdif_dev {
 
 static void sun4i_spdif_configure(struct sun4i_spdif_dev *host)
 {
-	u32 reg_val;
-
 	/* soft reset SPDIF */
 	regmap_write(host->regmap, SUN4I_SPDIF_CTL, SUN4I_SPDIF_CTL_RESET);
 
-	/* MCLK OUTPUT enable */
-	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
-			SUN4I_SPDIF_CTL_MCLKOUTEN, SUN4I_SPDIF_CTL_MCLKOUTEN);
-
 	/* flush TX FIFO */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_FCTL,
-			SUN4I_SPDIF_FCTL_FTX, SUN4I_SPDIF_FCTL_FTX);
-
-	/* clear interrupt status */
-	regmap_read(host->regmap, SUN4I_SPDIF_ISTA, &reg_val);
-	regmap_write(host->regmap, SUN4I_SPDIF_ISTA, reg_val);
+					SUN4I_SPDIF_FCTL_FTX,
+					SUN4I_SPDIF_FCTL_FTX);
 
 	/* clear TX counter */
 	regmap_write(host->regmap, SUN4I_SPDIF_TXCNT, 0);
-
 }
 
-void sun4i_snd_txctrl_on(struct snd_pcm_substream *substream,
+static void sun4i_snd_txctrl_on(struct snd_pcm_substream *substream,
 				struct sun4i_spdif_dev *host)
 {
 	if (substream->runtime->channels == 1)
@@ -228,7 +218,7 @@ void sun4i_snd_txctrl_on(struct snd_pcm_substream *substream,
 					SUN4I_SPDIF_CTL_GEN);
 }
 
-void sun4i_snd_txctrl_off(struct snd_pcm_substream *substream,
+static void sun4i_snd_txctrl_off(struct snd_pcm_substream *substream,
 				struct sun4i_spdif_dev *host)
 {
 	/* SPDIF TX DISABLE */
@@ -343,7 +333,6 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	reg_val = 0;
-	reg_val &= ~SUN4I_SPDIF_FCTL_FIFOSRC;
 	reg_val |= SUN4I_SPDIF_FCTL_TXTL_MASK;
 	reg_val |= SUN4I_SPDIF_FCTL_RXTL_MASK;
 	reg_val |= SUN4I_SPDIF_FCTL_TXIM;
@@ -375,7 +364,6 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	reg_val = 0;
-	reg_val &= ~SUN4I_SPDIF_TXCFG_SINGLEMOD;
 	reg_val |= SUN4I_SPDIF_TXCFG_ASS;
 	reg_val |= fmt; /* set non audio and bit depth */
 	reg_val |= SUN4I_SPDIF_TXCFG_CHSTMODE;
