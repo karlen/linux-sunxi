@@ -326,12 +326,8 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 		return ret;
 	}
 
-	reg_val = 0;
-	reg_val |= SUN4I_SPDIF_FCTL_TXTL_MASK;
-	reg_val |= SUN4I_SPDIF_FCTL_RXTL_MASK;
-	reg_val |= SUN4I_SPDIF_FCTL_TXIM;
-	reg_val |= SUN4I_SPDIF_FCTL_RXOM_MASK;
-	regmap_write(host->regmap, SUN4I_SPDIF_FCTL, reg_val);
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_FCTL,
+			   SUN4I_SPDIF_FCTL_TXIM, SUN4I_SPDIF_FCTL_TXIM);
 
 	switch (rate) {
 	case 22050:
