@@ -187,8 +187,7 @@ static void sun4i_spdif_configure(struct sun4i_spdif_dev *host)
 
 	/* flush TX FIFO */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_FCTL,
-					SUN4I_SPDIF_FCTL_FTX,
-					SUN4I_SPDIF_FCTL_FTX);
+			   SUN4I_SPDIF_FCTL_FTX, SUN4I_SPDIF_FCTL_FTX);
 
 	/* clear TX counter */
 	regmap_write(host->regmap, SUN4I_SPDIF_TXCNT, 0);
@@ -199,43 +198,40 @@ static void sun4i_snd_txctrl_on(struct snd_pcm_substream *substream,
 {
 	if (substream->runtime->channels == 1)
 		regmap_update_bits(host->regmap, SUN4I_SPDIF_TXCFG,
-						SUN4I_SPDIF_TXCFG_SINGLEMOD,
-						SUN4I_SPDIF_TXCFG_SINGLEMOD);
+				   SUN4I_SPDIF_TXCFG_SINGLEMOD,
+				   SUN4I_SPDIF_TXCFG_SINGLEMOD);
 
 	/* SPDIF TX ENABLE */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_TXCFG,
-					SUN4I_SPDIF_TXCFG_TXEN,
-					SUN4I_SPDIF_TXCFG_TXEN);
+			   SUN4I_SPDIF_TXCFG_TXEN, SUN4I_SPDIF_TXCFG_TXEN);
 
 	/* DRQ ENABLE */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_INT,
-					SUN4I_SPDIF_INT_TXDRQEN,
-					SUN4I_SPDIF_INT_TXDRQEN);
+			   SUN4I_SPDIF_INT_TXDRQEN, SUN4I_SPDIF_INT_TXDRQEN);
 
 	/* Global enable */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
-					SUN4I_SPDIF_CTL_GEN,
-					SUN4I_SPDIF_CTL_GEN);
+			   SUN4I_SPDIF_CTL_GEN, SUN4I_SPDIF_CTL_GEN);
 }
 
 static void sun4i_snd_txctrl_off(struct snd_pcm_substream *substream,
-				struct sun4i_spdif_dev *host)
+				 struct sun4i_spdif_dev *host)
 {
 	/* SPDIF TX DISABLE */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_TXCFG,
-					SUN4I_SPDIF_TXCFG_TXEN, 0);
+			   SUN4I_SPDIF_TXCFG_TXEN, 0);
 
 	/* DRQ DISABLE */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_INT,
-					SUN4I_SPDIF_INT_TXDRQEN, 0);
+			   SUN4I_SPDIF_INT_TXDRQEN, 0);
 
 	/* Global disable */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
-					SUN4I_SPDIF_CTL_GEN, 0);
+			   SUN4I_SPDIF_CTL_GEN, 0);
 }
 
 static int sun4i_spdif_startup(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *cpu_dai)
+			       struct snd_soc_dai *cpu_dai)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(rtd->cpu_dai);
@@ -249,7 +245,7 @@ static int sun4i_spdif_startup(struct snd_pcm_substream *substream,
 }
 
 static void sun4i_spdif_shutdown(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
+				 struct snd_soc_dai *dai)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(rtd->cpu_dai);
@@ -261,8 +257,8 @@ static void sun4i_spdif_shutdown(struct snd_pcm_substream *substream,
 }
 
 static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params,
-				struct snd_soc_dai *cpu_dai)
+				 struct snd_pcm_hw_params *params,
+				 struct snd_soc_dai *cpu_dai)
 {
 	int ret = 0;
 	int fmt;
@@ -374,7 +370,7 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 }
 
 static int sun4i_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
-				struct snd_soc_dai *dai)
+			       struct snd_soc_dai *dai)
 {
 	int ret = 0;
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(dai);
