@@ -32,6 +32,7 @@
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 #include <sound/dmaengine_pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
@@ -241,19 +242,16 @@ static int sun4i_spdif_startup(struct snd_pcm_substream *substream,
 
 	sun4i_spdif_configure(host);
 
-	return clk_prepare_enable(host->clk);
+	return 0;
 }
 
 static void sun4i_spdif_shutdown(struct snd_pcm_substream *substream,
 				 struct snd_soc_dai *dai)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(rtd->cpu_dai);
 
 	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
 		return;
-
-	clk_disable_unprepare(host->clk);
 }
 
 static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
@@ -485,6 +483,26 @@ static const struct snd_soc_component_driver sun4i_spdif_component = {
 	.name		= "sun4i-spdif",
 };
 
+#ifdef CONFIG_PM
+static int sun4i_spdif_runtime_suspend(struct device *dev)
+{
+	struct sun4i_spdif_dev *host  = dev_get_drvdata(dev);
+
+	clk_disable_unprepare(host->clk);
+
+	return 0;
+}
+
+static int sun4i_spdif_runtime_resume(struct device *dev)
+{
+	struct sun4i_spdif_dev *host  = dev_get_drvdata(dev);
+
+	clk_prepare_enable(host->clk);
+
+	return 0;
+}
+#endif /* CONFIG_PM */
+
 static int sun4i_spdif_probe(struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
@@ -578,6 +596,8 @@ static int sun4i_spdif_probe(struct platform_device *pdev)
 	if (ret)
 		goto exit_clkdisable_clk;
 
+	pm_runtime_enable(&pdev->dev);
+
 	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
 	if (ret)
 		goto exit_clkdisable_clk;
@@ -597,6 +617,8 @@ static int sun4i_spdif_remove(struct platform_device *pdev)
 	snd_soc_unregister_platform(&pdev->dev);
 	snd_soc_unregister_component(&pdev->dev);
 
+	pm_runtime_disable(&pdev->dev);
+
 	if (!IS_ERR(host->clk)) {
 		clk_disable_unprepare(host->clk);
 		clk_disable_unprepare(host->apb_clk);
@@ -605,11 +627,17 @@ static int sun4i_spdif_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static const struct dev_pm_ops sun4i_spdif_pm = {
+	SET_RUNTIME_PM_OPS(sun4i_spdif_runtime_suspend,
+			   sun4i_spdif_runtime_resume, NULL)
+};
+
 static struct platform_driver sun4i_spdif_driver = {
 	.driver		= {
 		.name	= "sun4i-spdif",
 		.owner	= THIS_MODULE,
 		.of_match_table = of_match_ptr(sun4i_spdif_of_match),
+		.pm	= &sun4i_spdif_pm,
 	},
 	.probe		= sun4i_spdif_probe,
 	.remove		= sun4i_spdif_remove,
