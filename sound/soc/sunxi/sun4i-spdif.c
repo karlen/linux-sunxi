@@ -245,15 +245,6 @@ static int sun4i_spdif_startup(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static void sun4i_spdif_shutdown(struct snd_pcm_substream *substream,
-				 struct snd_soc_dai *dai)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-
-	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return;
-}
-
 static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 				 struct snd_pcm_hw_params *params,
 				 struct snd_soc_dai *cpu_dai)
@@ -431,7 +422,6 @@ static int sun4i_spdif_soc_dai_probe(struct snd_soc_dai *dai)
 
 static const struct snd_soc_dai_ops sun4i_spdif_dai_ops = {
 	.startup	= sun4i_spdif_startup,
-	.shutdown	= sun4i_spdif_shutdown,
 	.trigger	= sun4i_spdif_trigger,
 	.hw_params	= sun4i_spdif_hw_params,
 };
