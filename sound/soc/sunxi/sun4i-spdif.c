@@ -172,7 +172,6 @@ struct sun4i_spdif_dev {
 	struct platform_device *pdev;
 	struct clk *spdif_clk;
 	struct clk *apb_clk;
-	struct clk *audio_clk;
 	struct snd_soc_dai_driver cpu_dai_drv;
 	struct regmap *regmap;
 	struct snd_dmaengine_dai_dma_data dma_params_tx;
@@ -338,13 +337,6 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 		return -EINVAL;
 	}
 
-	ret = clk_set_rate(host->audio_clk, mclk);
-	if (ret < 0) {
-		dev_err(&pdev->dev,
-			"Setting pll2 clock rate for %d Hz failed!\n", mclk);
-		return ret;
-	}
-
 	ret = clk_set_rate(host->spdif_clk, mclk);
 	if (ret < 0) {
 		dev_err(&pdev->dev,
@@ -425,7 +417,7 @@ static int sun4i_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 	u32 reg_val = 0;
 
 	dev_err(&pdev->dev,
-			"Command State %d Audio Clock is %lu\n", cmd, clk_get_rate(host->audio_clk));
+			"Command State %d Audio Clock is %lu\n", cmd, clk_get_rate(host->spdif_clk));
 
 	regmap_read(host->regmap, SUN4I_SPDIF_CTL, &reg_val);
 	dev_err(&pdev->dev,
@@ -578,21 +570,9 @@ static int sun4i_spdif_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	host->audio_clk = devm_clk_get(&pdev->dev, "audio");
-	if (IS_ERR(host->audio_clk)) {
-		dev_err(&pdev->dev, "failed to get an audio clock.\n");
-		return PTR_ERR(host->audio_clk);
-	}
-
 	host->spdif_clk = devm_clk_get(&pdev->dev, "spdif");
 	if (IS_ERR(host->spdif_clk)) {
 		dev_err(&pdev->dev, "failed to get a spdif clock.\n");
-		return PTR_ERR(host->spdif_clk);
-	}
-
-	ret = clk_prepare_enable(host->audio_clk);
-	if (ret) {
-		dev_err(&pdev->dev, "try to enable audio clk failed\n");
 		goto exit_clkdisable_apb_clk;
 	}
 
