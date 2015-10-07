@@ -170,7 +170,7 @@
 
 struct sun4i_spdif_dev {
 	struct platform_device *pdev;
-	struct clk *clk;
+	struct clk *spdif_clk;
 	struct clk *apb_clk;
 	struct clk *audio_clk;
 	struct snd_soc_dai_driver cpu_dai_drv;
@@ -310,7 +310,7 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 		return ret;
 	}
 
-	ret = clk_set_rate(host->clk, mclk);
+	ret = clk_set_rate(host->spdif_clk, mclk);
 	if (ret < 0) {
 		dev_err(&pdev->dev,
 			"Setting SPDIF clock rate for %d Hz failed!\n", mclk);
@@ -474,7 +474,7 @@ static int sun4i_spdif_runtime_suspend(struct device *dev)
 {
 	struct sun4i_spdif_dev *host  = dev_get_drvdata(dev);
 
-	clk_disable_unprepare(host->clk);
+	clk_disable_unprepare(host->spdif_clk);
 
 	return 0;
 }
@@ -483,7 +483,7 @@ static int sun4i_spdif_runtime_resume(struct device *dev)
 {
 	struct sun4i_spdif_dev *host  = dev_get_drvdata(dev);
 
-	clk_prepare_enable(host->clk);
+	clk_prepare_enable(host->spdif_clk);
 
 	return 0;
 }
@@ -545,10 +545,10 @@ static int sun4i_spdif_probe(struct platform_device *pdev)
 		return PTR_ERR(host->audio_clk);
 	}
 
-	host->clk = devm_clk_get(&pdev->dev, "spdif");
-	if (IS_ERR(host->clk)) {
+	host->spdif_clk = devm_clk_get(&pdev->dev, "spdif");
+	if (IS_ERR(host->spdif_clk)) {
 		dev_err(&pdev->dev, "failed to get a spdif clock.\n");
-		return PTR_ERR(host->clk);
+		return PTR_ERR(host->spdif_clk);
 	}
 
 	ret = clk_prepare_enable(host->audio_clk);
@@ -590,7 +590,7 @@ static int sun4i_spdif_probe(struct platform_device *pdev)
 	return 0;
 
 exit_clkdisable_clk:
-	clk_disable_unprepare(host->clk);
+	clk_disable_unprepare(host->spdif_clk);
 exit_clkdisable_apb_clk:
 	clk_disable_unprepare(host->apb_clk);
 	return ret;
@@ -605,8 +605,8 @@ static int sun4i_spdif_remove(struct platform_device *pdev)
 
 	pm_runtime_disable(&pdev->dev);
 
-	if (!IS_ERR(host->clk)) {
-		clk_disable_unprepare(host->clk);
+	if (!IS_ERR(host->spdif_clk)) {
+		clk_disable_unprepare(host->spdif_clk);
 		clk_disable_unprepare(host->apb_clk);
 	}
 
