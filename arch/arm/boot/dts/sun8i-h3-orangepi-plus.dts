@@ -60,6 +60,10 @@
 	};
 };
 
+&codec {
+	status = "okay";
+};
+
 &ehci3 {
 	status = "okay";
 };
