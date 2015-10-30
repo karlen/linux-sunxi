@@ -14,6 +14,12 @@ config SND_SUN6I_CODEC
 	select SND_SOC_GENERIC_DMAENGINE_PCM
 	tristate "Allwinner A31 Audio Codec Support"
 
+config SND_SUN8I_CODEC
+	select MFD_CORE
+	select REGMAP_MMIO
+	select SND_SOC_GENERIC_DMAENGINE_PCM
+	tristate "Allwinner H3 Audio Codec Support"
+
 config SND_SUN4I_I2S
 	tristate "APB on-chip sun4i/sun5i/sun7i I2S"
 	select SND_SOC_GENERIC_DMAENGINE_PCM
