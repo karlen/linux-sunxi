@@ -323,7 +323,7 @@ struct sun8i_priv {
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 };
 
-struct sun8i_priv *sun8i;
+//struct sun8i_priv *sun8i;
 
 void codec_wr_control(struct sun8i_priv *sun8i, u32 reg, u32 mask, u32 shift, u32 val)
 {
@@ -514,6 +514,9 @@ static int sun8i_codec_capture_stop(struct sun8i_priv *sun8i)
 static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 			 struct snd_soc_dai *dai)
 {
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct sun8i_priv *sun8i = snd_soc_card_get_drvdata(rtd->card);
+
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		if (sun8i->speaker_active) {
 			/* return codec_pa_play_open(sun8i); */
@@ -680,7 +683,7 @@ static int sun8i_codec_dai_probe(struct snd_soc_dai *dai)
 	return 0;
 }
 
-static void sun8i_codec_init(struct sun8i_priv *priv)
+static void sun8i_codec_init(struct sun8i_priv *sun8i)
 {
 	/*
 	 * Stop doing DMA requests whenever there's only 16 samples
@@ -1017,6 +1020,7 @@ static int sun8i_codec_probe(struct platform_device *pdev)
 		goto err_clk_disable;
 
 	sun8i_codec_init(priv);
+	dev_err(&pdev->dev, "COOPS:regmap 0x%x\n", priv->regmap);
 
 	ret = snd_soc_register_card(card);
 	if (ret) {
