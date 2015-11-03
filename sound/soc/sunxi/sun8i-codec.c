@@ -433,10 +433,8 @@ struct sun8i_priv {
 
 	bool			linein_playback;
 	bool			linein_capture;
-	bool			headphone_playback;
-	bool			earpiece_playback;
-	bool			speaker_playback;
 	bool			speaker_active;
+	bool			codec_addaloop_en;
 
 	struct regmap		*regmap;
 
@@ -446,9 +444,13 @@ struct sun8i_priv {
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 
 	int 			lineout_vol;
+	int 			cap_vol;
+	int			codec_cap_mode;
 };
 
-//struct sun8i_priv *sun8i;
+//tidy up this later
+static int codec_wr_prcm_control(u32 reg, u32 mask, u32 shift, u32 val);
+static unsigned int read_prcm_wvalue(unsigned int addr);
 
 void codec_wr_control(struct sun8i_priv *sun8i, u32 reg, u32 mask, u32 shift, u32 val)
 {
@@ -457,32 +459,10 @@ void codec_wr_control(struct sun8i_priv *sun8i, u32 reg, u32 mask, u32 shift, u3
 
 static int sun8i_codec_pa_play_open(struct sun8i_priv *sun8i)
 {
-	/* int pa_vol = 0; */
-	/* script_item_u val; */
-	/* script_item_value_type_e  type; */
-	/* int pa_double_used = 0; */
-
-	/* type = script_get_item("audio_para", "pa_double_used", &val); */
-	/* if (SCIRPT_ITEM_VALUE_TYPE_INT != type) { */
-	/* 	printk("[audiocodec] type err!\n"); */
-	/* } */
-	/* pa_double_used = val.val; */
-	/* if (!pa_double_used) { */
-	/* 	type = script_get_item("audio_para", "pa_single_vol", &val); */
-	/* 	if (SCIRPT_ITEM_VALUE_TYPE_INT != type) { */
-	/* 		printk("[audiocodec] type err!\n"); */
-	/* 	} */
-	/* 	pa_vol = val.val; */
-	/* } else { */
-	/* 	type = script_get_item("audio_para", "pa_double_vol", &val); */
-	/* 	if (SCIRPT_ITEM_VALUE_TYPE_INT != type) { */
-	/* 		printk("[audiocodec] type err!\n"); */
-	/* 	} */
-	/* 	pa_vol = val.val; */
-	/* } */
-
+	int l_vol = 0;
 	/*enable dac digital*/
 	codec_wr_control(sun8i, SUNXI_DAC_DPC, 0x1, SUNXI_DAC_DPC_EN_DA, 0x1);
+	codec_wr_prcm_control(LINEOUT_PA_GAT, 0x1, PA_CLK_GC, 0x0);
 	/*set TX FIFO send drq level*/
 	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0xf);
 	/*set TX FIFO MODE*/
@@ -490,24 +470,54 @@ static int sun8i_codec_pa_play_open(struct sun8i_priv *sun8i)
 
 	//send last sample when dac fifo under run
 	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
+	codec_wr_prcm_control(PAEN_CTR, 0x3, PA_ANTI_POP_CTRL, 0x3);
+
+	codec_wr_prcm_control(DAC_PA_SRC, 0x1, DACALEN, 0x1);
+	codec_wr_prcm_control(DAC_PA_SRC, 0x1, DACAREN, 0x1);
+
+	codec_wr_prcm_control(DAC_PA_SRC, 0x1, LMIXEN, 0x1);
+	codec_wr_prcm_control(DAC_PA_SRC, 0x1, RMIXEN, 0x1);
+	msleep(10);
+
+	codec_wr_prcm_control(ROMIXSC, 0x1, RMIXMUTEDACR, 0x1);
+	codec_wr_prcm_control(LOMIXSC, 0x1, LMIXMUTEDACL, 0x1);
+	/*while adjust volume from app interface, so read the hardware vol first*/
+	l_vol = read_prcm_wvalue(LINEOUT_VOLC);
+	l_vol = l_vol>>3;
+	codec_wr_prcm_control(LINEOUT_VOLC, 0x1f, LINEOUTVOL, l_vol);
 
 	return 0;
 }
 
 static int sun8i_codec_capture_open(struct sun8i_priv *sun8i)
 {
-	int cap_vol = 0;
-	/* script_item_u val; */
-	/* script_item_value_type_e  type; */
+	/*disable Right linein Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
+	/*disable Left linein Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
 
-	/* type = script_get_item("audio_para", "cap_vol", &val); */
-	/* if (SCIRPT_ITEM_VALUE_TYPE_INT != type) { */
-	/* 	printk("[audiocodec] type err!\n"); */
-	/* } */
-	/* cap_vol = val.val; */
+	/*enable mic1 pa*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x1);
+	/*mic1 gain 36dB,if capture volume is too small, enlarge the mic1boost*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x7, MIC1BOOST, sun8i->cap_vol);
+	/*enable Master microphone bias*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x1);
 
-	/* TODO: This used to be retrieved by FEX */
-	cap_vol = 5;
+	if (sun8i->codec_addaloop_en) {
+		/*enable Left output Boost stage*/
+		codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTELOUTPUT, 0x1);
+		/*enable Right output Boost stage*/
+		codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTEROUTPUT, 0x1);
+	} else {
+		/*enable Left MIC1 Boost stage*/
+		codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x1);
+		/*enable Right MIC1 Boost stage*/
+		codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x1);
+	}
+
+	/*enable adc_r adc_l analog*/
+	codec_wr_prcm_control(ADC_AP_EN, 0x1,  ADCREN, 0x1);
+	codec_wr_prcm_control(ADC_AP_EN, 0x1,  ADCLEN, 0x1);
 
 	/*set RX FIFO mode*/
 	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
@@ -515,12 +525,17 @@ static int sun8i_codec_capture_open(struct sun8i_priv *sun8i)
 	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
 	/*enable adc digital part*/
 	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
+	/*enable adc drq*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
+	/*hardware fifo delay*/
+	msleep(200);
 
 	return 0;
 }
 
 static int sun8i_codec_play_start(struct sun8i_priv *sun8i)
 {
+	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0x40);
 	/*enable dac drq*/
 	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x1);
 	/*DAC FIFO Flush,Write '1' to flush TX FIFO, self clear to '0'*/
@@ -531,25 +546,10 @@ static int sun8i_codec_play_start(struct sun8i_priv *sun8i)
 
 static int sun8i_codec_play_stop(struct sun8i_priv *sun8i)
 {
-	int i = 0;
-	int headphone_vol = 0;
-	/* script_item_u val; */
-	/* script_item_value_type_e  type; */
+	codec_wr_prcm_control(ROMIXSC, 0x1, RMIXMUTEDACR, 0x0);
+	codec_wr_prcm_control(LOMIXSC, 0x1, LMIXMUTEDACL, 0x0);
 
-	/* type = script_get_item("audio_para", "headphone_vol", &val); */
-	/* if (SCIRPT_ITEM_VALUE_TYPE_INT != type) { */
-	/* 	printk("[audiocodec] type err!\n"); */
-	/* } */
-	/* headphone_vol = val.val; */
-
-	/* TODO: This used to be retrieved by FEX*/
-	headphone_vol = 0x3b;
-
-	/*disable dac drq*/
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x0);
-
-	/*disable dac digital*/
-	codec_wr_control(sun8i, SUNXI_DAC_DPC ,  0x1, SUNXI_DAC_DPC_EN_DA, 0x0);
+	codec_wr_control(sun8i, SUNXI_DAC_FIFOC, 0x1, SUNXI_DAC_FIFOC_FIFO_FLUSH, 0x1);
 
 	return 0;
 }
@@ -567,7 +567,118 @@ static int sun8i_codec_capture_stop(struct sun8i_priv *sun8i)
 	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x0);
 	/*disable adc drq*/
 	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x0);
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_FIFO_FLUSH, 0x1);
 
+	/*disable mic1 pa*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x0);
+	/*disable Master microphone bias*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x0);
+	codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x0);
+	
+	/*disable Right linein Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
+	/*disable Left linein Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
+
+	/*disable Left MIC1 Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x0);
+	/*disable Right MIC1 Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x0);
+
+	/*disable Left output Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTELOUTPUT, 0x0);
+	/*disable Right output Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTEROUTPUT, 0x0);
+
+	/*disable Left MIC2 Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTEMIC2BOOST, 0x0);
+	/*disable Right MIC2 Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x0);
+
+	/*disable adc_r adc_l analog*/
+	codec_wr_prcm_control(ADC_AP_EN, 0x1,  ADCREN, 0x0);
+	codec_wr_prcm_control(ADC_AP_EN, 0x1,  ADCLEN, 0x0);
+
+	return 0;
+}
+
+/*
+*	use for the line_in record
+*/
+int sun8i_codec_linein_capture_open(struct sun8i_priv *sun8i)
+{
+	/*disable mic1 pa*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x0);
+	/*disable Master microphone bias*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x0);
+
+	codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x0);
+	/*disable Right MIC2 Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x0);
+	/*disable Left MIC1 Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x0);
+
+	/*enable Right linein Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x1);
+	/*enable Left linein Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x1);
+
+	/*enable adc_r adc_l analog*/
+	codec_wr_prcm_control(ADC_AP_EN, 0x1,  ADCREN, 0x1);
+	codec_wr_prcm_control(ADC_AP_EN, 0x1,  ADCLEN, 0x1);
+
+	/*set RX FIFO mode*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
+	/*set RX FIFO rec drq level*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
+	/*enable adc digital part*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
+	/*enable adc drq*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
+	/*hardware fifo delay*/
+	msleep(200);
+	return 0;
+}
+
+/*
+*	use for the phone noise reduced while in phone model.
+*	use the mic1 and mic2 to reduced the noise from record
+*/
+static int sun8i_codec_mic1_2_capture_open(struct sun8i_priv *sun8i)
+{
+	/*disable Right linein Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
+	/*disable Left linein Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
+	/*disable Right MIC1 Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x0);
+
+	/*enable mic1 pa*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x1);
+	/*enable Master microphone bias*/
+	codec_wr_prcm_control(MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x1);
+
+	codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x1);
+
+	/*enable Right MIC2 Boost stage*/
+	codec_wr_prcm_control(RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x1);
+	/*enable Left MIC1 Boost stage*/
+	codec_wr_prcm_control(LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x1);
+	
+	/*enable adc_r adc_l analog*/
+	codec_wr_prcm_control(ADC_AP_EN, 0x1,  ADCREN, 0x1);
+	codec_wr_prcm_control(ADC_AP_EN, 0x1,  ADCLEN, 0x1);
+
+	/*set RX FIFO mode*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
+	/*set RX FIFO rec drq level*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
+	/*enable adc digital part*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
+	/*enable adc drq*/
+	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
+	/*hardware fifo delay*/
+	msleep(200);
 	return 0;
 }
 
@@ -578,7 +689,7 @@ static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 	struct sun8i_priv *sun8i = snd_soc_card_get_drvdata(rtd->card);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		if (sun8i->speaker_active) {
+		if (1/*sun8i->speaker_active*/) {
 			return sun8i_codec_pa_play_open(sun8i);
 		} else {
 			/*set TX FIFO send drq level*/
@@ -591,7 +702,13 @@ static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 			codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
 		}
 	} else {
-		sun8i_codec_capture_open(sun8i);
+		if (sun8i->codec_cap_mode == 1) {
+			sun8i_codec_mic1_2_capture_open(sun8i);
+		} else if (sun8i->codec_cap_mode == 2) {
+			sun8i_codec_linein_capture_open(sun8i);
+		} else {
+			sun8i_codec_capture_open(sun8i);
+		}
 	}
 
 	return 0;
@@ -742,8 +859,6 @@ static int sun8i_codec_dai_probe(struct snd_soc_dai *dai)
 				  &priv->capture_dma_data);
 	return 0;
 }
-//tidy up this later
-static int codec_wr_prcm_control(u32 reg, u32 mask, u32 shift, u32 val);
 
 static void sun8i_codec_init(struct sun8i_priv *sun8i)
 {
@@ -855,11 +970,9 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 static	bool adcdrc_used       = false;
 static	bool dacdrc_used       = false;
 static	bool adchpf_used       = false;
-static int codec_cap_mode = 0;
 static bool codec_lineout_en = false;
 static  bool codec_addadrc_en = false;
 static  bool codec_lineinin_en  = false;
-static bool codec_addaloop_en = false;
 static int play_running = 0;
 
 static unsigned int read_prcm_wvalue(unsigned int addr)
@@ -1033,7 +1146,7 @@ static int codec_get_addadrc(struct snd_kcontrol *kcontrol,
 static int codec_set_addaloop(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	codec_addaloop_en = ucontrol->value.integer.value[0];
+	//codec_addaloop_en = ucontrol->value.integer.value[0];
 
 	return 0;
 }
@@ -1041,13 +1154,13 @@ static int codec_set_addaloop(struct snd_kcontrol *kcontrol,
 static int codec_get_addaloop(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = codec_addaloop_en;
+	//ucontrol->value.integer.value[0] = codec_addaloop_en;
 	return 0;
 }
 static int codec_set_audio_capture_mode(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	codec_cap_mode = ucontrol->value.integer.value[0];
+	//codec_cap_mode = ucontrol->value.integer.value[0];
 
 	return 0;
 }
@@ -1055,7 +1168,7 @@ static int codec_set_audio_capture_mode(struct snd_kcontrol *kcontrol,
 static int codec_get_audio_capture_mode(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = codec_cap_mode;
+	//ucontrol->value.integer.value[0] = codec_cap_mode;
 	return 0;
 }
 
