@@ -94,10 +94,6 @@
 #define SUN6I_ADC_DAP_RDAC	(0x90)		//ADC DAP Right Decay&Attack time Register
 #define SUN6I_ADC_DAP_HPFC	(0x94)		//ADC DAP HPF Coefficient Register
 
-
-#define RADCMIXMUTE				  (7)
-#define LADCMIXMUTE				  (0)
-
 /*DAC Debug Register
 * codecbase+0x48
 */
@@ -218,6 +214,210 @@
 #define ADC_RIGHT_ATTACK_TIME_COEFF_SET	(16)
 #define ADC_RIGHT_DECAY_TIME_COEFF_SET	(0)
 
+#define SUNXI_R_PRCM_VBASE		0x01f01400
+#define ADDA_PR_CFG_REG     	  (SUNXI_R_PRCM_VBASE+0x1c0)
+#define LINEOUT_PA_GAT			  (0x00)
+#define LOMIXSC					  (0x01)
+#define ROMIXSC					  (0x02)
+#define DAC_PA_SRC				  (0x03)
+#define LINEIN_GCTR				  (0x05)
+#define MIC_GCTR				  (0x06)
+#define PAEN_CTR				  (0x07)
+#define LINEOUT_VOLC			  (0x09)
+#define MIC2G_LINEOUT_CTR		  (0x0A)
+#define MIC1G_MICBIAS_CTR		  (0x0B)
+#define LADCMIXSC		  		  (0x0C)
+#define RADCMIXSC				  (0x0D)
+#define ADC_AP_EN				  (0x0F)
+#define ADDA_APT0				  (0x10)
+#define ADDA_APT1				  (0x11)
+#define ADDA_APT2				  (0x12)
+#define BIAS_DA16_CTR0			  (0x13)
+#define BIAS_DA16_CTR1			  (0x14)
+#define DA16CAL					  (0x15)
+#define DA16VERIFY				  (0x16)
+#define BIASCALI				  (0x17)
+#define BIASVERIFY				  (0x18)
+/*
+*	apb0 base
+*	0x00 LINEOUT_PA_GAT
+*/
+#define PA_CLK_GC		(7)
+
+/*
+*	apb0 base
+*	0x01 LOMIXSC
+*/
+#define LMIXMUTE				  (0)
+#define LMIXMUTEDACR			  (0)
+#define LMIXMUTEDACL			  (1)
+#define LMIXMUTELINEINL			  (2)
+#define LMIXMUTEMIC2BOOST		  (5)
+#define LMIXMUTEMIC1BOOST		  (6)
+
+/*
+*	apb0 base
+*	0x02 ROMIXSC
+*/
+#define RMIXMUTE				  (0)
+#define RMIXMUTEDACL			  (0)
+#define RMIXMUTEDACR			  (1)
+#define RMIXMUTELINEINR			  (2)
+#define RMIXMUTEMIC2BOOST		  (5)
+#define RMIXMUTEMIC1BOOST		  (6)
+
+/*
+*	apb0 base
+*	0x03 DAC_PA_SRC
+*/
+#define DACAREN			(7)
+#define DACALEN			(6)
+#define RMIXEN			(5)
+#define LMIXEN			(4)
+
+/*
+*	apb0 base
+*	0x05 LINEIN_GCTR
+*/
+#define LINEING			(4)
+
+/*
+*	apb0 base
+*	0x06 MIC_GCTR
+*/
+#define MIC1G			(4)
+#define MIC2G			(0)
+
+/*
+*	apb0 base
+*	0x07 PAEN_CTR
+*/
+#define LINEOUTEN		 (7)
+#define PA_ANTI_POP_CTRL (2)
+
+/*
+*	apb0 base
+*	0x09 LINEOUT_VOLC
+*/
+#define LINEOUTVOL		 (3)
+
+/*
+*	apb0 base
+*	0x0A MIC2G_LINEOUT_CTR
+*/
+#define MIC2AMPEN		 (7)
+#define MIC2BOOST		 (4)
+#define LINEOUTL_EN		 (3)
+#define LINEOUTR_EN		 (2)
+#define LINEOUTL_SS		 (1)
+#define LINEOUTR_SS		 (0)
+
+/*
+*	apb0 base
+*	0x0B MIC1G_MICBIAS_CTR
+*/
+#define MMICBIASEN		 (6)
+#define MIC1AMPEN		 (3)
+#define MIC1BOOST		 (0)
+
+/*
+*	apb0 base
+*	0x0C LADCMIXSC
+*/
+#define LADCMIXMUTE		 		  (0)
+#define LADCMIXMUTEMIC1BOOST	  (6)
+#define LADCMIXMUTEMIC2BOOST	  (5)
+#define LADCMIXMUTELINEINL		  (2)
+#define LADCMIXMUTELOUTPUT		  (1)
+#define LADCMIXMUTEROUTPUT		  (0)
+
+/*
+*	apb0 base
+*	0x0D RADCMIXSC
+*/
+#define RADCMIXMUTE		          (0)
+#define RADCMIXMUTEMIC1BOOST	  (6)
+#define RADCMIXMUTEMIC2BOOST	  (5)
+#define RADCMIXMUTEPHONEPN		  (4)
+#define RADCMIXMUTEPHONEP		  (3)
+#define RADCMIXMUTELINEINR		  (2)
+#define RADCMIXMUTEROUTPUT		  (1)
+#define RADCMIXMUTELOUTPUT		  (0)
+
+/*
+*	apb0 base
+*	0x0F ADC_AP_EN
+*/
+#define ADCREN			 (7)
+#define ADCLEN			 (6)
+#define ADCG			 (0)
+
+/*
+*	apb0 base
+*	0x10 ADDA_APT0
+*/
+#define OPDRV_OPCOM_CUR				(6)
+#define OPADC1_BIAS_CUR				(4)
+#define OPADC2_BIAS_CUR				(2)
+#define OPAAF_BIAS_CUR				(0)
+
+/*
+*	apb0 base
+*	0x11 ADDA_APT1
+*/
+#define OPMIC_BIAS_CUR				(6)
+#define OPDAC_BIAS_CUR				(2)
+#define OPMIX_BIAS_CUR				(0)
+
+/*
+*	apb0 base
+*	0x12 ADDA_APT2
+*/
+#define ZERO_CROSS_EN 	  			(7)
+#define TIMEOUT_ZERO_CROSS 			(6)
+#define PTDBS						(4)
+#define PA_SLOPE_SELECT	  			(3)
+#define USB_BIAS_CUR				(0)
+
+/*
+*	apb0 base
+*	0x13 BIAS_DA16_CTR0
+*/
+#define MMIC_BIAS_CHOP_EN			(7)
+#define MMIC_BIAS_CLK_SEL			(5)
+#define DITHER						(4)
+#define DITHER_CLK_SELECT			(2)
+#define BIHE_CTRL					(0)
+
+/*
+*	apb0 base
+*	0x14 BIAS_DA16_CTR1
+*/
+#define PA_SPEED_SEL				(7)
+#define CURRENT_TEST_SEL			(6)
+#define BIAS_DA17_CAL_CLK_SEL		(4)
+#define BIAS_CAL_MODE_SEL			(3)
+#define BIAS_DA16_CAL_CTRL			(2)
+#define BIASCALIVERIFY				(1)
+#define DA16CALIVERIFY				(0)
+
+/*
+*	apb0 base
+*	0x15 DA16CALI
+*/
+#define DA16CALI_DATA				(0)		
+
+/*
+*	apb0 base
+*	0x17 BIASCALI
+*/
+#define BIASCALI_DATA				(0)
+
+/*
+*	apb0 base
+*	0x18 BIASVERIFY
+*/
+#define BIASVERIFY_DATA				(0)
 
 /* Supported SoC families - used for quirks */
 enum sun8i_soc_family {
@@ -244,6 +444,8 @@ struct sun8i_priv {
 
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
+
+	int 			lineout_vol;
 };
 
 //struct sun8i_priv *sun8i;
@@ -377,7 +579,7 @@ static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		if (sun8i->speaker_active) {
-			/* return codec_pa_play_open(sun8i); */
+			return sun8i_codec_pa_play_open(sun8i);
 		} else {
 			/*set TX FIFO send drq level*/
 			codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0xf);
@@ -389,7 +591,7 @@ static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 			codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
 		}
 	} else {
-		/* return codec_capture_open(sun8i); */
+		sun8i_codec_capture_open(sun8i);
 	}
 
 	return 0;
@@ -540,6 +742,8 @@ static int sun8i_codec_dai_probe(struct snd_soc_dai *dai)
 				  &priv->capture_dma_data);
 	return 0;
 }
+//tidy up this later
+static int codec_wr_prcm_control(u32 reg, u32 mask, u32 shift, u32 val);
 
 static void sun8i_codec_init(struct sun8i_priv *sun8i)
 {
@@ -560,7 +764,30 @@ static void sun8i_codec_init(struct sun8i_priv *sun8i)
 
 	/* /\* Use a 32 bits FIR *\/ */
 	/* codec_wr_control(sun8i, SUNXI_DAC_FIFOC, 0x1, FIR_VERSION, 0x1); */
+	codec_wr_prcm_control(LINEOUT_VOLC, 0x20, LINEOUTVOL, sun8i->lineout_vol);
 
+	codec_wr_prcm_control(PAEN_CTR, 0x1, LINEOUTEN, 0x1);
+	codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x1);
+	codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x1);
+	msleep(1250);
+/*
+	gpio_set_value(item.gpio.gpio, 1);
+	if (adcagc_used) {
+		adcagc_config();
+	}
+	if (adcdrc_used) {
+		adcdrc_config();
+	}
+	if (adchpf_used) {
+		adchpf_config();
+	}
+	if (dacdrc_used) {
+		dacdrc_config();
+	}
+	if (dachpf_used) {
+		dachpf_config();
+	}
+*/
 }
 
 static int sun8i_codec_startup(struct snd_pcm_substream *substream,
@@ -625,97 +852,244 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 };
 
 /*** Codec ***/
-static const char *sun8i_fir_length[] = {"64 bits", "32 bits"};
-static const struct soc_enum sun8i_fir_length_enum =
-	SOC_ENUM_SINGLE(SUNXI_DAC_FIFOC, 28, 2, sun8i_fir_length);
+static	bool adcdrc_used       = false;
+static	bool dacdrc_used       = false;
+static	bool adchpf_used       = false;
+static int codec_cap_mode = 0;
+static bool codec_lineout_en = false;
+static  bool codec_addadrc_en = false;
+static  bool codec_lineinin_en  = false;
+static bool codec_addaloop_en = false;
+static int play_running = 0;
 
-static const struct snd_kcontrol_new sun8i_snd_controls[] = {
-	/* This is actually an attenuation by 64 steps of -1.16dB */
-	SOC_SINGLE("DAC Playback Volume",
-		   SUNXI_DAC_DPC, 12, 0x1f, 1),
-	SOC_SINGLE("DAC High Pass Filter Switch",
-		   SUNXI_DAC_DPC, 18, 1, 0),
-
-	SOC_ENUM("FIR Length", sun8i_fir_length_enum),
-
-};
-
-static const struct snd_soc_dapm_widget sun8i_dapm_widgets[] = {
-	/* Digital controls of the DACs */
-	SND_SOC_DAPM_DAC("DAC", "Playback", SUNXI_DAC_DPC, 31, 0),
-
-	SND_SOC_DAPM_OUTPUT("HPL"),
-	SND_SOC_DAPM_OUTPUT("HPR"),
-};
-
-static const struct snd_soc_dapm_route sun8i_dapm_routes[] = {
-	/* DACs */
-	{ "Left DAC", NULL, "DAC" },
-	{ "Right DAC", NULL, "DAC" },
-
-	/* Left Mixer */
-	{ "Left Output Mixer", NULL, "Left DAC" },
-	{ "Left Output Mixer", NULL, "Right DAC" },
-
-	/* Right Mixer */
-	{ "Right Output Mixer", NULL, "Left DAC" },
-	{ "Right Output Mixer", NULL, "Right DAC" },
-
-	/* Left HP Mux */
-	{ "Left Headphone Amplifier Mux", NULL, "Left Output Mixer" },
-	{ "Left Headphone Amplifier Mux", NULL, "Left DAC" },
-
-	/* Right HP Mux */
-	{ "Right Headphone Amplifier Mux", NULL, "Right Output Mixer" },
-	{ "Right Headphone Amplifier Mux", NULL, "Right DAC" },
-
-	/* Left HP Amplifier */
-	{ "Headphone Amplifier", NULL, "Left Headphone Amplifier Mux" },
-
-	/* Right HP Amplifier */
-	{ "Headphone Amplifier", NULL, "Right Headphone Amplifier Mux" },
-
-	/* Power up the headphone amplifiers */
-	{ "Left Headphone Amplifier", NULL, "Headphone Amplifier" },
-	{ "Right Headphone Amplifier", NULL, "Headphone Amplifier" },
-
-	/* Headphone outputs */
-	{ "HPL", NULL, "Left Headphone Amplifier" },
-	{ "HPR", NULL, "Right Headphone Amplifier" },
-};
-
-static struct snd_soc_codec_driver sun8i_codec = {
-
-	.controls		= sun8i_snd_controls,
-	.num_controls		= ARRAY_SIZE(sun8i_snd_controls),
-	.dapm_widgets		= sun8i_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(sun8i_dapm_widgets),
-	.dapm_routes		= sun8i_dapm_routes,
-	.num_dapm_routes	= ARRAY_SIZE(sun8i_dapm_routes),
-};
-
-/*** Board routing ***/
-/* TODO: do this with DT */
-
-static const struct snd_soc_dapm_widget sun8i_board_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-};
-
-static const struct snd_soc_dapm_route sun8i_board_routing[] = {
-	{ "Headphone Jack",	NULL,	"HPL" },
-	{ "Headphone Jack",	NULL,	"HPR" },
-};
-
-static int sun8i_dai_init(struct snd_soc_pcm_runtime *rtd)
+static unsigned int read_prcm_wvalue(unsigned int addr)
 {
-	struct snd_soc_codec *codec = rtd->codec;
-	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	unsigned int reg;
+	reg = readl(ADDA_PR_CFG_REG);
+	reg |= (0x1<<28);
+	writel(reg, ADDA_PR_CFG_REG);
 
-	snd_soc_dapm_enable_pin(dapm, "Headphone Jack");
+	reg = readl(ADDA_PR_CFG_REG);
+	reg &= ~(0x1<<24);
+	writel(reg, ADDA_PR_CFG_REG);
+
+	reg = readl(ADDA_PR_CFG_REG);
+	reg &= ~(0x1f<<16);
+	reg |= (addr<<16);
+	writel(reg, ADDA_PR_CFG_REG);
+
+	reg = readl(ADDA_PR_CFG_REG); 
+	reg &= (0xff<<0);
+
+	return reg;
+}
+
+static void write_prcm_wvalue(unsigned int addr, unsigned int val)
+{
+	unsigned int reg;
+	reg = readl(ADDA_PR_CFG_REG);
+	reg |= (0x1<<28);
+	writel(reg, ADDA_PR_CFG_REG);
+
+	reg = readl(ADDA_PR_CFG_REG);
+	reg &= ~(0x1f<<16);
+	reg |= (addr<<16);
+	writel(reg, ADDA_PR_CFG_REG);
+
+	reg = readl(ADDA_PR_CFG_REG);
+	reg &= ~(0xff<<8);
+	reg |= (val<<8);
+	writel(reg, ADDA_PR_CFG_REG);
+
+	reg = readl(ADDA_PR_CFG_REG);
+	reg |= (0x1<<24);
+	writel(reg, ADDA_PR_CFG_REG);
+
+	reg = readl(ADDA_PR_CFG_REG);
+	reg &= ~(0x1<<24);
+	writel(reg, ADDA_PR_CFG_REG);
+}
+
+static int codec_wrreg_prcm_bits(unsigned short reg, unsigned int mask, unsigned int value)
+{
+	unsigned int old, new;
+		
+	old	=	read_prcm_wvalue(reg);
+	new	=	(old & ~mask) | value;
+	write_prcm_wvalue(reg,new);
 
 	return 0;
 }
 
+static int codec_wr_prcm_control(u32 reg, u32 mask, u32 shift, u32 val)
+{
+	u32 reg_val;
+	reg_val = val << shift;
+	mask = mask << shift;
+	codec_wrreg_prcm_bits(reg, mask, reg_val);
+	return 0;
+}
+
+/*
+*	codec_lineinin_en == 1, open the linein in.
+*	codec_lineinin_en == 0, close the linein in.
+*/
+static int codec_set_lineinin(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	codec_lineinin_en = ucontrol->value.integer.value[0];
+	if (codec_lineinin_en) {
+		/*select LINEINL*/
+		codec_wr_prcm_control(LOMIXSC, 0x1, LMIXMUTELINEINL, 0x1);
+		/*select LINEINR*/
+		codec_wr_prcm_control(ROMIXSC, 0x1, RMIXMUTELINEINR, 0x1);
+	} else {
+		/*close LINEINL*/
+		codec_wr_prcm_control(LOMIXSC, 0x1, LMIXMUTELINEINL, 0x0);
+		/*close LINEINR*/
+		codec_wr_prcm_control(ROMIXSC, 0x1, RMIXMUTELINEINR, 0x0);
+	}
+
+	return 0;
+}
+
+static int codec_get_lineinin(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = codec_lineinin_en;
+	return 0;
+}
+
+/*
+*	codec_lineout_en == 1, open the speaker.
+*	codec_lineout_en == 0, close the speaker.
+*/
+static int codec_set_lineout(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	codec_lineout_en = ucontrol->value.integer.value[0];
+
+	if (codec_lineout_en) {
+		codec_wr_prcm_control(LOMIXSC, 0x1, LMIXMUTELINEINL, 0x1);
+		codec_wr_prcm_control(ROMIXSC, 0x1, RMIXMUTELINEINR, 0x1);
+		codec_wr_prcm_control(PAEN_CTR, 0x1, LINEOUTEN, 0x1);
+		codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x1);
+		codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x1);
+
+		codec_wr_prcm_control(DAC_PA_SRC, 0x1, LMIXEN, 0x1);
+		codec_wr_prcm_control(DAC_PA_SRC, 0x1, RMIXEN, 0x1);
+		usleep_range(2000, 3000);
+		//gpio_set_value(item.gpio.gpio, 1);
+		msleep(62);
+	} else {
+		codec_wr_prcm_control(LOMIXSC, 0x1, LMIXMUTELINEINL, 0x0);
+		codec_wr_prcm_control(ROMIXSC, 0x1, RMIXMUTELINEINR, 0x0);
+		if (!play_running) {
+			codec_wr_prcm_control(PAEN_CTR, 0x1, LINEOUTEN, 0x0);
+			codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x0);
+			codec_wr_prcm_control(MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x0);
+
+			codec_wr_prcm_control(DAC_PA_SRC, 0x1, LMIXEN, 0x0);
+			codec_wr_prcm_control(DAC_PA_SRC, 0x1, RMIXEN, 0x0);
+		//	gpio_set_value(item.gpio.gpio, 0);
+		}
+	}
+
+	return 0;
+}
+
+static int codec_get_lineout(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = codec_lineout_en;
+	return 0;
+}
+
+static int codec_set_addadrc(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	codec_addadrc_en = ucontrol->value.integer.value[0];
+
+	if (codec_addadrc_en) {
+		adcdrc_used       		= 1;
+		dacdrc_used       		= 1;
+		adchpf_used       		= 1;
+		//sun8i_codec_init();
+	} else {
+		adcdrc_used       		= 0;
+		dacdrc_used       		= 0;
+		adchpf_used       		= 0;
+	}
+
+	return 0;
+}
+
+static int codec_get_addadrc(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = codec_addadrc_en;
+	return 0;
+}
+static int codec_set_addaloop(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	codec_addaloop_en = ucontrol->value.integer.value[0];
+
+	return 0;
+}
+
+static int codec_get_addaloop(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = codec_addaloop_en;
+	return 0;
+}
+static int codec_set_audio_capture_mode(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	codec_cap_mode = ucontrol->value.integer.value[0];
+
+	return 0;
+}
+
+static int codec_get_audio_capture_mode(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = codec_cap_mode;
+	return 0;
+}
+
+static const char *audio_capture_function[] = {"main mic", "mic1_2", "linein"};
+static const struct soc_enum audio_capture_enum[] = {
+        SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(audio_capture_function), audio_capture_function),
+};
+
+static const struct snd_kcontrol_new sun8i_codec_controls[] = {
+	SOC_SINGLE("MIC1_G boost stage output mixer control",	MIC_GCTR, MIC1G, 0x7, 0),
+	SOC_SINGLE("MIC2_G boost stage output mixer control",	MIC_GCTR, MIC2G, 0x7, 0),
+	SOC_SINGLE("LINEIN_G boost stage output mixer control",	LINEIN_GCTR, LINEING, 0x7, 0),
+
+	SOC_SINGLE("MIC1 boost AMP gain control",		MIC1G_MICBIAS_CTR, MIC1BOOST, 0x7, 0),
+	SOC_SINGLE("MIC2 boost AMP gain control", 		MIC2G_LINEOUT_CTR, MIC2BOOST, 0x7, 0),
+
+	SOC_SINGLE("Lineout volume control", 			LINEOUT_VOLC, LINEOUTVOL, 0x1f, 0),
+
+	SOC_SINGLE("ADC input gain ctrl", 			ADC_AP_EN, ADCG, 0x7, 0),
+	SOC_SINGLE_BOOL_EXT("Audio linein in", 	0, codec_get_lineinin, 	codec_set_lineinin),
+	SOC_SINGLE_BOOL_EXT("Audio lineout", 	0, codec_get_lineout, 	codec_set_lineout),
+	SOC_SINGLE_BOOL_EXT("Audio adda drc", 	0, codec_get_addadrc, 	codec_set_addadrc),
+	SOC_SINGLE_BOOL_EXT("Audio adda loop", 	0, codec_get_addaloop, 	codec_set_addaloop),
+	SOC_ENUM_EXT("audio capture mode", audio_capture_enum[0], codec_get_audio_capture_mode, codec_set_audio_capture_mode),
+};
+
+static struct snd_soc_codec_driver sun8i_codec = {
+
+	.controls		= sun8i_codec_controls,
+	.num_controls		= ARRAY_SIZE(sun8i_codec_controls),
+};
+
+/*** Board routing ***/
+/* TODO: do this with DT */
 /*** Card and DAI Link ***/
 
 static struct snd_soc_dai_link sun8i_card_dai[] = {
@@ -727,7 +1101,6 @@ static struct snd_soc_dai_link sun8i_card_dai[] = {
 		.codec_name	= "1c22c00.codec",
 		.platform_name	= "1c22c00.codec",
 		.dai_fmt	= SND_SOC_DAIFMT_I2S,
-		.init		= sun8i_dai_init,
 	},
 };
 
@@ -737,11 +1110,6 @@ static struct snd_soc_card snd_soc_sun8i_codec = {
 
 	.dai_link = &sun8i_card_dai,
 	.num_links = ARRAY_SIZE(sun8i_card_dai),
-
-	.dapm_widgets = sun8i_board_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(sun8i_board_dapm_widgets),
-	.dapm_routes = sun8i_board_routing,
-	.num_dapm_routes = ARRAY_SIZE(sun8i_board_routing),
 };
 
 /*** CPU DAI ***/
