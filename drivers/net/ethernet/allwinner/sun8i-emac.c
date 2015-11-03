@@ -1410,7 +1410,7 @@ static int geth_probe(struct platform_device *pdev)
 	if (!priv->base) {
 		dev_err(&pdev->dev, "failed to remap registers\n");
 		ret = -ENOMEM;
-		goto map_err;
+		goto out_err;
 	}
 
 	/* fill in parameters for net-dev structure */
@@ -1545,6 +1545,13 @@ static void geth_device_release(struct device *dev)
 {
 }
 
+static const struct of_device_id emac_of_match[] = {
+	{.compatible = "allwinner,sun8i-h3-emac",},
+	{},
+};
+
+MODULE_DEVICE_TABLE(of, emac_of_match);
+
 static u64 geth_dma_mask = 0xffffffffUL;
 static struct platform_device geth_device = {
 	.name = "gmac0",
@@ -1561,9 +1568,10 @@ static struct platform_driver geth_driver = {
 	.probe	= geth_probe,
 	.remove = geth_remove,
 	.driver = {
-		   .name = "gmac0",
-		   .owner = THIS_MODULE,
-		   .pm = &geth_pm_ops,
+			.name = "gmac0",
+			.owner = THIS_MODULE,
+			.pm = &geth_pm_ops,
+			.of_match_table = emac_of_match,
 	},
 };
 
