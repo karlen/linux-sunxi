@@ -71,84 +71,7 @@
 
 #define SUN6I_ADC_FIFOS		(0x14)		//33 ADC FIFO Status Register, different with a10
 #define SUN6I_ADC_RXDATA	(0x18)		//33 ADC RX Data Register
-#define SUN6I_HMIC_CTRL		(0x1c)		//Earpiece MIC bias detect register,new func
 #define SUN8I_DAC_TXDATA	(0x20)
-
-#define SUN6I_PA_CTRL		(0x24)		//new func
-#define SUN6I_PA_CTRL_HPPAEN			(31)
-#define SUN6I_PA_CTRL_HPCOM_CTL			(29)
-#define SUN6I_PA_CTRL_HPCOM_PRO			(28)
-#define SUN6I_PA_CTRL_PA_ANTI_POP_CTL		(26)
-#define SUN6I_PA_CTRL_LTRNMUTE			(25)
-#define SUN6I_PA_CTRL_RTLNMUTE			(24)
-#define SUN6I_PA_CTRL_MIC1G			(15)
-#define SUN6I_PA_CTRL_MIG2G			(12)
-#define SUN6I_PA_CTRL_LINEING			(9)
-#define SUN6I_PA_CTRL_PHONEG			(6)
-#define SUN6I_PA_CTRL_PHONEPG			(3)
-#define SUN6I_PA_CTRL_PHONENG			(0)
-
-#define SUN6I_MIC_CTRL		(0x28)		//Microphone,Lineout and Phoneout Control Register,new func
-#define SUN6I_MIC_CTRL_HBIASEN			(31)
-#define SUN6I_MIC_CTRL_MBIASEN			(30)
-#define SUN6I_MIC_CTRL_HBIASADCEN		(29)
-#define SUN6I_MIC_CTRL_MIC1AMPEN		(28)
-#define SUN6I_MIC_CTRL_MIC1BOOST		(25)
-#define SUN6I_MIC_CTRL_MIC2AMPEN		(24)
-#define SUN6I_MIC_CTRL_MIC2BOOST		(21)
-#define SUN6I_MIC_CTRL_MIC2_SEL			(20)
-#define SUN6I_MIC_CTRL_LINEOUTL_EN		(19)
-#define SUN6I_MIC_CTRL_LINEOUTR_EN		(18)
-#define SUN6I_MIC_CTRL_LINEOUTL_SRC_SEL		(17)
-#define SUN6I_MIC_CTRL_LINEOUTR_SRC_SEL		(16)
-#define SUN6I_MIC_CTRL_LINEOUT_VOL		(11)
-#define SUN6I_MIC_CTRL_PHONEPREG		(8)
-#define SUN6I_MIC_CTRL_PHONEOUTG		(5)
-#define SUN6I_MIC_CTRL_PHONEOUT_EN		(4)
-#define SUN6I_MIC_CTRL_PHONEOUTS0		(3)
-#define SUN6I_MIC_CTRL_PHONEOUTS1		(2)
-#define SUN6I_MIC_CTRL_PHONEOUTS2		(1)
-#define SUN6I_MIC_CTRL_PHONEOUTS3		(0)
-
-#define SUN6I_ADC_ACTL		(0x2c)		//diff with a10, ADC Analog Control Register
-#define SUNXI_ADC_ACTL_ADCREN			(31)
-#define SUNXI_ADC_ACTL_ADCLEN			(30)
-#define SUNXI_ADC_ACTL_PREG1EN			(29)
-#define SUNXI_ADC_ACTL_PREG2EN			(28)
-#define SUNXI_ADC_ACTL_VMICEN			(27)
-#define SUN6I_ADC_ACTL_ADCRG			(27)
-#define SUN6I_ADC_ACTL_ADCLG			(24)
-#define SUNXI_ADC_ACTL_VADCG			(20)
-#define SUNXI_ADC_ACTL_ADCIS			(17)
-#define SUN6I_ADC_ACTL_RADCMIXMUTEMIC1BOOST	(13)
-#define SUN6I_ADC_ACTL_RADCMIXMUTEMIC2BOOST	(12)
-#define SUN6I_ADC_ACTL_RADCMIXMUTEPHONEPN	(11)
-#define SUN6I_ADC_ACTL_RADCMIXMUTEPHONEP	(10)
-#define SUN6I_ADC_ACTL_RADCMIXMUTELINEINR	(9)
-#define SUN6I_ADC_ACTL_RADCMIXMUTEROUTPUT	(8)
-#define SUN6I_ADC_ACTL_RADCMIXMUTELOUTPUT	(7)
-#define SUN6I_ADC_ACTL_LADCMIXMUTEMIC1BOOST	(6)
-#define SUN6I_ADC_ACTL_LADCMIXMUTEMIC2BOOST	(5)
-#define SUNXI_ADC_ACTL_PA_EN			(4)
-#define SUN6I_ADC_ACTL_LADCMIXMUTEPHONEPN	(4)
-#define SUNXI_ADC_ACTL_DDE			(3)
-#define SUN6I_ADC_ACTL_LADCMIXMUTEPHONEP	(3)
-#define SUN6I_ADC_ACTL_LADCMIXMUTELINEINL	(2)
-#define SUN6I_ADC_ACTL_LADCMIXMUTELOUTPUT	(1)
-#define SUN6I_ADC_ACTL_LADCMIXMUTEROUTPUT	(0)
-
-#define SUN6I_ADDAC_TUNE	(0x30)
-#define SUN6I_ADDAC_TUNE_PA_SLOPE_SECECT	(30)
-#define SUN6I_ADDAC_TUNE_DITHER			(25)
-#define SUN6I_ADDAC_TUNE_ZERO_CROSS_EN		(22)
-#define SUN6I_BIAS_CRT		(0x34)
-#define SUN6I_BIAS_CRT_OPMIC_BIAS_CUR		(30)
-#define SUN6I_BIAS_CRT_BIASCALIVERIFY		(29)
-#define SUN6I_BIAS_CRT_BIASVERIFY		(23)
-#define SUN6I_BIAS_CRT_BIASCALI			(17)
-#define SUN6I_BIAS_CRT_DA16CALIVERIFY		(16)
-#define SUN6I_BIAS_CRT_DA16VERIFY		(8)
-#define SUN6I_BIAS_CRT_DA16CALI			(0)
 
 #define SUN6I_DAC_TXCNT		(0x40)
 #define SUN6I_ADC_RXCNT		(0x44)
@@ -366,33 +289,6 @@ static int sun8i_codec_pa_play_open(struct sun8i_priv *sun8i)
 	//send last sample when dac fifo under run
 	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
 
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTL_EN, 0x1);
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTR_EN, 0x1);
-
-	/* TODO: This used to be retrieved by FEX */
-	/* if (!pa_double_used) { */
-		codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTR_SRC_SEL, 0x1);
-		codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTL_SRC_SEL, 0x1);
-	/* } else { */
-	/* 	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, LINEOUTL_SRC_SEL, 0x0); */
-	/* 	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, LINEOUTR_SRC_SEL, 0x0); */
-	/* } */
-	
-	/*
-	 * TODO: This used to be retrieved by FEX.
-	 * The script has nice comments explaining what values mean in term of dB output
-	 */
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1f, SUN6I_MIC_CTRL_LINEOUT_VOL, 0x19);
-
-	/* TODO: Configure the GPIO using gpiolib */
-	/* mdelay(3); */
-	/* item.gpio.data = 1; */
-	/* /\*config gpio info of audio_pa_ctrl open*\/ */
-	/* if (0 != sw_gpio_setall_range(&item.gpio, 1)) { */
-	/* 	printk("sw_gpio_setall_range failed\n"); */
-	/* } */
-	/* mdelay(62); */
-
 	return 0;
 }
 
@@ -411,20 +307,6 @@ static int sun8i_codec_capture_open(struct sun8i_priv *sun8i)
 	/* TODO: This used to be retrieved by FEX */
 	cap_vol = 5;
 
-	/*enable mic1 pa*/
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_MIC1AMPEN, 0x1);
-	/*mic1 gain 36dB,if capture volume is too small, enlarge the mic1boost*/
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x7, SUN6I_MIC_CTRL_MIC1BOOST,cap_vol);//36db
-	/*enable Master microphone bias*/
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_MBIASEN, 0x1);
-
-	/*enable Right MIC1 Boost stage*/
-	codec_wr_control(sun8i, SUN6I_ADC_ACTL, 0x1, SUN6I_ADC_ACTL_RADCMIXMUTEMIC1BOOST, 0x1);
-	/*enable Left MIC1 Boost stage*/
-	codec_wr_control(sun8i, SUN6I_ADC_ACTL, 0x1, SUN6I_ADC_ACTL_LADCMIXMUTEMIC1BOOST, 0x1);
-	/*enable adc_r adc_l analog*/
-	codec_wr_control(sun8i, SUN6I_ADC_ACTL, 0x1, SUNXI_ADC_ACTL_ADCREN, 0x1);
-	codec_wr_control(sun8i, SUN6I_ADC_ACTL, 0x1, SUNXI_ADC_ACTL_ADCLEN, 0x1);
 	/*set RX FIFO mode*/
 	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
 	/*set RX FIFO rec drq level*/
@@ -461,29 +343,12 @@ static int sun8i_codec_play_stop(struct sun8i_priv *sun8i)
 	/* TODO: This used to be retrieved by FEX*/
 	headphone_vol = 0x3b;
 
-	codec_wr_control(sun8i, SUN6I_ADDAC_TUNE, 0x1, SUN6I_ADDAC_TUNE_ZERO_CROSS_EN, 0x0);
-
 	/*disable dac drq*/
 	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x0);
 
 	/*disable dac digital*/
 	codec_wr_control(sun8i, SUNXI_DAC_DPC ,  0x1, SUNXI_DAC_DPC_EN_DA, 0x0);
 
-	/* TODO: Configure the GPIO */
-	/* item.gpio.data = 0; */
-	/* /\*config gpio info of audio_pa_ctrl open*\/ */
-	/* if (0 != sw_gpio_setall_range(&item.gpio, 1)) { */
-	/* 	printk("sw_gpio_setall_range failed\n"); */
-	/* } */
-
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTR_EN, 0x0);
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTL_EN, 0x0);
-
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTL_SRC_SEL, 0x0);
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_LINEOUTR_SRC_SEL, 0x0);
-	
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_PHONEOUTS2, 0x0);
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_PHONEOUTS3, 0x0);
 	return 0;
 }
 
@@ -500,13 +365,6 @@ static int sun8i_codec_capture_stop(struct sun8i_priv *sun8i)
 	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x0);
 	/*disable adc drq*/
 	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x0);
-	/*disable mic1 pa*/
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_MIC1AMPEN, 0x0);
-	/*disable Master microphone bias*/
-	codec_wr_control(sun8i, SUN6I_MIC_CTRL, 0x1, SUN6I_MIC_CTRL_MBIASEN, 0x0);
-	/*disable adc_r adc_l analog*/
-	codec_wr_control(sun8i, SUN6I_ADC_ACTL, 0x1, SUNXI_ADC_ACTL_ADCREN, 0x0);
-	codec_wr_control(sun8i, SUN6I_ADC_ACTL, 0x1, SUNXI_ADC_ACTL_ADCLEN, 0x0);
 
 	return 0;
 }
@@ -767,11 +625,6 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 };
 
 /*** Codec ***/
-
-static const char *sun8i_zero_crossover_time[] = {"32ms", "64ms"};
-static const struct soc_enum sun8i_zero_crossover_time_enum =
-	SOC_ENUM_SINGLE(SUN6I_ADDAC_TUNE, 21, 2, sun8i_zero_crossover_time);
-
 static const char *sun8i_fir_length[] = {"64 bits", "32 bits"};
 static const struct soc_enum sun8i_fir_length_enum =
 	SOC_ENUM_SINGLE(SUNXI_DAC_FIFOC, 28, 2, sun8i_fir_length);
@@ -783,7 +636,6 @@ static const struct snd_kcontrol_new sun8i_snd_controls[] = {
 	SOC_SINGLE("DAC High Pass Filter Switch",
 		   SUNXI_DAC_DPC, 18, 1, 0),
 
-	SOC_ENUM("Zero-crossover Time", sun8i_zero_crossover_time_enum),
 	SOC_ENUM("FIR Length", sun8i_fir_length_enum),
 
 };
@@ -791,10 +643,6 @@ static const struct snd_kcontrol_new sun8i_snd_controls[] = {
 static const struct snd_soc_dapm_widget sun8i_dapm_widgets[] = {
 	/* Digital controls of the DACs */
 	SND_SOC_DAPM_DAC("DAC", "Playback", SUNXI_DAC_DPC, 31, 0),
-
-	/* Power up of the Headphone amplifier */
-	SND_SOC_DAPM_PGA("Headphone Amplifier",
-			 SUN6I_PA_CTRL, 31, 0, NULL, 0),
 
 	SND_SOC_DAPM_OUTPUT("HPL"),
 	SND_SOC_DAPM_OUTPUT("HPR"),
