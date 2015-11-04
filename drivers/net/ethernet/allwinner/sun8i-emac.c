@@ -1469,7 +1469,6 @@ static int geth_probe(struct platform_device *pdev)
 	ndev->netdev_ops = &geth_netdev_ops;
 	ndev->ethtool_ops = &geth_ethtool_ops;
 	ndev->base_addr = (unsigned long)priv->base;
-	ndev->irq = irq;
 
 	priv->ndev = ndev;
 	priv->dev = &pdev->dev;
