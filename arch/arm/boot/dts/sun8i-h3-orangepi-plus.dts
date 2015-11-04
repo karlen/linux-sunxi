@@ -95,7 +95,7 @@
 
 &emac {
 	pinctrl-names = "default";
-	pinctrl-0 = <&gmac_pins_a>;
+	pinctrl-0 = <&emac_pins_a>;
 	phy = <&phy1>;
 	phy-mode = "rgmii";
 	status = "okay";

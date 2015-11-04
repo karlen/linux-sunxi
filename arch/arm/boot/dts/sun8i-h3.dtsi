@@ -352,7 +352,7 @@
 			#gpio-cells = <3>;
 
 			ir_pins_a: ir@0 {
-				allwinner,pins = "PL4";
+				allwinner,pins = "PL11";
 				allwinner,function = "s_ir";
 				allwinner,drive = <0>;
 				allwinner,pull = <0>;
@@ -562,6 +562,17 @@
 						 "PG4", "PG5";
 				allwinner,function = "mmc1";
 				allwinner,drive = <SUN4I_PINCTRL_30_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
+			emac_pins_a: emac0@0 {
+				allwinner,pins = "PD0", "PD1", "PD2",
+						"PD3", "PD4", "PD5", "PD6",
+						"PD7", "PD8", "PD9", "PD10",
+						"PD11", "PD12", "PD13", "PD14",
+						"PD15", "PD16", "PD17";
+				allwinner,function = "emac";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
 			};
 		};
