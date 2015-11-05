@@ -75,24 +75,119 @@
 
 #define SUN6I_DAC_TXCNT		(0x40)
 #define SUN6I_ADC_RXCNT		(0x44)
-#define SUN6I_DAC_DEBUG		(0x48)
-#define SUN6I_ADC_DEBUG		(0x4c)
-#define SUN6I_HMIC_CTL		(0x50)		//new func
-#define SUN6I_HMIC_DATA		(0x54)		//new func
+#define SUN8I_DAC_DEBUG		(0x48)
+#define SUN8I_ADC_DEBUG		(0x4c)
 #define SUN6I_DAC_DAP_CTL	(0x60)		//DAC DAP control Register
-#define SUN6I_DAC_DAP_VOL	(0x64)		//DAC DAP volume Register
-#define SUN6I_DAC_DAP_COF	(0x68)		//DAC DAP Coefficient Register
-#define SUN6I_DAC_DAP_OPT	(0x6c)		//DAC DAP Optimum Register
 #define SUN6I_ADC_DAP_CTL	(0x70)		//ADC DAP Control Register
-#define SUN6I_ADC_DAP_VOL	(0x74)		//ADC DAP volume Register
-#define SUN6I_ADC_DAP_LCTL	(0x78)		//ADC DAP Left Control Register
-#define SUN6I_ADC_DAP_RCTL	(0x7c)		//ADC DAP Right Control Register
-#define SUN6I_ADC_DAP_PARA	(0x80)		//ADC DAP Parameter Control Register
-#define SUN6I_ADC_DAP_LAC	(0x84)		//ADC DAP Left Average Coefficient Register
-#define SUN6I_ADC_DAP_LDAT	(0x88)		//ADC DAP Left Decay&Attack Time Register
-#define SUN6I_ADC_DAP_RAC	(0x8c)		//ADC DAP Right Average Coefficient Register
-#define SUN6I_ADC_DAP_RDAC	(0x90)		//ADC DAP Right Decay&Attack time Register
-#define SUN6I_ADC_DAP_HPFC	(0x94)		//ADC DAP HPF Coefficient Register
+#define SUN8I_ADC_DAP_LCTL	(0x74)		//ADC DAP Left Control Register
+#define SUN8I_ADC_DAP_RCTL	(0x78)		//ADC DAP Right Control Register
+#define SUN8I_ADC_DAP_PARA	(0x7c)		//ADC DAP Parameter Control Register
+#define SUN8I_ADC_DAP_LAC	(0x80)		//ADC DAP Left Average Coefficient Register
+#define SUN8I_ADC_DAP_LDAT	(0x84)		//ADC DAP Left Decay&Attack Time Register
+#define SUN8I_ADC_DAP_RAC	(0x88)		//ADC DAP Right Average Coefficient Register
+#define SUN8I_ADC_DAP_RDAC	(0x8c)		//ADC DAP Right Decay&Attack time Register
+#define SUN8I_ADC_DAP_HPFC	(0x90)		//ADC DAP HPF Coefficient Register
+#define SUN8I_ADC_DAP_LINAC	(0x94)
+#define SUN8I_ADC_DAP_RINAC	(0x98)
+#define SUN8I_ADC_DAP_ORT	(0x9C)
+#define SUN8I_DAC_DRC_HHPFC	(0X100)
+#define SUN8I_DAC_DRC_LHPFC	(0X104)
+#define SUN8I_DAC_DRC_CTRL	(0X108)
+#define SUN8I_DAC_DRC_LPFHAT	(0X10C)
+#define SUN8I_DAC_DRC_LPFLAT	(0X110)
+#define SUN8I_DAC_DRC_RPFHAT	(0X114)
+#define SUN8I_DAC_DRC_RPFLAT	(0X118)
+#define SUN8I_DAC_DRC_LPFHRT	(0X11C)
+#define SUN8I_DAC_DRC_LPFLRT	(0X120)
+#define SUN8I_DAC_DRC_RPFHRT	(0X124)
+#define SUN8I_DAC_DRC_RPFLRT	(0X128)
+#define SUN8I_DAC_DRC_LRMSHAT	(0X12C)
+#define SUN8I_DAC_DRC_LRMSLAT	(0X130)
+#define SUN8I_DAC_DRC_RRMSHAT	(0X134)
+#define SUN8I_DAC_DRC_RRMSLAT	(0X138)
+#define SUN8I_DAC_DRC_HCT	(0X13C)
+#define SUN8I_DAC_DRC_LCT	(0X140)
+#define SUN8I_DAC_DRC_HKC	(0X144)
+#define SUN8I_DAC_DRC_LKC	(0X148)
+#define SUN8I_DAC_DRC_HOPC	(0X14C)
+#define SUN8I_DAC_DRC_LOPC	(0X150)
+#define SUN8I_DAC_DRC_HLT	(0X154)
+#define SUN8I_DAC_DRC_LLT	(0X158)
+#define SUN8I_DAC_DRC_HKI	(0X15C)
+#define SUN8I_DAC_DRC_LKI	(0X160)
+#define SUN8I_DAC_DRC_HOPL	(0X164)
+#define SUN8I_DAC_DRC_LOPL	(0X168)
+#define SUN8I_DAC_DRC_HET	(0X16C)
+#define	SUN8I_DAC_DRC_LET	(0X170)
+#define SUN8I_DAC_DRC_HKE	(0X174)
+#define SUN8I_DAC_DRC_LKE	(0X178)
+#define SUN8I_DAC_DRC_HOPE	(0X17C)
+#define SUN8I_DAC_DRC_LOPE	(0X180)
+#define SUN8I_DAC_DRC_HKN	(0X184)
+#define SUN8I_DAC_DRC_LKN	(0X188)
+#define SUN8I_DAC_DRC_SFHAT	(0X18C)
+#define SUN8I_DAC_DRC_SFLAT	(0X190)
+#define SUN8I_DAC_DRC_SFHRT	(0X194)
+#define	SUN8I_DAC_DRC_SFLRT	(0X198)
+#define	SUN8I_DAC_DRC_MXGHS	(0X19C)
+#define SUN8I_DAC_DRC_MXGLS	(0X1A0)
+#define SUN8I_DAC_DRC_MNGHS	(0X1A4)
+#define SUN8I_DAC_DRC_MNGLS	(0X1A8)
+#define SUN8I_DAC_DRC_EPSHC	(0X1AC)
+#define SUN8I_DAC_DRC_EPSLC	(0X1B0)
+#define SUN8I_DAC_DRC_OPT	(0X1B4)
+#define SUN8I_DAC_HPF_HG	(0x1B8)
+#define SUN8I_DAC_HPF_LG	(0x1BC)
+
+
+#define SUN8I_ADC_DRC_HHPFC	(0X200)
+#define SUN8I_ADC_DRC_LHPFC	(0X204)
+#define SUN8I_ADC_DRC_CTRL	(0X208)
+#define SUN8I_ADC_DRC_LPFHAT	(0X20C)
+#define SUN8I_ADC_DRC_LPFLAT	(0X210)
+#define SUN8I_ADC_DRC_RPFHAT	(0X214)
+#define SUN8I_ADC_DRC_RPFLAT	(0X218)
+#define SUN8I_ADC_DRC_LPFHRT	(0X21C)
+#define SUN8I_ADC_DRC_LPFLRT	(0X220)
+#define SUN8I_ADC_DRC_RPFHRT	(0X224)
+#define SUN8I_ADC_DRC_RPFLRT	(0X228)
+#define SUN8I_ADC_DRC_LRMSHAT	(0X22C)
+#define SUN8I_ADC_DRC_LRMSLAT	(0X230)
+#define SUN8I_ADC_DRC_RRMSHAT	(0X234)
+#define SUN8I_ADC_DRC_RRMSLAT	(0X238)
+#define SUN8I_ADC_DRC_HCT	(0X23C)
+#define SUN8I_ADC_DRC_LCT	(0X240)
+#define SUN8I_ADC_DRC_HKC	(0X244)
+#define SUN8I_ADC_DRC_LKC	(0X248)
+#define SUN8I_ADC_DRC_HOPC	(0X24C)
+#define SUN8I_ADC_DRC_LOPC	(0X250)
+#define SUN8I_ADC_DRC_HLT	(0X254)
+#define SUN8I_ADC_DRC_LLT	(0X258)
+#define SUN8I_ADC_DRC_HKI	(0X25C)
+#define SUN8I_ADC_DRC_LKI	(0X260)
+#define SUN8I_ADC_DRC_HOPL	(0X264)
+#define SUN8I_ADC_DRC_LOPL	(0X268)
+#define SUN8I_ADC_DRC_HET	(0X26C)
+#define SUN8I_ADC_DRC_LET	(0X270)
+#define	SUN8I_ADC_DRC_HKE	(0X274)
+#define SUN8I_ADC_DRC_LKE	(0X278)
+#define SUN8I_ADC_DRC_HOPE	(0X27C)
+#define SUN8I_ADC_DRC_LOPE	(0X280)
+#define SUN8I_ADC_DRC_HKN	(0X284)
+#define SUN8I_ADC_DRC_LKN	(0X288)
+#define SUN8I_ADC_DRC_SFHAT	(0X28C)
+#define SUN8I_ADC_DRC_SFLAT	(0X290)
+#define SUN8I_ADC_DRC_SFHRT	(0X294)
+#define SUN8I_ADC_DRC_SFLRT	(0X298)
+#define SUN8I_ADC_DRC_MXGHS	(0X29C)
+#define SUN8I_ADC_DRC_MXGLS	(0X2A0)
+#define SUN8I_ADC_DRC_MNGHS	(0X2A4)
+#define SUN8I_ADC_DRC_MNGLS	(0X2A8)
+#define SUN8I_ADC_DRC_EPSHC	(0X2AC)
+#define SUN8I_ADC_DRC_EPSLC	(0X2B0)
+#define SUN8I_ADC_DRC_OPT	(0X2B4)
+#define SUN8I_ADC_HPF_HG	(0x2B8)
+#define SUN8I_ADC_HPF_LG	(0x2BC)
 
 /*DAC Debug Register
 * codecbase+0x48
@@ -1255,7 +1350,7 @@ static struct regmap_config sun8i_codec_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_register	= SUN6I_ADC_DAP_HPFC,
+	.max_register	= SUN8I_ADC_HPF_LG,
 	.fast_io	= true,
 };
 
