@@ -529,7 +529,8 @@ struct sun8i_priv {
 	struct clk		*clk_module;
 	struct reset_control	*rstc;
 
-	bool			linein_playback;
+	bool			linein_enabled;
+	bool			lineout_enabled;
 	bool			linein_capture;
 	bool			speaker_active;
 	bool			codec_addaloop_en;
@@ -1068,9 +1069,9 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 static	bool adcdrc_used       = false;
 static	bool dacdrc_used       = false;
 static	bool adchpf_used       = false;
-static bool codec_lineout_en = false;
+//static bool codec_lineout_en = false;
 static  bool codec_addadrc_en = false;
-static  bool codec_lineinin_en  = false;
+//static  bool codec_lineinin_en  = false;
 static int play_running = 0;
 
 static unsigned int read_prcm_wvalue(struct sun8i_priv *sun8i, unsigned int addr)
@@ -1149,9 +1150,11 @@ static int codec_wr_prcm_control(struct sun8i_priv *sun8i, u32 reg, u32 mask, u3
 static int codec_set_lineinin(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	codec_lineinin_en = ucontrol->value.integer.value[0];
-	struct sun8i_priv *sun8i;
-	if (codec_lineinin_en) {
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
+	sun8i->linein_enabled = ucontrol->value.integer.value[0];
+
+	if (sun8i->linein_enabled) {
 		/*select LINEINL*/
 		codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTELINEINL, 0x1);
 		/*select LINEINR*/
@@ -1169,7 +1172,10 @@ static int codec_set_lineinin(struct snd_kcontrol *kcontrol,
 static int codec_get_lineinin(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = codec_lineinin_en;
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
+
+	ucontrol->value.integer.value[0] = sun8i->linein_enabled;
 	return 0;
 }
 
@@ -1180,10 +1186,11 @@ static int codec_get_lineinin(struct snd_kcontrol *kcontrol,
 static int codec_set_lineout(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	codec_lineout_en = ucontrol->value.integer.value[0];
-	struct sun8i_priv *sun8i;
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
 
-	if (codec_lineout_en) {
+	sun8i->lineout_enabled = ucontrol->value.integer.value[0];
+	if (sun8i->lineout_enabled) {
 		codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTELINEINL, 0x1);
 		codec_wr_prcm_control(sun8i, ROMIXSC, 0x1, RMIXMUTELINEINR, 0x1);
 		codec_wr_prcm_control(sun8i, PAEN_CTR, 0x1, LINEOUTEN, 0x1);
@@ -1215,7 +1222,10 @@ static int codec_set_lineout(struct snd_kcontrol *kcontrol,
 static int codec_get_lineout(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = codec_lineout_en;
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
+
+	ucontrol->value.integer.value[0] = sun8i->lineout_enabled;
 	return 0;
 }
 
