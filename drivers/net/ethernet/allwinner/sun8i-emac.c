@@ -31,6 +31,7 @@
 #include <linux/crypto.h>
 #include <linux/err.h>
 #include <linux/scatterlist.h>
+#include <linux/regmap.h>
 
 #include <linux/regulator/consumer.h>
 
@@ -132,7 +133,7 @@ struct geth_priv {
 	struct pinctrl *pinctrl;
 	struct clk *geth_clk;
 	struct clk *ephy_clk;
-	void __iomem *geth_extclk;
+	struct regmap *regmap;
 	struct regulator **power;
 	bool is_suspend;
 
@@ -168,9 +169,9 @@ static void desc_print(struct dma_desc *desc, int size)
 
 static int geth_power_on(struct geth_priv *priv)
 {
-	int value;
+	u32 value;
 
-	value = readl(priv->geth_extclk + GETH_CLK_REG);
+	regmap_read(priv->regmap, GETH_CLK_REG, &value);
 	if (priv->phy_ext == INT_PHY) {
 		value |= (1 << 15);
 		value &= ~(1 << 16);
@@ -179,19 +180,19 @@ static int geth_power_on(struct geth_priv *priv)
 		value &= ~(1 << 15);
 		value |= (1 << 16);
 	}
-	writel(value, priv->geth_extclk + GETH_CLK_REG);
+	regmap_write(priv->regmap, GETH_CLK_REG, value);
 
 	return 0;
 }
 
 static void geth_power_off(struct geth_priv *priv)
 {
-	int value;
+	u32 value;
 
 	if (priv->phy_ext == INT_PHY) {
-		value = readl(priv->geth_extclk + GETH_CLK_REG);
+		regmap_read(priv->regmap, GETH_CLK_REG, &value);
 		value |= (1 << 16);
-		writel(value, priv->geth_extclk + GETH_CLK_REG);
+		regmap_write(priv->regmap, GETH_CLK_REG, value);
 	}
 }
 
@@ -653,7 +654,7 @@ static void geth_clk_enable(struct geth_priv *priv)
 
 	phy_interface = priv->phy_interface;
 
-	clk_value = readl(priv->geth_extclk + GETH_CLK_REG);
+	regmap_read(priv->regmap, GETH_CLK_REG, &clk_value);
 	if (phy_interface == PHY_INTERFACE_MODE_RGMII)
 		clk_value |= 0x00000004;
 	else
@@ -663,7 +664,7 @@ static void geth_clk_enable(struct geth_priv *priv)
 	if (phy_interface == PHY_INTERFACE_MODE_RGMII
 			|| phy_interface == PHY_INTERFACE_MODE_GMII)
 		clk_value |= 0x00000002;
-	writel(clk_value, priv->geth_extclk + GETH_CLK_REG);
+	regmap_write(priv->regmap, GETH_CLK_REG, clk_value);
 }
 
 static void geth_clk_disable(struct geth_priv *priv)
@@ -1372,7 +1373,7 @@ static void geth_sys_release(struct platform_device *pdev)
 	if (!IS_ERR_OR_NULL(priv->pinctrl))
 		devm_pinctrl_put(priv->pinctrl);
 
-	iounmap(priv->geth_extclk);
+	iounmap(priv->regmap);
 
 	if (priv->phy_ext == INT_PHY && priv->ephy_clk)
 		clk_put(priv->ephy_clk);
@@ -1380,6 +1381,14 @@ static void geth_sys_release(struct platform_device *pdev)
 	if (priv->geth_clk)
 		clk_put(priv->geth_clk);
 }
+#define SUN8I_EMAC_RGMII_STA 0xD0
+static struct regmap_config sun8i_emac_regmap_config = {
+	.reg_bits	= 32,
+	.reg_stride	= 4,
+	.val_bits	= 32,
+	.max_register	= SUN8I_EMAC_RGMII_STA,
+	.fast_io	= true,
+};
 
 /**
  * geth_probe
@@ -1405,13 +1414,18 @@ static int geth_probe(struct platform_device *pdev)
 	priv = netdev_priv(ndev);
 	platform_set_drvdata(pdev, ndev);
 
-	/* Must set private data to pdev, before call it */
-	priv->base = of_iomap(np, 0);
-	if (!priv->base) {
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	priv->base = devm_ioremap_resource(&pdev->dev, res);
+	if (IS_ERR(priv->base)) {
 		dev_err(&pdev->dev, "failed to remap registers\n");
-		ret = -ENOMEM;
+		ret = PTR_ERR(priv->base);
 		goto out_err;
 	}
+
+	priv->regmap = devm_regmap_init_mmio(&pdev->dev, priv->base,
+					     &sun8i_emac_regmap_config);
+	if (IS_ERR(priv->regmap))
+		return PTR_ERR(priv->regmap);
 
 	/* fill in parameters for net-dev structure */
 	ndev->base_addr = (unsigned long)priv->base;
@@ -1436,8 +1450,6 @@ static int geth_probe(struct platform_device *pdev)
 	priv->phy_interface = of_get_phy_mode(np);
 	if (priv->phy_ext == INT_PHY)
 		priv->phy_interface = PHY_INTERFACE_MODE_MII;
-
-	priv->geth_extclk = 0x01c00000;
 
 	priv->geth_clk = clk_get(&pdev->dev, "emac");
 	if (unlikely(!priv->geth_clk || IS_ERR(priv->geth_clk))) {
