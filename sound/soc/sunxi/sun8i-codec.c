@@ -532,8 +532,9 @@ struct sun8i_priv {
 	bool			linein_enabled;
 	bool			lineout_enabled;
 	bool			linein_capture;
-	bool			speaker_active;
-	bool			codec_addaloop_en;
+	bool			addaloop_enabled;
+	bool			addadrc_enabled;
+	bool			playing;
 
 	struct regmap		*regmap;
 	void __iomem		*analog_part;
@@ -602,7 +603,7 @@ static int sun8i_codec_capture_open(struct sun8i_priv *sun8i)
 	/*enable Master microphone bias*/
 	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x1);
 
-	if (sun8i->codec_addaloop_en) {
+	if (sun8i->addaloop_enabled) {
 		/*enable Left output Boost stage*/
 		codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTELOUTPUT, 0x1);
 		/*enable Right output Boost stage*/
@@ -788,18 +789,14 @@ static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 	struct sun8i_priv *sun8i = snd_soc_card_get_drvdata(rtd->card);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		if (1/*sun8i->speaker_active*/) {
-			return sun8i_codec_pa_play_open(sun8i);
-		} else {
-			/*set TX FIFO send drq level*/
-			codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0xf);
+		sun8i_codec_pa_play_open(sun8i);
+		/*set TX FIFO send drq level*/
+		codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0xf);
 
-			/*set TX FIFO MODE*/
-			codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_TX_FIFO_MODE, 0x1);
-
-			//send last sample when dac fifo under run
-			codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
-		}
+		/*set TX FIFO MODE*/
+		codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_TX_FIFO_MODE, 0x1);
+		//send last sample when dac fifo under run
+		codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
 	} else {
 		if (sun8i->codec_cap_mode == 1) {
 			sun8i_codec_mic1_2_capture_open(sun8i);
@@ -1023,6 +1020,37 @@ static void sun8i_codec_shutdown(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sun8i_priv *priv = snd_soc_card_get_drvdata(rtd->card);
 
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		codec_wr_prcm_control(priv, ADDA_APT2, 0x1, ZERO_CROSS_EN, 0x0);
+		if (priv->lineout_enabled) {
+			codec_wr_prcm_control(priv, DAC_PA_SRC, 0x1, LMIXEN, 0x0);
+			codec_wr_prcm_control(priv, DAC_PA_SRC, 0x1, RMIXEN, 0x0);
+		}
+		/*disable dac drq*/
+		codec_wr_control(priv, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x0);
+		codec_wr_prcm_control(priv, DAC_PA_SRC, 0x1, DACALEN, 0x0);
+		codec_wr_prcm_control(priv, DAC_PA_SRC, 0x1, DACAREN, 0x0);
+		/*disable dac digital*/
+		codec_wr_control(priv, SUNXI_DAC_DPC ,  0x1, SUNXI_DAC_DPC_EN_DA, 0x0);
+		codec_wr_prcm_control(priv, LINEOUT_PA_GAT, 0x1, PA_CLK_GC, 0x0);
+		priv->playing = false;
+/*		if (dacdrc_used) {
+			dacdrc_enable(0);
+		}
+		if (dachpf_used) {
+			dachpf_enable(0);
+		}
+	} else {
+	    if (adcdrc_used) {
+			adcdrc_enable(0);
+		}
+		if (adcagc_used) {
+			adcagc_enable(0);
+		}
+		if (adchpf_used) {
+			adchpf_enable(0);
+		}*/
+	}
 	clk_disable_unprepare(priv->clk_module);
 }
 
@@ -1069,10 +1097,6 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 static	bool adcdrc_used       = false;
 static	bool dacdrc_used       = false;
 static	bool adchpf_used       = false;
-//static bool codec_lineout_en = false;
-static  bool codec_addadrc_en = false;
-//static  bool codec_lineinin_en  = false;
-static int play_running = 0;
 
 static unsigned int read_prcm_wvalue(struct sun8i_priv *sun8i, unsigned int addr)
 {
@@ -1144,8 +1168,8 @@ static int codec_wr_prcm_control(struct sun8i_priv *sun8i, u32 reg, u32 mask, u3
 }
 
 /*
-*	codec_lineinin_en == 1, open the linein in.
-*	codec_lineinin_en == 0, close the linein in.
+*	linein_enabled == 1, open the linein in.
+*	linein_enabled == 0, close the linein in.
 */
 static int codec_set_lineinin(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
@@ -1180,8 +1204,8 @@ static int codec_get_lineinin(struct snd_kcontrol *kcontrol,
 }
 
 /*
-*	codec_lineout_en == 1, open the speaker.
-*	codec_lineout_en == 0, close the speaker.
+*	lineout_enabled == 1, open the speaker.
+*	lineout_enabled == 0, close the speaker.
 */
 static int codec_set_lineout(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
@@ -1205,7 +1229,7 @@ static int codec_set_lineout(struct snd_kcontrol *kcontrol,
 	} else {
 		codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTELINEINL, 0x0);
 		codec_wr_prcm_control(sun8i, ROMIXSC, 0x1, RMIXMUTELINEINR, 0x0);
-		if (!play_running) {
+		if (!sun8i->playing) {
 			codec_wr_prcm_control(sun8i, PAEN_CTR, 0x1, LINEOUTEN, 0x0);
 			codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x0);
 			codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x0);
@@ -1232,9 +1256,12 @@ static int codec_get_lineout(struct snd_kcontrol *kcontrol,
 static int codec_set_addadrc(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	codec_addadrc_en = ucontrol->value.integer.value[0];
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
 
-	if (codec_addadrc_en) {
+	sun8i->addadrc_enabled = ucontrol->value.integer.value[0];
+
+	if (sun8i->addadrc_enabled) {
 		adcdrc_used       		= 1;
 		dacdrc_used       		= 1;
 		adchpf_used       		= 1;
@@ -1251,13 +1278,19 @@ static int codec_set_addadrc(struct snd_kcontrol *kcontrol,
 static int codec_get_addadrc(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = codec_addadrc_en;
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
+
+	ucontrol->value.integer.value[0] = sun8i->addadrc_enabled;
 	return 0;
 }
 static int codec_set_addaloop(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	//codec_addaloop_en = ucontrol->value.integer.value[0];
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
+
+	sun8i->addaloop_enabled = ucontrol->value.integer.value[0];
 
 	return 0;
 }
@@ -1265,7 +1298,10 @@ static int codec_set_addaloop(struct snd_kcontrol *kcontrol,
 static int codec_get_addaloop(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	//ucontrol->value.integer.value[0] = codec_addaloop_en;
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
+
+	ucontrol->value.integer.value[0] = sun8i->addaloop_enabled;
 	return 0;
 }
 static int codec_set_audio_capture_mode(struct snd_kcontrol *kcontrol,
@@ -1288,6 +1324,79 @@ static const struct soc_enum audio_capture_enum[] = {
         SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(audio_capture_function), audio_capture_function),
 };
 
+#if 0
+/* Codec */
+static const struct snd_kcontrol_new sun8i_codec_pa_mute =
+	SOC_DAPM_SINGLE("Switch", SUNXI_CODEC_DAC_ACTL,
+			SUN4I_CODEC_DAC_ACTL_PA_MUTE, 1, 0);
+
+static DECLARE_TLV_DB_SCALE(sun8i_codec_pa_volume_scale, -6300, 100, 1);
+
+static const struct snd_soc_dapm_widget sun8i_codec_dapm_widgets[] = {
+	/* Digital parts of the DACs */
+	SND_SOC_DAPM_SUPPLY("DAC", SUNXI_DAC_DPC,
+			    SUNXI_DAC_DPC_EN_DA, 0,
+			    NULL, 0),
+
+	/* Analog parts of the DACs */
+	SND_SOC_DAPM_DAC("Left DAC", "Codec Playback", SUNXI_DAC_ACTL,
+			 SUN4I_CODEC_DAC_ACTL_DACAENL, 0),
+	SND_SOC_DAPM_DAC("Right DAC", "Codec Playback", SUN4I_CODEC_DAC_ACTL,
+			 SUN4I_CODEC_DAC_ACTL_DACAENR, 0),
+
+	/* Mixers */
+	SND_SOC_DAPM_MIXER("Left Mixer", SND_SOC_NOPM, 0, 0,
+			   sun4i_codec_left_mixer_controls,
+			   ARRAY_SIZE(sun4i_codec_left_mixer_controls)),
+	SND_SOC_DAPM_MIXER("Right Mixer", SND_SOC_NOPM, 0, 0,
+			   sun4i_codec_right_mixer_controls,
+			   ARRAY_SIZE(sun4i_codec_right_mixer_controls)),
+
+	/* Global Mixer Enable */
+	SND_SOC_DAPM_SUPPLY("Mixer Enable", SUN4I_CODEC_DAC_ACTL,
+			    SUN4I_CODEC_DAC_ACTL_MIXEN, 0, NULL, 0),
+
+	/* Power Amplifier */
+	SND_SOC_DAPM_MIXER("Power Amplifier", SUN4I_CODEC_ADC_ACTL,
+			   SUN4I_CODEC_ADC_ACTL_PA_EN, 0,
+			   sun4i_codec_pa_mixer_controls,
+			   ARRAY_SIZE(sun4i_codec_pa_mixer_controls)),
+	SND_SOC_DAPM_SWITCH("Power Amplifier Mute", SND_SOC_NOPM, 0, 0,
+			    &sun8i_codec_pa_mute),
+
+	SND_SOC_DAPM_OUTPUT("Line Out Right"),
+	SND_SOC_DAPM_OUTPUT("Line Out Left"),
+};
+
+static const struct snd_soc_dapm_route sun8i_codec_dapm_routes[] = {
+	/* Left DAC Routes */
+	{ "Left DAC", NULL, "DAC" },
+
+	/* Right DAC Routes */
+	{ "Right DAC", NULL, "DAC" },
+
+	/* Right Mixer Routes */
+	{ "Right Mixer", NULL, "Mixer Enable" },
+	{ "Right Mixer", "Left DAC Playback Switch", "Left DAC" },
+	{ "Right Mixer", "Right DAC Playback Switch", "Right DAC" },
+
+	/* Left Mixer Routes */
+	{ "Left Mixer", NULL, "Mixer Enable" },
+	{ "Left Mixer", "Left DAC Playback Switch", "Left DAC" },
+
+	/* Power Amplifier Routes */
+	{ "Power Amplifier", "Mixer Playback Switch", "Left Mixer" },
+	{ "Power Amplifier", "Mixer Playback Switch", "Right Mixer" },
+	{ "Power Amplifier", "DAC Playback Switch", "Left DAC" },
+	{ "Power Amplifier", "DAC Playback Switch", "Right DAC" },
+
+	/* Line Output Routes */
+	{ "Power Amplifier Mute", "Switch", "Power Amplifier" },
+	{ "Line Out Right", NULL, "Power Amplifier Mute" },
+	{ "Line Out Left", NULL, "Power Amplifier Mute" },
+};
+#endif
+
 static const struct snd_kcontrol_new sun8i_codec_controls[] = {
 	SOC_SINGLE("MIC1_G boost stage output mixer control",	MIC_GCTR, MIC1G, 0x7, 0),
 	SOC_SINGLE("MIC2_G boost stage output mixer control",	MIC_GCTR, MIC2G, 0x7, 0),
@@ -1307,9 +1416,12 @@ static const struct snd_kcontrol_new sun8i_codec_controls[] = {
 };
 
 static struct snd_soc_codec_driver sun8i_codec = {
-
 	.controls		= sun8i_codec_controls,
 	.num_controls		= ARRAY_SIZE(sun8i_codec_controls),
+/*	.dapm_widgets		= sun8i_codec_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(sun8i_codec_dapm_widgets),
+	.dapm_routes		= sun8i_codec_dapm_routes,
+	.num_dapm_routes	= ARRAY_SIZE(sun8i_codec_dapm_routes),*/
 };
 
 /*** Board routing ***/
