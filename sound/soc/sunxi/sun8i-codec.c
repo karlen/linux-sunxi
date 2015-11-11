@@ -35,6 +35,7 @@
 #include <linux/timer.h>
 #include <linux/io.h>
 #include <linux/reset.h>
+#include <linux/mfd/syscon.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_gpio.h>
@@ -537,6 +538,7 @@ struct sun8i_priv {
 	bool			playing;
 
 	struct regmap		*regmap;
+	struct regmap		*prcm_regmap;
 	void __iomem		*analog_part;
 	enum sun8i_soc_family revision;
 
@@ -1525,11 +1527,10 @@ static int sun8i_codec_probe(struct platform_device *pdev)
 		return PTR_ERR(priv->regmap);
 	dev_dbg(dev, "COOPS registers mapped");
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "analog_part");
-	priv->analog_part = devm_ioremap_resource(dev, res);
-
-	if (IS_ERR(priv->analog_part))
-		return PTR_ERR(priv->analog_part);
+	priv->prcm_regmap = syscon_regmap_lookup_by_compatible(
+					"allwinner, sun8i-h3-prcm");
+	if (IS_ERR(priv->prcm_regmap))
+		return PTR_ERR(priv->prcm_regmap);
 	dev_dbg(dev, "COOPS Analog Part mapped");
 
 	/* Get the clocks from the DT */
