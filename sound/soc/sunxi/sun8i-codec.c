@@ -1103,20 +1103,20 @@ static	bool adchpf_used       = false;
 static unsigned int read_prcm_wvalue(struct sun8i_priv *sun8i, unsigned int addr)
 {
 	unsigned int reg;
-	reg = readl(sun8i->analog_part);
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg |= (0x1<<28);
-	writel(reg, sun8i->analog_part);
+	(void)regmap_write(sun8i->prcm_regmap, 0, reg);
 
-	reg = readl(sun8i->analog_part);
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg &= ~(0x1<<24);
-	writel(reg, sun8i->analog_part);
+	(void)regmap_write(sun8i->prcm_regmap, 0, reg);
 
-	reg = readl(sun8i->analog_part);
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg &= ~(0x1f<<16);
 	reg |= (addr<<16);
-	writel(reg, sun8i->analog_part);
+	(void)regmap_write(sun8i->prcm_regmap, 0, reg);
 
-	reg = readl(sun8i->analog_part); 
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg &= (0xff<<0);
 	dev_dbg (sun8i->dev, "COOPS - Analog block read 0x%x from addr %x", reg, addr);
 	return reg;
@@ -1125,27 +1125,27 @@ static unsigned int read_prcm_wvalue(struct sun8i_priv *sun8i, unsigned int addr
 static void write_prcm_wvalue(struct sun8i_priv *sun8i, unsigned int addr, unsigned int val)
 {
 	unsigned int reg;
-	reg = readl(sun8i->analog_part);
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg |= (0x1<<28);
-	writel(reg, sun8i->analog_part);
+	(void)regmap_write(sun8i->prcm_regmap, 0, reg);
 
-	reg = readl(sun8i->analog_part);
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg &= ~(0x1f<<16);
 	reg |= (addr<<16);
-	writel(reg, sun8i->analog_part);
+	(void)regmap_write(sun8i->prcm_regmap, 0, reg);
 
-	reg = readl(sun8i->analog_part);
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg &= ~(0xff<<8);
 	reg |= (val<<8);
-	writel(reg, sun8i->analog_part);
+	(void)regmap_write(sun8i->prcm_regmap, 0, reg);
 
-	reg = readl(sun8i->analog_part);
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg |= (0x1<<24);
-	writel(reg, sun8i->analog_part);
+	(void)regmap_write(sun8i->prcm_regmap, 0, reg);
 
-	reg = readl(sun8i->analog_part);
+	(void)regmap_read(sun8i->prcm_regmap, 0, &reg);
 	reg &= ~(0x1<<24);
-	writel(reg, sun8i->analog_part);
+	(void)regmap_write(sun8i->prcm_regmap, 0, reg);
 	dev_dbg (sun8i->dev, "COOPS - Analog block wrote 0x%x to addr %x", val, addr);
 }
 
@@ -1203,6 +1203,34 @@ static int codec_get_lineinin(struct snd_kcontrol *kcontrol,
 
 	ucontrol->value.integer.value[0] = sun8i->linein_enabled;
 	return 0;
+}
+
+static int codec_get_lineout_vol(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = 0;
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
+
+	if (sun8i->lineout_enabled) {
+		ret = read_prcm_wvalue(sun8i, LINEOUT_VOLC);
+		ret = ret>>3;
+	}
+	return ret;
+}
+
+static int codec_put_lineout_vol(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = 0;
+	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
+	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
+
+	if (sun8i->lineout_enabled) {
+		ret = read_prcm_wvalue(sun8i, LINEOUT_VOLC);
+		ret = ret>>3;
+	}
+	return ret;
 }
 
 /*
@@ -1325,14 +1353,13 @@ static const char *audio_capture_function[] = {"main mic", "mic1_2", "linein"};
 static const struct soc_enum audio_capture_enum[] = {
         SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(audio_capture_function), audio_capture_function),
 };
-
+static DECLARE_TLV_DB_SCALE(sun8i_codec_pa_volume_scale, -4800, 100, 1);
 #if 0
 /* Codec */
 static const struct snd_kcontrol_new sun8i_codec_pa_mute =
 	SOC_DAPM_SINGLE("Switch", SUNXI_CODEC_DAC_ACTL,
 			SUN4I_CODEC_DAC_ACTL_PA_MUTE, 1, 0);
 
-static DECLARE_TLV_DB_SCALE(sun8i_codec_pa_volume_scale, -6300, 100, 1);
 
 static const struct snd_soc_dapm_widget sun8i_codec_dapm_widgets[] = {
 	/* Digital parts of the DACs */
@@ -1398,23 +1425,10 @@ static const struct snd_soc_dapm_route sun8i_codec_dapm_routes[] = {
 	{ "Line Out Left", NULL, "Power Amplifier Mute" },
 };
 #endif
-
 static const struct snd_kcontrol_new sun8i_codec_controls[] = {
-	SOC_SINGLE("MIC1_G boost stage output mixer control",	MIC_GCTR, MIC1G, 0x7, 0),
-	SOC_SINGLE("MIC2_G boost stage output mixer control",	MIC_GCTR, MIC2G, 0x7, 0),
-	SOC_SINGLE("LINEIN_G boost stage output mixer control",	LINEIN_GCTR, LINEING, 0x7, 0),
-
-	SOC_SINGLE("MIC1 boost AMP gain control",		MIC1G_MICBIAS_CTR, MIC1BOOST, 0x7, 0),
-	SOC_SINGLE("MIC2 boost AMP gain control", 		MIC2G_LINEOUT_CTR, MIC2BOOST, 0x7, 0),
-
-	SOC_SINGLE("Lineout volume control", 			LINEOUT_VOLC, LINEOUTVOL, 0x1f, 0),
-
-	SOC_SINGLE("ADC input gain ctrl", 			ADC_AP_EN, ADCG, 0x7, 0),
-	SOC_SINGLE_BOOL_EXT("Audio linein in", 	0, codec_get_lineinin, 	codec_set_lineinin),
+	SOC_SINGLE_EXT_TLV("Lineout volume control", LINEOUT_VOLC, LINEOUTVOL, 0x1f, 0,
+			codec_get_lineout_vol, codec_put_lineout_vol, sun8i_codec_pa_volume_scale),
 	SOC_SINGLE_BOOL_EXT("Audio lineout", 	0, codec_get_lineout, 	codec_set_lineout),
-	SOC_SINGLE_BOOL_EXT("Audio adda drc", 	0, codec_get_addadrc, 	codec_set_addadrc),
-	SOC_SINGLE_BOOL_EXT("Audio adda loop", 	0, codec_get_addaloop, 	codec_set_addaloop),
-	SOC_ENUM_EXT("audio capture mode", audio_capture_enum[0], codec_get_audio_capture_mode, codec_set_audio_capture_mode),
 };
 
 static struct snd_soc_codec_driver sun8i_codec = {
