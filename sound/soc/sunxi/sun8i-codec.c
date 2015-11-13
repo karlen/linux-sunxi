@@ -43,50 +43,108 @@
 #include <sound/dmaengine_pcm.h>
 
 #define SUNXI_DAC_DPC		(0x00)		//the same as a10
-#define SUNXI_DAC_DPC_EN_DA			(31)
-#define SUNXI_DAC_DPC_DVOL			(12)
+	#define SUNXI_DAC_DPC_EN_DA		BIT(31)
+	#define SUNXI_DAC_DPC_DVOL		BIT(12)
+
 #define SUNXI_DAC_FIFOC		(0x04)		//the same as a10
-#define SUNXI_DAC_FIFOC_DAC_FS			(29)
-#define SUNXI_DAC_FIFOC_FIR_VERSION		(28)
-#define SUNXI_DAC_FIFOC_SEND_LASAT		(26)
-#define SUNXI_DAC_FIFOC_TX_FIFO_MODE		(24)
-#define SUNXI_DAC_FIFOC_DRQ_CLR_CNT		(21)
-#define SUNXI_DAC_FIFOC_TX_TRIG_LEVEL		(8)
-#define SUNXI_DAC_FIFOC_MONO_EN			(6)
-#define SUNXI_DAC_FIFOC_TX_SAMPLE_BITS		(5)
-#define SUNXI_DAC_FIFOC_DAC_DRQ_EN		(4)
-#define SUNXI_DAC_FIFOC_FIFO_FLUSH		(0)
+	#define SUNXI_DAC_FIFOC_DAC_FS		BIT(29)
+	#define SUNXI_DAC_FIFOC_DAC_FS_MASK	GENMASK(31,29)
+	#define SUNXI_DAC_FIFOC_DAC_FS_RATE(v)	((v) << 29)
+	#define SUNXI_DAC_FIFOC_FIR_VERSION	BIT(28)
+	#define SUNXI_DAC_FIFOC_SEND_LASAT	BIT(26)
+	#define SUNXI_DAC_FIFOC_TX_FIFO_MODE	BIT(24)
+	#define SUNXI_DAC_FIFOC_DRQ_CLR_CNT(v)	((v) << 21)
+	#define SUNXI_DAC_FIFOC_DRQ_CLR_CNT_MASK	GENMASK(22,21)
+	#define SUNXI_DAC_FIFOC_TX_TRIG_LEVEL(v)	((v) << 8)
+	#define SUNXI_DAC_FIFOC_TX_TRIG_LEVEL_MASK	GENMASK(14,8)
+	#define SUNXI_DAC_FIFOC_MONO_EN		BIT(6)
+	#define SUNXI_DAC_FIFOC_TX_SAMPLE_BITS	BIT(5)
+	#define SUNXI_DAC_FIFOC_DAC_DRQ_EN	BIT(4)
+	#define SUNXI_DAC_FIFOC_FIFO_FLUSH	BIT(0)
+
 #define SUNXI_DAC_FIFOS		(0x08)		//the same as a10
+
 #define SUNXI_DAC_TXDATA	(0x0c)		//the same as a10
-#define SUN6I_ADC_FIFOC		(0x10)		//33 ADC FIFO Control Register, different with a10
-#define SUNXI_ADC_FIFOC_DAC_FS			(29)
-#define SUNXI_ADC_FIFOC_EN_AD			(28)
-#define SUN6I_ADC_DIG_MIC_EN			(27)
-#define SUNXI_ADC_FIFOC_RX_FIFO_MODE		(24)
-#define SUN6I_ADC_DFEN				(16)
-#define SUNXI_ADC_FIFOC_RX_TRIG_LEVEL		(8)
-#define SUNXI_ADC_FIFOC_MONO_EN			(7)
-#define SUNXI_ADC_FIFOC_RX_SAMPLE_BITS		(6)
-#define SUNXI_ADC_FIFOC_ADC_DRQ_EN		(4)
-#define SUNXI_ADC_FIFOC_FIFO_FLUSH		(0)
 
-#define SUN6I_ADC_FIFOS		(0x14)		//33 ADC FIFO Status Register, different with a10
-#define SUN6I_ADC_RXDATA	(0x18)		//33 ADC RX Data Register
+#define SUN8I_ADC_FIFOC		(0x10)		//33 ADC FIFO Control Register, different with a10
+	#define SUNXI_ADC_FIFOC_DAC_FS		IT(29)
+	#define SUNXI_ADC_FIFOC_DAC_FS_MASK	GENMASK(31,29)
+	#define SUNXI_ADC_FIFOC_DAC_FS_RATE(v)	((v) << 29)
+	#define SUNXI_ADC_FIFOC_EN_AD		BIT(28)
+	#define SUN8I_ADC_DIG_MIC_EN		BIT(27)
+	#define SUNXI_ADC_FIFOC_RX_FIFO_MODE	BIT(24)
+	#define SUN8I_ADC_DFEN			BIT(16)
+	#define SUNXI_ADC_FIFOC_RX_TRIG_LEVEL_MASK	GENMASK(12,8)
+	#define SUNXI_ADC_FIFOC_RX_TRIG_LEVEL(v)	((v) << 8)
+	#define SUNXI_ADC_FIFOC_MONO_EN		BIT(7)
+	#define SUNXI_ADC_FIFOC_RX_SAMPLE_BITS	BIT(6)
+	#define SUNXI_ADC_FIFOC_ADC_DRQ_EN	BIT(4)
+	#define SUNXI_ADC_FIFOC_FIFO_FLUSH	BIT(0)
+
+#define SUN8I_ADC_FIFOS		(0x14)		//33 ADC FIFO Status Register, different with a10
+#define SUN8I_ADC_RXDATA	(0x18)		//33 ADC RX Data Register
 #define SUN8I_DAC_TXDATA	(0x20)
-
-#define SUN6I_DAC_TXCNT		(0x40)
-#define SUN6I_ADC_RXCNT		(0x44)
+#define SUN8I_DAC_TXCNT		(0x40)
+#define SUN8I_ADC_RXCNT		(0x44)
 #define SUN8I_DAC_DEBUG		(0x48)
+	#define SUN8I_DAC_DEBUGDAC_SWP		BIT(6)
+
+
 #define SUN8I_ADC_DEBUG		(0x4c)
-#define SUN6I_DAC_DAP_CTL	(0x60)		//DAC DAP control Register
-#define SUN6I_ADC_DAP_CTL	(0x70)		//ADC DAP Control Register
+
+#define SUN8I_DAC_DAP_CTL	(0x60)		//DAC DAP control Register
+	#define SUN8I_DAC_DAP_CTL_DAC_DAP_EN	BIT(31)
+	#define SUN8I_DAC_DAP_CTL_DAC_DRC_EN	BIT(15)
+	#define SUN8I_DAC_DAP_CTL_DAC_HPF_EN	BIT(14)
+
+#define SUN8I_ADC_DAP_CTL	(0x70)		//ADC DAP Control Register
+	#define SUN8I_ADC_DAP_CTL_ADC_DAP_EN	BIT(31)
+	#define SUN8I_ADC_DAP_CTL_ADC_DAP_START		BIT(30)
+	#define SUN8I_ADC_DAP_CTL_ENADC_DRC	BIT(26)
+	#define SUN8I_ADC_DAP_CTL_ADC_DRC_EN	BIT(25)
+	#define SUN8I_ADC_DAP_CTL_ADC_DRC_HPF_EN	BIT(24)
+	#define SUN8I_ADC_DAP_CTL_AGC_LEFT_SATURATION_FLAG	BIT(21)
+	#define SUN8I_ADC_DAP_CTL_AGC_LEFT_NOISE_THRES_FLAG	BIT(20)
+	#define SUN8I_ADC_DAP_CTL_AGC_LEFT_GAIN_APP_MASK	GENMASK(19,12)
+	#define SUN8I_ADC_DAP_CTL_AGC_LEFT_GAIN_APP(v)		(v <<(12))
+	#define SUN8I_ADC_DAP_CTL_AGC_RIGHT_SATURATION_FLAG	BIT(9)
+	#define SUN8I_ADC_DAP_CTL_AGC_RIGHT_NOISE_THRES_FLAG	BIT(8)
+	#define SUN8I_ADC_DAP_CTL_AGC_RIGHT_GAIN_APP_MASK	GENMASK(7,0)
+	#define SUN8I_ADC_DAP_CTL_AGC_RIGHT_GAIN_APP(v)		(v)
+
 #define SUN8I_ADC_DAP_LCTL	(0x74)		//ADC DAP Left Control Register
+	#define SUN8I_ADC_LEFT_CHAN_NOISE_THRES_SET	BIT(16)
+	#define SUN8I_ADC_LEFT_AGC_EN			BIT(14)
+	#define SUN8I_ADC_LEFT_HPF_EN			BIT(13)
+	#define SUN8I_ADC_LEFT_NOISE_DET_EN		BIT(12)
+	#define SUN8I_ADC_LEFT_HYS_SET			BIT(8)
+	#define SUN8I_ADC_LEFT_NOISE_DEBOURCE_TIME	BIT(4)
+	#define SUN8I_ADC_LEFT_SIGNAL_DEBOUNCE_TIME	BIT(0)
+
 #define SUN8I_ADC_DAP_RCTL	(0x78)		//ADC DAP Right Control Register
+	#define SUN8I_ADC_RIGHT_CHAN_NOISE_THRES_SET	BIT(16)
+	#define SUN8I_ADC_RIGHT_AGC_EN			BIT(14)
+	#define SUN8I_ADC_RIGHT_HPF_EN			BIT(13)
+	#define SUN8I_ADC_RIGHT_NOISE_DET_EN		BIT(12)
+	#define SUN8I_ADC_RIGHT_HYS_SET			BIT(8)
+	#define SUN8I_ADC_RIGHT_NOISE_DEBOURCE_TIME	BIT(4)
+	#define SUN8I_ADC_RIGHT_SIGNAL_DEBOUNCE_TIME	BIT(0)
+
 #define SUN8I_ADC_DAP_PARA	(0x7c)		//ADC DAP Parameter Control Register
+	#define SUN8I_ADC_LEFT_CHAN_TARG_LEVEL_SET	BIT(24)
+	#define SUN8I_ADC_RIGHT_CHAN_TARG_LEVEL_SET	BIT(16)
+	#define SUN8I_ADC_LEFT_CHAN_MAX_GAIN_SET	BIT(8)
+	#define SUN8I_ADC_RIGHT_CHAN_MAX_GAIN_SET	BIT(0)
+
 #define SUN8I_ADC_DAP_LAC	(0x80)		//ADC DAP Left Average Coefficient Register
 #define SUN8I_ADC_DAP_LDAT	(0x84)		//ADC DAP Left Decay&Attack Time Register
+	#define SUN8I_ADC_LEFT_ATTACK_TIME_COEFF_SET(v)	((v) << 16)
+	#define SUN8I_ADC_LEFT_DECAY_TIME_COEFF_SET(v)	((v) << 0)
+
 #define SUN8I_ADC_DAP_RAC	(0x88)		//ADC DAP Right Average Coefficient Register
 #define SUN8I_ADC_DAP_RDAC	(0x8c)		//ADC DAP Right Decay&Attack time Register
+	#define SUN8I_ADC_RIGHT_ATTACK_TIME_COEFF_SET(v)	((v) << 16)
+	#define SUN8I_ADC_RIGHT_DECAY_TIME_COEFF_SET(v)		((v) << 0)
 #define SUN8I_ADC_DAP_HPFC	(0x90)		//ADC DAP HPF Coefficient Register
 #define SUN8I_ADC_DAP_LINAC	(0x94)
 #define SUN8I_ADC_DAP_RINAC	(0x98)
@@ -140,7 +198,6 @@
 #define SUN8I_DAC_HPF_HG	(0x1B8)
 #define SUN8I_DAC_HPF_LG	(0x1BC)
 
-
 #define SUN8I_ADC_DRC_HHPFC	(0X200)
 #define SUN8I_ADC_DRC_LHPFC	(0X204)
 #define SUN8I_ADC_DRC_CTRL	(0X208)
@@ -190,332 +247,104 @@
 #define SUN8I_ADC_HPF_HG	(0x2B8)
 #define SUN8I_ADC_HPF_LG	(0x2BC)
 
-/*DAC Debug Register
-* codecbase+0x48
-*/
-#define DAC_SWP					  (6)
-
-/*HMIC Control Register
-*codecbase+0x50
-*/
-#define HMIC_M					  (28)
-#define HMIC_N					  (24)
-#define HMIC_DIRQ				  (23)
-#define HMIC_TH1_HYS			  (21)
-#define	HMIC_EARPHONE_OUT_IRQ_EN  (20)
-#define HMIC_EARPHONE_IN_IRQ_EN	  (19)
-#define HMIC_KEY_UP_IRQ_EN		  (18)
-#define HMIC_KEY_DOWN_IRQ_EN	  (17)
-#define HMIC_DATA_IRQ_EN		  (16)
-#define HMIC_DS_SAMP			  (14)
-#define HMIC_TH2_HYS			  (13)
-#define HMIC_TH2_KEY		      (8)
-#define HMIC_SF_SMOOTH_FIL		  (6)
-#define KEY_UP_IRQ_PEND			  (5)
-#define HMIC_TH1_EARPHONE		  (0)
-
-/*HMIC Data Register
-* codecbase+0x54
-*/
-#define HMIC_EARPHONE_OUT_IRQ_PEND  (20)
-#define HMIC_EARPHONE_IN_IRQ_PEND   (19)
-#define HMIC_KEY_UP_IRQ_PEND 	    (18)
-#define HMIC_KEY_DOWN_IRQ_PEND 		(17)
-#define HMIC_DATA_IRQ_PEND			(16)
-#define HMIC_ADC_DATA				(0)
-
-/*DAC DAP Control Register
-* codecbase+0x60
-*/
-#define DAC_DAP_EN						(31)
-#define DAC_DAP_CTL						(30)
-#define DAC_DAP_STATE					(29)
-#define DAC_BQ_EN						(16)
-#define DAC_DRC_EN						(15)
-#define DAC_HPF_EN						(14)
-#define DAC_DE_CTL						(12)
-#define DAC_RAM_ADDR					(0)
-
-/* DAC DAP volume register
-*	codecbase+0x64
-*/
-#define DAC_LEFT_CHAN_SOFT_MUTE_CTL		(30)
-#define DAC_RIGHT_CHAN_SOFT_MUTE_CTL	(29)
-#define DAC_MASTER_SOFT_MUTE_CTL		(28)
-#define DAC_SKEW_TIME_VOL_CTL			(24)
-#define DAC_MASTER_VOL					(16)
-#define DAC_LEFT_CHAN_VOL				(8)
-#define DAC_RIGHT_CHAN_VOL				(0)
-
-/*ADC DAP Control Register
-* codecbase+0x70
-*/
-#define ADC_DAP_EN					(31)
-#define ADC_DAP_START				(30)
-#define AGC_LEFT_SATURATION_FLAG	(21)
-#define AGC_LEFT_NOISE_THRES_FLAG	(20)
-#define AGC_LEFT_GAIN_APP			(12)
-#define AGC_RIGHT_SATURATION_FLAG	(9)
-#define AGC_RIGHT_NOISE_THRES_FLAG	(8)
-#define AGC_RIGHT_GAIN_APP			(0)
-
-/*ADC DAP Volume Register
-* codecbase+0x74
-*/
-#define ADC_LEFT_CHAN_VOL_MUTE		(18)
-#define ADC_RIGHT_CHAN_VOL_MUTE		(17)
-#define ADC_SKEW_TIME_VOL			(16)
-#define ADC_LEFT_CHAN_VOL			(8)
-#define ADC_RIGHT_CHAN_VOL			(0)
-
-/*ADC DAP Left control register
-* codecbase+0x78
-*/
-#define ADC_LEFT_CHAN_NOISE_THRES_SET	(16)
-#define ADC_LEFT_AGC_EN					(14)
-#define ADC_LEFT_HPF_EN					(13)
-#define ADC_LEFT_NOISE_DET_EN			(12)
-#define ADC_LEFT_HYS_SET				(8)
-#define ADC_LEFT_NOISE_DEBOURCE_TIME	(4)
-#define ADC_LEFT_SIGNAL_DEBOUNCE_TIME	(0)
-
-/*ADC DAP Right Control Register
-* codecbase+0x7c
-*/
-#define ADC_RIGHT_CHAN_NOISE_THRES_SET	(16)
-#define ADC_RIGHT_AGC_EN				(14)
-#define ADC_RIGHT_HPF_EN				(13)
-#define ADC_RIGHT_NOISE_DET_EN			(12)
-#define ADC_RIGHT_HYS_SET				(8)
-#define ADC_RIGHT_NOISE_DEBOURCE_TIME	(4)
-#define ADC_RIGHT_SIGNAL_DEBOUNCE_TIME	(0)
-
-/*ADC DAP Parameter Register
-* codecbase+0x80
-*/
-#define ADC_LEFT_CHAN_TARG_LEVEL_SET	(24)
-#define ADC_RIGHT_CHAN_TARG_LEVEL_SET	(16)
-#define ADC_LEFT_CHAN_MAX_GAIN_SET		(8)
-#define ADC_RIGHT_CHAN_MAX_GAIN_SET		(0)
-
-/*ADC DAP Left Decay&Attack time register
-* codecbase+0x88
-*/
-#define ADC_LEFT_ATTACK_TIME_COEFF_SET	(16)
-#define ADC_LEFT_DECAY_TIME_COEFF_SET	(0)
-
-/*ADC DAP Right decay&Attack Time register
-* codecbae+0x90
-*/
-#define ADC_RIGHT_ATTACK_TIME_COEFF_SET	(16)
-#define ADC_RIGHT_DECAY_TIME_COEFF_SET	(0)
-
-#define IO_ADDRESS(x)			IOMEM((x)/* + 0xf0000000*/)
-#define SUNXI_R_PRCM_PBASE		0x01f01400
-#define SUNXI_R_PRCM_VBASE		IO_ADDRESS(SUNXI_R_PRCM_PBASE         )
-#define ADDA_PR_CFG_REG     	  	(SUNXI_R_PRCM_VBASE+0x1c0)
-#define LINEOUT_PA_GAT			  (0x00)
-#define LOMIXSC					  (0x01)
-#define ROMIXSC					  (0x02)
-#define DAC_PA_SRC				  (0x03)
-#define LINEIN_GCTR				  (0x05)
-#define MIC_GCTR				  (0x06)
-#define PAEN_CTR				  (0x07)
-#define LINEOUT_VOLC			  (0x09)
-#define MIC2G_LINEOUT_CTR		  (0x0A)
-#define MIC1G_MICBIAS_CTR		  (0x0B)
-#define LADCMIXSC		  		  (0x0C)
-#define RADCMIXSC				  (0x0D)
-#define ADC_AP_EN				  (0x0F)
-#define ADDA_APT0				  (0x10)
-#define ADDA_APT1				  (0x11)
-#define ADDA_APT2				  (0x12)
-#define BIAS_DA16_CTR0			  (0x13)
-#define BIAS_DA16_CTR1			  (0x14)
-#define DA16CAL					  (0x15)
-#define DA16VERIFY				  (0x16)
-#define BIASCALI				  (0x17)
-#define BIASVERIFY				  (0x18)
-/*
-*	apb0 base
-*	0x00 LINEOUT_PA_GAT
-*/
-#define PA_CLK_GC		(7)
-
-/*
-*	apb0 base
-*	0x01 LOMIXSC
-*/
-#define LMIXMUTE				  (0)
-#define LMIXMUTEDACR			  (0)
-#define LMIXMUTEDACL			  (1)
-#define LMIXMUTELINEINL			  (2)
-#define LMIXMUTEMIC2BOOST		  (5)
-#define LMIXMUTEMIC1BOOST		  (6)
-
-/*
-*	apb0 base
-*	0x02 ROMIXSC
-*/
-#define RMIXMUTE				  (0)
-#define RMIXMUTEDACL			  (0)
-#define RMIXMUTEDACR			  (1)
-#define RMIXMUTELINEINR			  (2)
-#define RMIXMUTEMIC2BOOST		  (5)
-#define RMIXMUTEMIC1BOOST		  (6)
-
-/*
-*	apb0 base
-*	0x03 DAC_PA_SRC
-*/
-#define DACAREN			(7)
-#define DACALEN			(6)
-#define RMIXEN			(5)
-#define LMIXEN			(4)
-
-/*
-*	apb0 base
-*	0x05 LINEIN_GCTR
-*/
-#define LINEING			(4)
-
-/*
-*	apb0 base
-*	0x06 MIC_GCTR
-*/
-#define MIC1G			(4)
-#define MIC2G			(0)
-
-/*
-*	apb0 base
-*	0x07 PAEN_CTR
-*/
-#define LINEOUTEN		 (7)
-#define PA_ANTI_POP_CTRL (2)
-
-/*
-*	apb0 base
-*	0x09 LINEOUT_VOLC
-*/
-#define LINEOUTVOL		 (3)
-
-/*
-*	apb0 base
-*	0x0A MIC2G_LINEOUT_CTR
-*/
-#define MIC2AMPEN		 (7)
-#define MIC2BOOST		 (4)
-#define LINEOUTL_EN		 (3)
-#define LINEOUTR_EN		 (2)
-#define LINEOUTL_SS		 (1)
-#define LINEOUTR_SS		 (0)
-
-/*
-*	apb0 base
-*	0x0B MIC1G_MICBIAS_CTR
-*/
-#define MMICBIASEN		 (6)
-#define MIC1AMPEN		 (3)
-#define MIC1BOOST		 (0)
-
-/*
-*	apb0 base
-*	0x0C LADCMIXSC
-*/
-#define LADCMIXMUTE		 		  (0)
-#define LADCMIXMUTEMIC1BOOST	  (6)
-#define LADCMIXMUTEMIC2BOOST	  (5)
-#define LADCMIXMUTELINEINL		  (2)
-#define LADCMIXMUTELOUTPUT		  (1)
-#define LADCMIXMUTEROUTPUT		  (0)
-
-/*
-*	apb0 base
-*	0x0D RADCMIXSC
-*/
-#define RADCMIXMUTE		          (0)
-#define RADCMIXMUTEMIC1BOOST	  (6)
-#define RADCMIXMUTEMIC2BOOST	  (5)
-#define RADCMIXMUTEPHONEPN		  (4)
-#define RADCMIXMUTEPHONEP		  (3)
-#define RADCMIXMUTELINEINR		  (2)
-#define RADCMIXMUTEROUTPUT		  (1)
-#define RADCMIXMUTELOUTPUT		  (0)
-
-/*
-*	apb0 base
-*	0x0F ADC_AP_EN
-*/
-#define ADCREN			 (7)
-#define ADCLEN			 (6)
-#define ADCG			 (0)
-
-/*
-*	apb0 base
-*	0x10 ADDA_APT0
-*/
-#define OPDRV_OPCOM_CUR				(6)
-#define OPADC1_BIAS_CUR				(4)
-#define OPADC2_BIAS_CUR				(2)
-#define OPAAF_BIAS_CUR				(0)
-
-/*
-*	apb0 base
-*	0x11 ADDA_APT1
-*/
-#define OPMIC_BIAS_CUR				(6)
-#define OPDAC_BIAS_CUR				(2)
-#define OPMIX_BIAS_CUR				(0)
-
-/*
-*	apb0 base
-*	0x12 ADDA_APT2
-*/
-#define ZERO_CROSS_EN 	  			(7)
-#define TIMEOUT_ZERO_CROSS 			(6)
-#define PTDBS						(4)
-#define PA_SLOPE_SELECT	  			(3)
-#define USB_BIAS_CUR				(0)
-
-/*
-*	apb0 base
-*	0x13 BIAS_DA16_CTR0
-*/
-#define MMIC_BIAS_CHOP_EN			(7)
-#define MMIC_BIAS_CLK_SEL			(5)
-#define DITHER						(4)
-#define DITHER_CLK_SELECT			(2)
-#define BIHE_CTRL					(0)
-
-/*
-*	apb0 base
-*	0x14 BIAS_DA16_CTR1
-*/
-#define PA_SPEED_SEL				(7)
-#define CURRENT_TEST_SEL			(6)
-#define BIAS_DA17_CAL_CLK_SEL		(4)
-#define BIAS_CAL_MODE_SEL			(3)
-#define BIAS_DA16_CAL_CTRL			(2)
-#define BIASCALIVERIFY				(1)
-#define DA16CALIVERIFY				(0)
-
-/*
-*	apb0 base
-*	0x15 DA16CALI
-*/
-#define DA16CALI_DATA				(0)		
-
-/*
-*	apb0 base
-*	0x17 BIASCALI
-*/
-#define BIASCALI_DATA				(0)
-
-/*
-*	apb0 base
-*	0x18 BIASVERIFY
-*/
-#define BIASVERIFY_DATA				(0)
+#define SUN8I_LINEOUT_PA_GAT	(0x00)
+	#define PA_CLK_GC		(7)
+#define SUN8I_LOMIXSC		(0x01)
+	#define LMIXMUTE		(0)
+	#define LMIXMUTEDACR		(0)
+	#define LMIXMUTEDACL		(1)
+	#define LMIXMUTELINEINL		(2)
+	#define LMIXMUTEMIC2BOOST	(5)
+	#define LMIXMUTEMIC1BOOST	(6)
+#define SUN8I_ROMIXSC		(0x02)
+	#define RMIXMUTE		(0)
+	#define RMIXMUTEDACL		(0)
+	#define RMIXMUTEDACR		(1)
+	#define RMIXMUTELINEINR		(2)
+	#define RMIXMUTEMIC2BOOST	(5)
+	#define RMIXMUTEMIC1BOOST	(6)
+#define SUN8I_DAC_PA_SRC	(0x03)
+	#define DACAREN			(7)
+	#define DACALEN			(6)
+	#define RMIXEN			(5)
+	#define LMIXEN			(4)
+#define SUN8I_LINEIN_GCTR	(0x05)
+	#define LINEING			(4)
+#define SUN8I_MIC_GCTR		(0x06)
+	#define MIC1G			(4)
+	#define MIC2G			(0)
+#define SUN8I_PAEN_CTR		(0x07)
+	#define LINEOUTEN		(7)
+	#define PA_ANTI_POP_CTRL	(2)
+#define SUN8I_LINEOUT_VOLC	(0x09)
+	#define LINEOUTVOL		(3)
+#define SUN8I_MIC2G_LINEOUT_CTR	(0x0A)
+	#define MIC2AMPEN		(7)
+	#define MIC2BOOST		(4)
+	#define LINEOUTL_EN		(3)
+	#define LINEOUTR_EN		(2)
+	#define LINEOUTL_SS		(1)
+	#define LINEOUTR_SS		(0)
+#define SUN8I_MIC1G_MICBIAS_CTR	(0x0B)
+	#define MMICBIASEN		(6)
+	#define MIC1AMPEN		(3)
+	#define MIC1BOOST		(0)
+#define SUN8I_LADCMIXSC		(0x0C)
+	#define LADCMIXMUTE		(0)
+	#define LADCMIXMUTEMIC1BOOST	(6)
+	#define LADCMIXMUTEMIC2BOOST	(5)
+	#define LADCMIXMUTELINEINL	(2)
+	#define LADCMIXMUTELOUTPUT	(1)
+	#define LADCMIXMUTEROUTPUT	(0)
+#define SUN8I_RADCMIXSC		(0x0D)
+	#define RADCMIXMUTE		(0)
+	#define RADCMIXMUTEMIC1BOOST	(6)
+	#define RADCMIXMUTEMIC2BOOST	(5)
+	#define RADCMIXMUTEPHONEPN	(4)
+	#define RADCMIXMUTEPHONEP	(3)
+	#define RADCMIXMUTELINEINR	(2)
+	#define RADCMIXMUTEROUTPUT	(1)
+	#define RADCMIXMUTELOUTPUT	(0)
+#define SUN8I_ADC_AP_EN		(0x0F)
+	#define ADCREN			(7)
+	#define ADCLEN			(6)
+	#define ADCG			(0)
+#define SUN8I_ADDA_APT0		(0x10)
+	#define OPDRV_OPCOM_CUR		(6)
+	#define OPADC1_BIAS_CUR		(4)
+	#define OPADC2_BIAS_CUR		(2)
+	#define OPAAF_BIAS_CUR		(0)
+#define SUN8I_ADDA_APT1		(0x11)
+	#define OPMIC_BIAS_CUR		(6)
+	#define OPDAC_BIAS_CUR		(2)
+	#define OPMIX_BIAS_CUR		(0)
+#define SUN8I_ADDA_APT2		(0x12)
+	#define ZERO_CROSS_EN 	  	(7)
+	#define TIMEOUT_ZERO_CROSS 	(6)
+	#define PTDBS			(4)
+	#define PA_SLOPE_SELECT	  	(3)
+	#define USB_BIAS_CUR		(0)
+#define SUN8I_BIAS_DA16_CTR0	(0x13)
+	#define MMIC_BIAS_CHOP_EN	(7)
+	#define MMIC_BIAS_CLK_SEL	(5)
+	#define DITHER			(4)
+	#define DITHER_CLK_SELECT	(2)
+	#define BIHE_CTRL		(0)
+#define SUN8I_BIAS_DA16_CTR1	(0x14)
+	#define PA_SPEED_SEL		(7)
+	#define CURRENT_TEST_SEL	(6)
+	#define BIAS_DA17_CAL_CLK_SEL	(4)
+	#define BIAS_CAL_MODE_SEL	(3)
+	#define BIAS_DA16_CAL_CTRL	(2)
+	#define BIASCALIVERIFY		(1)
+	#define DA16CALIVERIFY		(0)
+#define SUN8I_DA16CAL		(0x15)
+	#define DA16CALI_DATA		(0)		
+#define SUN8I_DA16VERIFY	(0x16)
+	#define BIASCALI_DATA		(0)
+#define SUN8I_BIASCALI		(0x17)
+#define SUN8I_BIASVERIFY	(0x18)
+	#define BIASVERIFY_DATA		(0)
 
 /* Supported SoC families - used for quirks */
 enum sun8i_soc_family {
@@ -554,39 +383,34 @@ struct sun8i_priv {
 static int codec_wr_prcm_control(struct sun8i_priv *sun8i, u32 reg, u32 mask, u32 shift, u32 val);
 static unsigned int read_prcm_wvalue(struct sun8i_priv *sun8i, unsigned int addr);
 
-void codec_wr_control(struct sun8i_priv *sun8i, u32 reg, u32 mask, u32 shift, u32 val)
-{
-	regmap_update_bits(sun8i->regmap, reg, mask << shift, val << shift);
-}
-
 static int sun8i_codec_pa_play_open(struct sun8i_priv *sun8i)
 {
 	int l_vol = 0;
 	/*enable dac digital*/
-	codec_wr_control(sun8i, SUNXI_DAC_DPC, 0x1, SUNXI_DAC_DPC_EN_DA, 0x1);
-	codec_wr_prcm_control(sun8i, LINEOUT_PA_GAT, 0x1, PA_CLK_GC, 0x0);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_DPC, SUNXI_DAC_DPC_EN_DA, SUNXI_DAC_DPC_EN_DA);
+	codec_wr_prcm_control(sun8i, SUN8I_LINEOUT_PA_GAT, 0x1, PA_CLK_GC, 0x0);
 	/*set TX FIFO send drq level*/
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0xf);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL_MASK, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL(0xf));
 	/*set TX FIFO MODE*/
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_TX_FIFO_MODE, 0x1);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_TX_FIFO_MODE, SUNXI_DAC_FIFOC_TX_FIFO_MODE);
 
 	//send last sample when dac fifo under run
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
-	codec_wr_prcm_control(sun8i, PAEN_CTR, 0x3, PA_ANTI_POP_CTRL, 0x3);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_PAEN_CTR, 0x3, PA_ANTI_POP_CTRL, 0x3);
 
-	codec_wr_prcm_control(sun8i, DAC_PA_SRC, 0x1, DACALEN, 0x1);
-	codec_wr_prcm_control(sun8i, DAC_PA_SRC, 0x1, DACAREN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_DAC_PA_SRC, 0x1, DACALEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_DAC_PA_SRC, 0x1, DACAREN, 0x1);
 
-	codec_wr_prcm_control(sun8i, DAC_PA_SRC, 0x1, LMIXEN, 0x1);
-	codec_wr_prcm_control(sun8i, DAC_PA_SRC, 0x1, RMIXEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_DAC_PA_SRC, 0x1, LMIXEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_DAC_PA_SRC, 0x1, RMIXEN, 0x1);
 	msleep(10);
 
-	codec_wr_prcm_control(sun8i, ROMIXSC, 0x1, RMIXMUTEDACR, 0x1);
-	codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTEDACL, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_ROMIXSC, 0x1, RMIXMUTEDACR, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_LOMIXSC, 0x1, LMIXMUTEDACL, 0x1);
 	/*while adjust volume from app interface, so read the hardware vol first*/
-	l_vol = read_prcm_wvalue(sun8i, LINEOUT_VOLC);
+	l_vol = read_prcm_wvalue(sun8i, SUN8I_LINEOUT_VOLC);
 	l_vol = l_vol>>3;
-	codec_wr_prcm_control(sun8i, LINEOUT_VOLC, 0x1f, LINEOUTVOL, l_vol);
+	codec_wr_prcm_control(sun8i, SUN8I_LINEOUT_VOLC, 0x1f, LINEOUTVOL, l_vol);
 
 	return 0;
 }
@@ -594,64 +418,64 @@ static int sun8i_codec_pa_play_open(struct sun8i_priv *sun8i)
 static int sun8i_codec_capture_open(struct sun8i_priv *sun8i)
 {
 	/*disable Right linein Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
 	/*disable Left linein Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
 
 	/*enable mic1 pa*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x1);
 	/*mic1 gain 36dB,if capture volume is too small, enlarge the mic1boost*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x7, MIC1BOOST, sun8i->cap_vol);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x7, MIC1BOOST, sun8i->cap_vol);
 	/*enable Master microphone bias*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x1);
 
 	if (sun8i->addaloop_enabled) {
 		/*enable Left output Boost stage*/
-		codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTELOUTPUT, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTELOUTPUT, 0x1);
 		/*enable Right output Boost stage*/
-		codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTEROUTPUT, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTEROUTPUT, 0x1);
 	} else {
 		/*enable Left MIC1 Boost stage*/
-		codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x1);
 		/*enable Right MIC1 Boost stage*/
-		codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x1);
 	}
-
+#if 0 //Moved to calling function
 	/*enable adc_r adc_l analog*/
 	codec_wr_prcm_control(sun8i, ADC_AP_EN, 0x1,  ADCREN, 0x1);
 	codec_wr_prcm_control(sun8i, ADC_AP_EN, 0x1,  ADCLEN, 0x1);
 
 	/*set RX FIFO mode*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
 	/*set RX FIFO rec drq level*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
 	/*enable adc digital part*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
 	/*enable adc drq*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
 	/*hardware fifo delay*/
 	msleep(200);
-
+#endif
 	return 0;
 }
 
 static int sun8i_codec_play_start(struct sun8i_priv *sun8i)
 {
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0x40);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL_MASK, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL(0x40));
 	/*enable dac drq*/
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x1);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_DAC_DRQ_EN, SUNXI_DAC_FIFOC_DAC_DRQ_EN);
 	/*DAC FIFO Flush,Write '1' to flush TX FIFO, self clear to '0'*/
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_FIFO_FLUSH, 0x1);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_FIFO_FLUSH, SUNXI_DAC_FIFOC_FIFO_FLUSH);
 
 	return 0;
 }
 
 static int sun8i_codec_play_stop(struct sun8i_priv *sun8i)
 {
-	codec_wr_prcm_control(sun8i, ROMIXSC, 0x1, RMIXMUTEDACR, 0x0);
-	codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTEDACL, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_ROMIXSC, 0x1, RMIXMUTEDACR, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_LOMIXSC, 0x1, LMIXMUTEDACL, 0x0);
 
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC, 0x1, SUNXI_DAC_FIFOC_FIFO_FLUSH, 0x1);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_FIFO_FLUSH, SUNXI_DAC_FIFOC_FIFO_FLUSH);
 
 	return 0;
 }
@@ -659,47 +483,47 @@ static int sun8i_codec_play_stop(struct sun8i_priv *sun8i)
 static int sun8i_codec_capture_start(struct sun8i_priv *sun8i)
 {
 	/*enable adc drq*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
+	regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_ADC_DRQ_EN, SUNXI_ADC_FIFOC_ADC_DRQ_EN);
 	return 0;
 }
 
 static int sun8i_codec_capture_stop(struct sun8i_priv *sun8i)
 {
 	/*disable adc digital part*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x0);
+	regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_EN_AD, 0x0);
 	/*disable adc drq*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x0);
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_FIFO_FLUSH, 0x1);
+	regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x0);
+	regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_FIFO_FLUSH, SUNXI_ADC_FIFOC_FIFO_FLUSH);
 
 	/*disable mic1 pa*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x0);
 	/*disable Master microphone bias*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x0);
-	codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x0);
 	
 	/*disable Right linein Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
 	/*disable Left linein Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
 
 	/*disable Left MIC1 Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x0);
 	/*disable Right MIC1 Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x0);
 
 	/*disable Left output Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTELOUTPUT, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTELOUTPUT, 0x0);
 	/*disable Right output Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTEROUTPUT, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTEROUTPUT, 0x0);
 
 	/*disable Left MIC2 Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTEMIC2BOOST, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTEMIC2BOOST, 0x0);
 	/*disable Right MIC2 Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x0);
 
 	/*disable adc_r adc_l analog*/
-	codec_wr_prcm_control(sun8i, ADC_AP_EN, 0x1,  ADCREN, 0x0);
-	codec_wr_prcm_control(sun8i, ADC_AP_EN, 0x1,  ADCLEN, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_ADC_AP_EN, 0x1,  ADCREN, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_ADC_AP_EN, 0x1,  ADCLEN, 0x0);
 
 	return 0;
 }
@@ -710,35 +534,37 @@ static int sun8i_codec_capture_stop(struct sun8i_priv *sun8i)
 int sun8i_codec_linein_capture_open(struct sun8i_priv *sun8i)
 {
 	/*disable mic1 pa*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x0);
 	/*disable Master microphone bias*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x0);
 
-	codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x0);
 	/*disable Right MIC2 Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x0);
 	/*disable Left MIC1 Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x0);
 
 	/*enable Right linein Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x1);
 	/*enable Left linein Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x1);
 
+#if 0 //Moved to calling function
 	/*enable adc_r adc_l analog*/
 	codec_wr_prcm_control(sun8i, ADC_AP_EN, 0x1,  ADCREN, 0x1);
 	codec_wr_prcm_control(sun8i, ADC_AP_EN, 0x1,  ADCLEN, 0x1);
 
 	/*set RX FIFO mode*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
 	/*set RX FIFO rec drq level*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
 	/*enable adc digital part*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
 	/*enable adc drq*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
 	/*hardware fifo delay*/
 	msleep(200);
+#endif
 	return 0;
 }
 
@@ -749,38 +575,40 @@ int sun8i_codec_linein_capture_open(struct sun8i_priv *sun8i)
 static int sun8i_codec_mic1_2_capture_open(struct sun8i_priv *sun8i)
 {
 	/*disable Right linein Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTELINEINR, 0x0);
 	/*disable Left linein Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTELINEINL, 0x0);
 	/*disable Right MIC1 Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x0);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTEMIC1BOOST, 0x0);
 
 	/*enable mic1 pa*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x1, MIC1AMPEN, 0x1);
 	/*enable Master microphone bias*/
-	codec_wr_prcm_control(sun8i, MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC1G_MICBIAS_CTR, 0x1, MMICBIASEN, 0x1);
 
-	codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, MIC2AMPEN, 0x1);
 
 	/*enable Right MIC2 Boost stage*/
-	codec_wr_prcm_control(sun8i, RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_RADCMIXSC, 0x1, RADCMIXMUTEMIC2BOOST, 0x1);
 	/*enable Left MIC1 Boost stage*/
-	codec_wr_prcm_control(sun8i, LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_LADCMIXSC, 0x1, LADCMIXMUTEMIC1BOOST, 0x1);
 	
+#if 0 //Moved to calling function
 	/*enable adc_r adc_l analog*/
 	codec_wr_prcm_control(sun8i, ADC_AP_EN, 0x1,  ADCREN, 0x1);
 	codec_wr_prcm_control(sun8i, ADC_AP_EN, 0x1,  ADCLEN, 0x1);
 
 	/*set RX FIFO mode*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_RX_FIFO_MODE, 0x1);
 	/*set RX FIFO rec drq level*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1f, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL, 0xf);
 	/*enable adc digital part*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_EN_AD, 0x1);
 	/*enable adc drq*/
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
+	codec_wr_control(sun8i, SUN8I_ADC_FIFOC ,0x1, SUNXI_ADC_FIFOC_ADC_DRQ_EN, 0x1);
 	/*hardware fifo delay*/
 	msleep(200);
+#endif
 	return 0;
 }
 
@@ -793,12 +621,12 @@ static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		sun8i_codec_pa_play_open(sun8i);
 		/*set TX FIFO send drq level*/
-		codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x7f, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL, 0xf);
+		regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL_MASK, SUNXI_DAC_FIFOC_TX_TRIG_LEVEL(0xf));
 
 		/*set TX FIFO MODE*/
-		codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_TX_FIFO_MODE, 0x1);
+		regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_TX_FIFO_MODE, SUNXI_DAC_FIFOC_TX_FIFO_MODE);
 		//send last sample when dac fifo under run
-		codec_wr_control(sun8i, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
+		regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_SEND_LASAT, 0x0);
 	} else {
 		if (sun8i->codec_cap_mode == 1) {
 			sun8i_codec_mic1_2_capture_open(sun8i);
@@ -807,6 +635,20 @@ static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 		} else {
 			sun8i_codec_capture_open(sun8i);
 		}
+		/*enable adc_r adc_l analog*/
+		codec_wr_prcm_control(sun8i, SUN8I_ADC_AP_EN, 0x1,  ADCREN, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_ADC_AP_EN, 0x1,  ADCLEN, 0x1);
+
+		/*set RX FIFO mode*/
+		regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_RX_FIFO_MODE, SUNXI_ADC_FIFOC_RX_FIFO_MODE);
+		/*set RX FIFO rec drq level*/
+		regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL_MASK, SUNXI_ADC_FIFOC_RX_TRIG_LEVEL(0xf));
+		/*enable adc digital part*/
+		regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_EN_AD, SUNXI_ADC_FIFOC_EN_AD);
+		/*enable adc drq*/
+		regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_ADC_DRQ_EN, SUNXI_ADC_FIFOC_ADC_DRQ_EN);
+		/*hardware fifo delay*/
+		msleep(200);
 	}
 
 	return 0;
@@ -839,7 +681,7 @@ static int sun8i_codec_trigger(struct snd_pcm_substream *substream, int cmd,
 
 			/*hardware fifo delay*/
 			mdelay(200);
-			codec_wr_control(priv, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_FIFO_FLUSH, 0x1);
+			regmap_update_bits(priv->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_FIFO_FLUSH, SUNXI_ADC_FIFOC_FIFO_FLUSH);
 		}
 		break;
 
@@ -931,17 +773,17 @@ static int sun8i_codec_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 7 << SUNXI_DAC_FIFOC_DAC_FS, hwrate << SUNXI_DAC_FIFOC_DAC_FS);
-		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 1 << SUNXI_DAC_FIFOC_MONO_EN, is_mono << SUNXI_DAC_FIFOC_MONO_EN);
-		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 1 << SUNXI_DAC_FIFOC_TX_SAMPLE_BITS, is_24bit << SUNXI_DAC_FIFOC_TX_SAMPLE_BITS);
-		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 1 << SUNXI_DAC_FIFOC_TX_FIFO_MODE, !is_24bit << SUNXI_DAC_FIFOC_TX_FIFO_MODE);
+		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_DAC_FS_MASK, SUNXI_DAC_FIFOC_DAC_FS_RATE(hwrate));
+		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_MONO_EN, is_mono ? SUNXI_DAC_FIFOC_MONO_EN:0);
+		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_TX_SAMPLE_BITS, is_24bit ? SUNXI_DAC_FIFOC_TX_SAMPLE_BITS:0);
+		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_TX_FIFO_MODE, !is_24bit ? SUNXI_DAC_FIFOC_TX_FIFO_MODE : 0);
 		if (is_24bit)
 			priv->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		else
 			priv->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 	} else  {
-		regmap_update_bits(priv->regmap, SUN6I_ADC_FIFOC, 7 << SUNXI_ADC_FIFOC_DAC_FS, hwrate << SUNXI_ADC_FIFOC_DAC_FS);
-		regmap_update_bits(priv->regmap, SUN6I_ADC_FIFOC, 1 << SUNXI_ADC_FIFOC_MONO_EN, is_mono << SUNXI_ADC_FIFOC_MONO_EN);
+		regmap_update_bits(priv->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_DAC_FS_MASK, SUNXI_ADC_FIFOC_DAC_FS_RATE(hwrate));
+		regmap_update_bits(priv->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_MONO_EN, is_mono ? SUNXI_ADC_FIFOC_MONO_EN : 0);
 	}
 
 	return 0;
@@ -960,28 +802,30 @@ static int sun8i_codec_dai_probe(struct snd_soc_dai *dai)
 
 static void sun8i_codec_init(struct sun8i_priv *sun8i)
 {
+	/* COOPS HACK */
+	sun8i->lineout_vol = 0x1f;	
 	/*
 	 * Stop doing DMA requests whenever there's only 16 samples
 	 * left available in the TX FIFO.
 	 */
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC, 0x3, SUNXI_DAC_FIFOC_DRQ_CLR_CNT,0x3);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_DRQ_CLR_CNT_MASK, SUNXI_DAC_FIFOC_DRQ_CLR_CNT(0x3));
 
 	/* Flush TX FIFO */
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC, 0x1, SUNXI_DAC_FIFOC_FIFO_FLUSH, 0x1);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_FIFO_FLUSH, SUNXI_DAC_FIFOC_FIFO_FLUSH);
 
 	/* Flush RX FIFO */
-	codec_wr_control(sun8i, SUN6I_ADC_FIFOC, 0x1, SUNXI_ADC_FIFOC_FIFO_FLUSH, 0x1);
+	regmap_update_bits(sun8i->regmap, SUN8I_ADC_FIFOC, SUNXI_ADC_FIFOC_FIFO_FLUSH, SUNXI_ADC_FIFOC_FIFO_FLUSH);
 
 	/* Do DRQ whenever the FIFO is empty */
-	codec_wr_control(sun8i, SUNXI_DAC_FIFOC, 0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x1);
+	regmap_update_bits(sun8i->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_DAC_DRQ_EN, SUNXI_DAC_FIFOC_DAC_DRQ_EN);
 
 	/* /\* Use a 32 bits FIR *\/ */
 	/* codec_wr_control(sun8i, SUNXI_DAC_FIFOC, 0x1, FIR_VERSION, 0x1); */
-	codec_wr_prcm_control(sun8i, LINEOUT_VOLC, 0x20, LINEOUTVOL, sun8i->lineout_vol);
+	codec_wr_prcm_control(sun8i, SUN8I_LINEOUT_VOLC, 0x20, LINEOUTVOL, sun8i->lineout_vol);
 
-	codec_wr_prcm_control(sun8i, PAEN_CTR, 0x1, LINEOUTEN, 0x1);
-	codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x1);
-	codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_PAEN_CTR, 0x1, LINEOUTEN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x1);
+	codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x1);
 	msleep(1250);
 /*
 	gpio_set_value(item.gpio.gpio, 1);
@@ -1023,18 +867,18 @@ static void sun8i_codec_shutdown(struct snd_pcm_substream *substream,
 	struct sun8i_priv *priv = snd_soc_card_get_drvdata(rtd->card);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		codec_wr_prcm_control(priv, ADDA_APT2, 0x1, ZERO_CROSS_EN, 0x0);
+		codec_wr_prcm_control(priv, SUN8I_ADDA_APT2, 0x1, ZERO_CROSS_EN, 0x0);
 		if (priv->lineout_enabled) {
-			codec_wr_prcm_control(priv, DAC_PA_SRC, 0x1, LMIXEN, 0x0);
-			codec_wr_prcm_control(priv, DAC_PA_SRC, 0x1, RMIXEN, 0x0);
+			codec_wr_prcm_control(priv, SUN8I_DAC_PA_SRC, 0x1, LMIXEN, 0x0);
+			codec_wr_prcm_control(priv, SUN8I_DAC_PA_SRC, 0x1, RMIXEN, 0x0);
 		}
 		/*disable dac drq*/
-		codec_wr_control(priv, SUNXI_DAC_FIFOC ,0x1, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x0);
-		codec_wr_prcm_control(priv, DAC_PA_SRC, 0x1, DACALEN, 0x0);
-		codec_wr_prcm_control(priv, DAC_PA_SRC, 0x1, DACAREN, 0x0);
+		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, SUNXI_DAC_FIFOC_DAC_DRQ_EN, 0x0);
+		codec_wr_prcm_control(priv, SUN8I_DAC_PA_SRC, 0x1, DACALEN, 0x0);
+		codec_wr_prcm_control(priv, SUN8I_DAC_PA_SRC, 0x1, DACAREN, 0x0);
 		/*disable dac digital*/
-		codec_wr_control(priv, SUNXI_DAC_DPC ,  0x1, SUNXI_DAC_DPC_EN_DA, 0x0);
-		codec_wr_prcm_control(priv, LINEOUT_PA_GAT, 0x1, PA_CLK_GC, 0x0);
+		regmap_update_bits(priv->regmap, SUNXI_DAC_DPC, SUNXI_DAC_DPC_EN_DA, 0x0);
+		codec_wr_prcm_control(priv, SUN8I_LINEOUT_PA_GAT, 0x1, PA_CLK_GC, 0x0);
 		priv->playing = false;
 /*		if (dacdrc_used) {
 			dacdrc_enable(0);
@@ -1068,8 +912,8 @@ static const struct snd_soc_dai_ops sun8i_codec_dai_ops = {
 	.trigger	= sun8i_codec_trigger,
 };
 
-#define SUN6I_RATES	SNDRV_PCM_RATE_8000_192000
-#define SUN6I_FORMATS	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
+#define SUN8I_RATES	SNDRV_PCM_RATE_8000_192000
+#define SUN8I_FORMATS	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
 			SNDRV_PCM_FMTBIT_S24_LE)
 static struct snd_soc_dai_driver sun8i_codec_dai = {
 	.name = "Codec",
@@ -1079,8 +923,8 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 		.channels_max	= 2,
 		.rate_min	= 8000,
 		.rate_max	= 192000,
-		.rates		= SUN6I_RATES | SNDRV_PCM_RATE_KNOT,
-		.formats	= SUN6I_FORMATS,
+		.rates		= SUN8I_RATES | SNDRV_PCM_RATE_KNOT,
+		.formats	= SUN8I_FORMATS,
 	},
 
 	.capture = {
@@ -1089,8 +933,8 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 		.channels_max	= 2,
 		.rate_min	= 8000,
 		.rate_max	= 192000,
-		.rates		= SUN6I_RATES | SNDRV_PCM_RATE_KNOT,
-		.formats	= SUN6I_FORMATS,
+		.rates		= SUN8I_RATES | SNDRV_PCM_RATE_KNOT,
+		.formats	= SUN8I_FORMATS,
 	},
 	.ops = &sun8i_codec_dai_ops,
 };
@@ -1180,18 +1024,11 @@ static int codec_set_lineinin(struct snd_kcontrol *kcontrol,
 	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
 	sun8i->linein_enabled = ucontrol->value.integer.value[0];
 
-	if (sun8i->linein_enabled) {
-		/*select LINEINL*/
-		codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTELINEINL, 0x1);
-		/*select LINEINR*/
-		codec_wr_prcm_control(sun8i, ROMIXSC, 0x1, RMIXMUTELINEINR, 0x1);
-	} else {
-		/*close LINEINL*/
-		codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTELINEINL, 0x0);
-		/*close LINEINR*/
-		codec_wr_prcm_control(sun8i, ROMIXSC, 0x1, RMIXMUTELINEINR, 0x0);
-	}
-
+	/*close LINEINL*/
+	codec_wr_prcm_control(sun8i, SUN8I_LOMIXSC, 0x1, LMIXMUTELINEINL, sun8i->linein_enabled);
+	/*close LINEINR*/
+	codec_wr_prcm_control(sun8i, SUN8I_ROMIXSC, 0x1, RMIXMUTELINEINR, sun8i->linein_enabled);
+	
 	return 0;
 }
 
@@ -1213,7 +1050,7 @@ static int codec_get_lineout_vol(struct snd_kcontrol *kcontrol,
 	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
 
 	if (sun8i->lineout_enabled) {
-		ret = read_prcm_wvalue(sun8i, LINEOUT_VOLC);
+		ret = read_prcm_wvalue(sun8i, SUN8I_LINEOUT_VOLC);
 		ret = ret>>3;
 	}
 	return ret;
@@ -1222,15 +1059,15 @@ static int codec_get_lineout_vol(struct snd_kcontrol *kcontrol,
 static int codec_put_lineout_vol(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	int ret = 0;
+	int lvol = 0;
 	struct snd_soc_platform *platform = snd_soc_kcontrol_platform(kcontrol);
 	struct sun8i_priv *sun8i = snd_soc_platform_get_drvdata(platform);
 
+	lvol = ucontrol->value.integer.value[0];
 	if (sun8i->lineout_enabled) {
-		ret = read_prcm_wvalue(sun8i, LINEOUT_VOLC);
-		ret = ret>>3;
+		codec_wr_prcm_control(sun8i, SUN8I_LINEOUT_VOLC, 0x1f, LINEOUTVOL, lvol);
 	}
-	return ret;
+	return 0;
 }
 
 /*
@@ -1245,27 +1082,27 @@ static int codec_set_lineout(struct snd_kcontrol *kcontrol,
 
 	sun8i->lineout_enabled = ucontrol->value.integer.value[0];
 	if (sun8i->lineout_enabled) {
-		codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTELINEINL, 0x1);
-		codec_wr_prcm_control(sun8i, ROMIXSC, 0x1, RMIXMUTELINEINR, 0x1);
-		codec_wr_prcm_control(sun8i, PAEN_CTR, 0x1, LINEOUTEN, 0x1);
-		codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x1);
-		codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_LOMIXSC, 0x1, LMIXMUTELINEINL, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_ROMIXSC, 0x1, RMIXMUTELINEINR, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_PAEN_CTR, 0x1, LINEOUTEN, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x1);
 
-		codec_wr_prcm_control(sun8i, DAC_PA_SRC, 0x1, LMIXEN, 0x1);
-		codec_wr_prcm_control(sun8i, DAC_PA_SRC, 0x1, RMIXEN, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_DAC_PA_SRC, 0x1, LMIXEN, 0x1);
+		codec_wr_prcm_control(sun8i, SUN8I_DAC_PA_SRC, 0x1, RMIXEN, 0x1);
 		usleep_range(2000, 3000);
 		//gpio_set_value(item.gpio.gpio, 1);
 		msleep(62);
 	} else {
-		codec_wr_prcm_control(sun8i, LOMIXSC, 0x1, LMIXMUTELINEINL, 0x0);
-		codec_wr_prcm_control(sun8i, ROMIXSC, 0x1, RMIXMUTELINEINR, 0x0);
+		codec_wr_prcm_control(sun8i, SUN8I_LOMIXSC, 0x1, LMIXMUTELINEINL, 0x0);
+		codec_wr_prcm_control(sun8i, SUN8I_ROMIXSC, 0x1, RMIXMUTELINEINR, 0x0);
 		if (!sun8i->playing) {
-			codec_wr_prcm_control(sun8i, PAEN_CTR, 0x1, LINEOUTEN, 0x0);
-			codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x0);
-			codec_wr_prcm_control(sun8i, MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x0);
+			codec_wr_prcm_control(sun8i, SUN8I_PAEN_CTR, 0x1, LINEOUTEN, 0x0);
+			codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, LINEOUTL_EN, 0x0);
+			codec_wr_prcm_control(sun8i, SUN8I_MIC2G_LINEOUT_CTR, 0x1, LINEOUTR_EN, 0x0);
 
-			codec_wr_prcm_control(sun8i, DAC_PA_SRC, 0x1, LMIXEN, 0x0);
-			codec_wr_prcm_control(sun8i, DAC_PA_SRC, 0x1, RMIXEN, 0x0);
+			codec_wr_prcm_control(sun8i, SUN8I_DAC_PA_SRC, 0x1, LMIXEN, 0x0);
+			codec_wr_prcm_control(sun8i, SUN8I_DAC_PA_SRC, 0x1, RMIXEN, 0x0);
 		//	gpio_set_value(item.gpio.gpio, 0);
 		}
 	}
@@ -1426,7 +1263,7 @@ static const struct snd_soc_dapm_route sun8i_codec_dapm_routes[] = {
 };
 #endif
 static const struct snd_kcontrol_new sun8i_codec_controls[] = {
-	SOC_SINGLE_EXT_TLV("Lineout volume control", LINEOUT_VOLC, LINEOUTVOL, 0x1f, 0,
+	SOC_SINGLE_EXT_TLV("Lineout volume control", SUN8I_LINEOUT_VOLC, LINEOUTVOL, 0x1f, 0,
 			codec_get_lineout_vol, codec_put_lineout_vol, sun8i_codec_pa_volume_scale),
 	SOC_SINGLE_BOOL_EXT("Audio lineout", 	0, codec_get_lineout, 	codec_set_lineout),
 };
@@ -1476,15 +1313,15 @@ static struct snd_soc_dai_driver dummy_cpu_dai = {
 	.playback = {
 		.channels_min	= 1,
 		.channels_max	= 2,
-		.rates		= SUN6I_RATES,
-		.formats	= SUN6I_FORMATS,
+		.rates		= SUN8I_RATES,
+		.formats	= SUN8I_FORMATS,
 	},
 
 	.capture = {
 		.channels_min	= 1,
 		.channels_max	= 2,
-		.rates		= SUN6I_RATES,
-		.formats	= SUN6I_FORMATS,
+		.rates		= SUN8I_RATES,
+		.formats	= SUN8I_FORMATS,
 	},
 };
 
@@ -1580,7 +1417,7 @@ static int sun8i_codec_probe(struct platform_device *pdev)
 	priv->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 
 	/* DMA configuration for RX FIFO */
-	priv->capture_dma_data.addr = res->start + SUN6I_ADC_RXDATA;
+	priv->capture_dma_data.addr = res->start + SUN8I_ADC_RXDATA;
 	priv->capture_dma_data.maxburst = 4;
 	priv->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 
