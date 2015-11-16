@@ -752,9 +752,13 @@
 				     <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
-		prcm: syscon@01f015c0 {
-			compatible = "allwinner,sun8i-h3-prcm", "syscon";
-			reg = <0x01f015c0 0x4>;
+		prcm@01f01400 {
+			compatible = "allwinner,sun8i-h3-prcm";
+			reg = <0x01f01400 0x400>;
+
+			ac_pr_cfg: ac_pr_cfg {
+				compatible = "allwinner,sun6i-h3-ac-pr-cfg", "syscon";
+			};
 		};
 	};
 };
