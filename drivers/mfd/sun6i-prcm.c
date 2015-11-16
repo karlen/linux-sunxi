@@ -57,6 +57,14 @@ static const struct resource sun6i_a31_apb0_rstc_res[] = {
 	},
 };
 
+static const struct resource sun8i_h3_ac_pr_cfg[] = {
+	{
+		.start = 0x1c0,
+		.end = 0x1c3,
+		.flags = IORESOURCE_MEM,
+	},
+};
+
 static const struct mfd_cell sun6i_a31_prcm_subdevs[] = {
 	{
 		.name = "sun6i-a31-ar100-clk",
@@ -111,6 +119,15 @@ static const struct mfd_cell sun8i_a23_prcm_subdevs[] = {
 	},
 };
 
+static const struct mfd_cell sun8i_h3_prcm_subdevs[] = {
+	{
+		.name = "sun8i-h3-ac-pr-cfg",
+		.of_compatible = "allwinner,sun8i-h3-ac-pr-cfg",
+		.num_resources = ARRAY_SIZE(sun8i_h3_ac_pr_cfg),
+		.resources = sun8i_h3_ac_pr_cfg,
+	},
+};
+
 static const struct prcm_data sun6i_a31_prcm_data = {
 	.nsubdevs = ARRAY_SIZE(sun6i_a31_prcm_subdevs),
 	.subdevs = sun6i_a31_prcm_subdevs,
@@ -121,6 +138,11 @@ static const struct prcm_data sun8i_a23_prcm_data = {
 	.subdevs = sun8i_a23_prcm_subdevs,
 };
 
+static const struct prcm_data sun8i_h3_prcm_data = {
+	.nsubdevs = ARRAY_SIZE(sun8i_h3_prcm_subdevs),
+	.subdevs = sun8i_h3_prcm_subdevs,
+};
+
 static const struct of_device_id sun6i_prcm_dt_ids[] = {
 	{
 		.compatible = "allwinner,sun6i-a31-prcm",
@@ -129,6 +151,10 @@ static const struct of_device_id sun6i_prcm_dt_ids[] = {
 	{
 		.compatible = "allwinner,sun8i-a23-prcm",
 		.data = &sun8i_a23_prcm_data,
+	},
+	{
+		.compatible = "allwinner,sun8i-h3-prcm",
+		.data = &sun8i_h3_prcm_data,
 	},
 	{ /* sentinel */ },
 };
