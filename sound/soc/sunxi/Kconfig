@@ -17,6 +17,7 @@ config SND_SUN6I_CODEC
 config SND_SUN8I_CODEC
 	select MFD_CORE
 	select REGMAP_MMIO
+#	select MFD_SYSCON
 	select SND_SOC_GENERIC_DMAENGINE_PCM
 	tristate "Allwinner H3 Audio Codec Support"
 

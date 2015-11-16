@@ -1379,7 +1379,7 @@ static int sun8i_codec_probe(struct platform_device *pdev)
 	dev_dbg(dev, "COOPS registers mapped");
 
 	priv->prcm_regmap = syscon_regmap_lookup_by_compatible(
-					"allwinner, sun8i-h3-prcm");
+					"allwinner,sun8i-h3-prcm");
 	if (IS_ERR(priv->prcm_regmap))
 		return PTR_ERR(priv->prcm_regmap);
 	dev_dbg(dev, "COOPS Analog Part mapped");
