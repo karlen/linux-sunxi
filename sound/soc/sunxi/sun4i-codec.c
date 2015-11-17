@@ -27,6 +27,7 @@
 #include <linux/of_address.h>
 #include <linux/clk.h>
 #include <linux/regmap.h>
+#include <linux/gpio/consumer.h>
 
 #include <sound/core.h>
 #include <sound/pcm.h>
@@ -101,16 +102,15 @@ struct sun4i_codec {
 	struct regmap	*regmap;
 	struct clk	*clk_apb;
 	struct clk	*clk_module;
+	struct gpio_desc *gpio_pa;
 
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
 };
 
 static void sun4i_codec_start_playback(struct sun4i_codec *scodec)
 {
-	/*
-	 * FIXME: according to the BSP, we might need to drive a PA
-	 *        GPIO high here on some boards
-	 */
+	if (scodec->gpio_pa)
+		gpiod_set_value_cansleep(scodec->gpio_pa, 1);
 
 	/* Flush TX FIFO */
 	regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
@@ -125,15 +125,13 @@ static void sun4i_codec_start_playback(struct sun4i_codec *scodec)
 
 static void sun4i_codec_stop_playback(struct sun4i_codec *scodec)
 {
-	/*
-	 * FIXME: according to the BSP, we might need to drive a PA
-	 *        GPIO low here on some boards
-	 */
-
 	/* Disable DAC DRQ */
 	regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
 			   BIT(SUN4I_CODEC_DAC_FIFOC_DAC_DRQ_EN),
 			   0);
+
+	if (scodec->gpio_pa)
+		gpiod_set_value_cansleep(scodec->gpio_pa, 0);
 }
 
 static int sun4i_codec_trigger(struct snd_pcm_substream *substream, int cmd,
@@ -631,6 +629,15 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 	if (clk_prepare_enable(scodec->clk_apb)) {
 		dev_err(&pdev->dev, "Failed to enable the APB clock\n");
 		return -EINVAL;
+	}
+
+	scodec->gpio_pa = devm_gpiod_get_optional(&pdev->dev, "pa",
+						  GPIOD_OUT_HIGH);
+	if (IS_ERR(scodec->gpio_pa)) {
+		ret = PTR_ERR(scodec->gpio_pa);
+		if (ret != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Failed to get pa gpio: %d\n", ret);
+		return ret;
 	}
 
 	/* DMA configuration for TX FIFO */
