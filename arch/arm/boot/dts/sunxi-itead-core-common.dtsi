@@ -93,13 +93,6 @@
 	status = "okay";
 };
 
-&emac {
-	pinctrl-names = "default";
-	pinctrl-0 = <&emac_pins_a>;
-	phy = <&phy1>;
-	status = "okay";
-};
-
 &emac_sram {
 	status = "okay";
 };
@@ -120,14 +113,6 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c1_pins_a>;
 	status = "okay";
-};
-
-&mdio {
-	status = "okay";
-
-	phy1: ethernet-phy@1 {
-		reg = <1>;
-	};
 };
 
 &mmc0 {

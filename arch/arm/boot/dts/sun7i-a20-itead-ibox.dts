@@ -48,8 +48,16 @@
 	compatible = "itead,a20-itead-ibox", "allwinner,sun7i-a20";
 };
 
+&emac {
+	status = "okay";
+};
+
 &ir0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&ir0_rx_pins_a>;
+	status = "okay";
+};
+
+&mdio {
 	status = "okay";
 };

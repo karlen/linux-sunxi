@@ -42,3 +42,30 @@
 
 #include "sun7i-a20.dtsi"
 #include "sunxi-itead-core-common.dtsi"
+
+&emac {
+	pinctrl-names = "default";
+	pinctrl-0 = <&emac_pins_a>;
+	phy = <&phy_mdio>;
+	status = "disabled";
+};
+
+&gmac {
+	pinctrl-names = "default";
+	pinctrl-0 = <&gmac_pins_rgmii_a>;
+	phy = <&phy_gmac>;
+	phy-mode = "rgmii";
+	status = "disabled";
+
+	phy_gmac: ethernet-phy@1 {
+		reg = <1>;
+	};
+};
+
+&mdio {
+	status = "disabled";
+
+	phy_mdio: ethernet-phy@1 {
+		reg = <1>;
+	};
+};
