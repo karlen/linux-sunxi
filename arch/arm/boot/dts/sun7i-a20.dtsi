@@ -1306,8 +1306,8 @@
 			compatible = "allwinner,sun4i-a10-spdif";
 			reg = <0x01c21000 0x40>;
 			interrupts = <GIC_SPI 13 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&apb0_gates 1>, <&pll2 1>, <&spdif_clk>;
-			clock-names = "apb", "audio", "spdif";
+			clocks = <&apb0_gates 1>, <&spdif_clk>;
+			clock-names = "apb", "spdif";
 			dmas = <&dma 0 2>, <&dma 0 2>;
 			dma-names = "rx", "tx";
 			spdif-in = "disabled";
