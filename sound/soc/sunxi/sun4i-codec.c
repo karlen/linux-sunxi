@@ -70,6 +70,7 @@
 
 /* Codec ADC register offsets and bit fields */
 #define SUN4I_CODEC_ADC_FIFOC			(0x1c)
+#define SUN4I_CODEC_ADC_FIFOC_ADC_FS			(29)
 #define SUN4I_CODEC_ADC_FIFOC_EN_AD			(28)
 #define SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE		(24)
 #define SUN4I_CODEC_ADC_FIFOC_RX_TRIG_LEVEL		(8)
@@ -85,6 +86,7 @@
 #define SUN4I_CODEC_ADC_ACTL_PREG1EN			(29)
 #define SUN4I_CODEC_ADC_ACTL_PREG2EN			(28)
 #define SUN4I_CODEC_ADC_ACTL_VMICEN			(27)
+#define SUN4I_CODEC_ADC_ACTL_MICGAIN			(25) /* Undocumented */
 #define SUN4I_CODEC_ADC_ACTL_VADCG			(20)
 #define SUN4I_CODEC_ADC_ACTL_ADCIS			(17)
 #define SUN4I_CODEC_ADC_ACTL_PA_EN			(4)
@@ -105,6 +107,7 @@ struct sun4i_codec {
 	struct gpio_desc *gpio_pa;
 
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
+	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 };
 
 static void sun4i_codec_start_playback(struct sun4i_codec *scodec)
@@ -134,26 +137,76 @@ static void sun4i_codec_stop_playback(struct sun4i_codec *scodec)
 		gpiod_set_value_cansleep(scodec->gpio_pa, 0);
 }
 
+static void sun4i_codec_start_capture(struct sun4i_codec *scodec)
+{
+	if (scodec->gpio_pa)
+		gpiod_set_value_cansleep(scodec->gpio_pa, 1);
+
+	/* Flush RX FIFO */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+			   BIT(SUN4I_CODEC_ADC_FIFOC_FIFO_FLUSH),
+			   BIT(SUN4I_CODEC_ADC_FIFOC_FIFO_FLUSH));
+
+	/* Enable ADC DRQ */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+			   BIT(SUN4I_CODEC_ADC_FIFOC_ADC_DRQ_EN),
+			   BIT(SUN4I_CODEC_ADC_FIFOC_ADC_DRQ_EN));
+}
+
+static void sun4i_codec_stop_capture(struct sun4i_codec *scodec)
+{
+	/* Disable ADC DRQ */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+			   BIT(SUN4I_CODEC_ADC_FIFOC_ADC_DRQ_EN), 0);
+	/* Disable mic1 PA */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_ACTL,
+			   BIT(SUN4I_CODEC_ADC_ACTL_PREG1EN), 0);
+	/* Disable VMIC */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_ACTL,
+			   BIT(SUN4I_CODEC_ADC_ACTL_VMICEN), 0);
+	if (1/*sunxi_is_sun7i()*/) {
+		/* boost up record effect */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_TUNE,
+				   0x3 << 8, 0 << 0x3);
+	}
+	/* Disable ADC digital */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+			   BIT(SUN4I_CODEC_ADC_FIFOC_EN_AD), 0);
+	/* set RX FIFO mode */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+			   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE), 0);
+	/* flush RX FIFO */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+			   BIT(SUN4I_CODEC_ADC_FIFOC_FIFO_FLUSH), 0);
+	/* Disable adc1 analog */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_ACTL,
+			   (BIT(SUN4I_CODEC_ADC_ACTL_ADC_R_EN) |
+			   BIT(SUN4I_CODEC_ADC_ACTL_ADC_L_EN)), 0);
+}
+
 static int sun4i_codec_trigger(struct snd_pcm_substream *substream, int cmd,
 			       struct snd_soc_dai *dai)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sun4i_codec *scodec = snd_soc_card_get_drvdata(rtd->card);
 
-	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -ENOTSUPP;
-
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		sun4i_codec_start_playback(scodec);
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			sun4i_codec_start_playback(scodec);
+		else
+			sun4i_codec_start_capture(scodec);
 		break;
 
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		sun4i_codec_stop_playback(scodec);
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			sun4i_codec_stop_playback(scodec);
+		else
+			sun4i_codec_stop_capture(scodec);
 		break;
 
 	default:
@@ -170,34 +223,75 @@ static int sun4i_codec_prepare(struct snd_pcm_substream *substream,
 	struct sun4i_codec *scodec = snd_soc_card_get_drvdata(rtd->card);
 	u32 val;
 
-	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -ENOTSUPP;
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		/* Flush the TX FIFO */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
+				   BIT(SUN4I_CODEC_DAC_FIFOC_FIFO_FLUSH),
+				   BIT(SUN4I_CODEC_DAC_FIFOC_FIFO_FLUSH));
 
-	/* Flush the TX FIFO */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-			   BIT(SUN4I_CODEC_DAC_FIFOC_FIFO_FLUSH),
-			   BIT(SUN4I_CODEC_DAC_FIFOC_FIFO_FLUSH));
+		/* Set TX FIFO Empty Trigger Level */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
+				   0x3f << SUN4I_CODEC_DAC_FIFOC_TX_TRIG_LEVEL,
+				   0xf << SUN4I_CODEC_DAC_FIFOC_TX_TRIG_LEVEL);
 
-	/* Set TX FIFO Empty Trigger Level */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-			   0x3f << SUN4I_CODEC_DAC_FIFOC_TX_TRIG_LEVEL,
-			   0xf << SUN4I_CODEC_DAC_FIFOC_TX_TRIG_LEVEL);
+		if (substream->runtime->rate > 32000)
+			/* Use 64 bits FIR filter */
+			val = 0;
+		else
+			/* Use 32 bits FIR filter */
+			val = BIT(SUN4I_CODEC_DAC_FIFOC_FIR_VERSION);
 
-	if (substream->runtime->rate > 32000)
-		/* Use 64 bits FIR filter */
-		val = 0;
-	else
-		/* Use 32 bits FIR filter */
-		val = BIT(SUN4I_CODEC_DAC_FIFOC_FIR_VERSION);
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
+				   BIT(SUN4I_CODEC_DAC_FIFOC_FIR_VERSION),
+				   val);
 
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-			   BIT(SUN4I_CODEC_DAC_FIFOC_FIR_VERSION),
-			   val);
+		/* Send zeros when we have an underrun */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
+				   BIT(SUN4I_CODEC_DAC_FIFOC_SEND_LASAT),
+				   0);
+	} else {
+		/* RX Routines in here */
+		/* Enable mic1 PA */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_ACTL,
+				   BIT(SUN4I_CODEC_ADC_ACTL_PREG1EN),
+				   BIT(SUN4I_CODEC_ADC_ACTL_PREG1EN));
+		/* mic1 gain 32db */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_ACTL,
+				   3 << SUN4I_CODEC_ADC_ACTL_MICGAIN,
+				   BIT(SUN4I_CODEC_ADC_ACTL_MICGAIN));
+		/* Enable VMIC */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_ACTL,
+				   BIT(SUN4I_CODEC_ADC_ACTL_VMICEN),
+				   BIT(SUN4I_CODEC_ADC_ACTL_VMICEN));
+		if (1/*sunxi_is_sun7i()*/) {
+			/* boost up record effect */
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_TUNE,
+					   0x3 << 8, 3 << 0x3);
+		}
 
-	/* Send zeros when we have an underrun */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-			   BIT(SUN4I_CODEC_DAC_FIFOC_SEND_LASAT),
-			   0);
+		/* enable ADC digital */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+				   BIT(SUN4I_CODEC_ADC_FIFOC_EN_AD),
+				   BIT(SUN4I_CODEC_ADC_FIFOC_EN_AD));
+		/* set RX FIFO mode */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+				   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE),
+				   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE));
+		/* flush RX FIFO */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+				   BIT(SUN4I_CODEC_ADC_FIFOC_FIFO_FLUSH),
+				   BIT(SUN4I_CODEC_ADC_FIFOC_FIFO_FLUSH));
+		/* set RX FIFO rec drq level */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+				   0xf << SUN4I_CODEC_ADC_FIFOC_RX_TRIG_LEVEL,
+				   0x7 << SUN4I_CODEC_ADC_FIFOC_RX_TRIG_LEVEL);
+		/* enable adc1 analog */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_ACTL,
+				   (BIT(SUN4I_CODEC_ADC_ACTL_ADC_R_EN) |
+				   BIT(SUN4I_CODEC_ADC_ACTL_ADC_L_EN)),
+				   (BIT(SUN4I_CODEC_ADC_ACTL_ADC_R_EN) |
+				   BIT(SUN4I_CODEC_ADC_ACTL_ADC_L_EN)));
+	}
 
 	return 0;
 }
@@ -284,9 +378,6 @@ static int sun4i_codec_hw_params(struct snd_pcm_substream *substream,
 	int ret, hwrate;
 	u32 val;
 
-	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -ENOTSUPP;
-
 	clk_freq = sun4i_codec_get_mod_freq(params);
 	if (!clk_freq)
 		return -EINVAL;
@@ -299,46 +390,88 @@ static int sun4i_codec_hw_params(struct snd_pcm_substream *substream,
 	if (hwrate < 0)
 		return hwrate;
 
-	/* Set DAC sample rate */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-			   7 << SUN4I_CODEC_DAC_FIFOC_DAC_FS,
-			   hwrate << SUN4I_CODEC_DAC_FIFOC_DAC_FS);
-
-	/* Set the number of channels we want to use */
-	if (params_channels(params) == 1)
-		val = BIT(SUN4I_CODEC_DAC_FIFOC_MONO_EN);
-	else
-		val = 0;
-
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-			   BIT(SUN4I_CODEC_DAC_FIFOC_MONO_EN),
-			   val);
-
-	/* Set the number of sample bits to either 16 or 24 bits */
-	if (hw_param_interval(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS)->min == 32) {
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		/* Set DAC sample rate */
 		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS),
-				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS));
+				   7 << SUN4I_CODEC_DAC_FIFOC_DAC_FS,
+				   hwrate << SUN4I_CODEC_DAC_FIFOC_DAC_FS);
 
-		/* Set TX FIFO mode to padding the LSBs with 0 */
+		/* Set the number of channels we want to use */
+		if (params_channels(params) == 1)
+			val = BIT(SUN4I_CODEC_DAC_FIFOC_MONO_EN);
+		else
+			val = 0;
+
 		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE),
-				   0);
+				   BIT(SUN4I_CODEC_DAC_FIFOC_MONO_EN),
+				   val);
 
-		scodec->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+		/* Set the number of sample bits to either 16 or 24 bits */
+		if (hw_param_interval(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS)->min == 32) {
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
+					   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS),
+					   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS));
+
+			/* Set TX FIFO mode to padding the LSBs with 0 */
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
+					   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE),
+					   0);
+
+			scodec->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+		} else {
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
+					   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS),
+					   0);
+
+			/* Set TX FIFO mode to repeat the MSB */
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
+					   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE),
+					   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE));
+
+			scodec->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+		}
 	} else {
-		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS),
-				   0);
+		/* RX Routines in here */
+		/* Set ADC sample rate */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+				   7 << SUN4I_CODEC_ADC_FIFOC_ADC_FS,
+				   hwrate << SUN4I_CODEC_ADC_FIFOC_ADC_FS);
 
-		/* Set TX FIFO mode to repeat the MSB */
-		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
-				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE),
-				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE));
+		/* Set the number of channels we want to use */
+		if (params_channels(params) == 1)
+			val = BIT(SUN4I_CODEC_ADC_FIFOC_MONO_EN);
+		else
+			val = 0;
 
-		scodec->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+				   BIT(SUN4I_CODEC_ADC_FIFOC_MONO_EN),
+				   val);
+
+		/* Set the number of sample bits to either 16 or 24 bits */
+		if (hw_param_interval(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS)->min == 32) {
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+					   BIT(SUN4I_CODEC_ADC_FIFOC_RX_SAMPLE_BITS),
+					   BIT(SUN4I_CODEC_ADC_FIFOC_RX_SAMPLE_BITS));
+
+			/* Set TX FIFO mode to padding the LSBs with 0 */
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+					   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE),
+					   0);
+
+			scodec->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+		} else {
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+					   BIT(SUN4I_CODEC_ADC_FIFOC_RX_SAMPLE_BITS),
+					   0);
+
+			/* Set TX FIFO mode to repeat the MSB */
+			regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+					   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE),
+					   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE));
+
+			scodec->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+		}
 	}
-
 	return 0;
 }
 
@@ -381,6 +514,19 @@ static struct snd_soc_dai_driver sun4i_codec_dai = {
 	.ops	= &sun4i_codec_dai_ops,
 	.playback = {
 		.stream_name	= "Codec Playback",
+		.channels_min	= 1,
+		.channels_max	= 2,
+		.rate_min	= 8000,
+		.rate_max	= 192000,
+		.rates		= SNDRV_PCM_RATE_8000_48000 |
+				  SNDRV_PCM_RATE_96000 |
+				  SNDRV_PCM_RATE_192000,
+		.formats	= SNDRV_PCM_FMTBIT_S16_LE |
+				  SNDRV_PCM_FMTBIT_S32_LE,
+		.sig_bits	= 24,
+	},
+	.capture = {
+		.stream_name	= "Codec Capture",
 		.channels_min	= 1,
 		.channels_max	= 2,
 		.rate_min	= 8000,
@@ -513,7 +659,7 @@ static int sun4i_codec_dai_probe(struct snd_soc_dai *dai)
 	struct sun4i_codec *scodec = snd_soc_card_get_drvdata(card);
 
 	snd_soc_dai_init_dma_data(dai, &scodec->playback_dma_data,
-				  NULL);
+				  &scodec->capture_dma_data);
 
 	return 0;
 }
@@ -523,6 +669,14 @@ static struct snd_soc_dai_driver dummy_cpu_dai = {
 	.probe	= sun4i_codec_dai_probe,
 	.playback = {
 		.stream_name	= "Playback",
+		.channels_min	= 1,
+		.channels_max	= 2,
+		.rates		= SUN4I_CODEC_RATES,
+		.formats	= SUN4I_CODEC_FORMATS,
+		.sig_bits	= 24,
+	},
+	.capture = {
+		.stream_name	= "Capture",
 		.channels_min	= 1,
 		.channels_max	= 2,
 		.rates		= SUN4I_CODEC_RATES,
@@ -644,6 +798,11 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 	scodec->playback_dma_data.addr = res->start + SUN4I_CODEC_DAC_TXDATA;
 	scodec->playback_dma_data.maxburst = 4;
 	scodec->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+
+	/* DMA configuration for RX FIFO */
+	scodec->capture_dma_data.addr = res->start + SUN4I_CODEC_ADC_RXDATA;
+	scodec->capture_dma_data.maxburst = 4;
+	scodec->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 
 	ret = snd_soc_register_codec(&pdev->dev, &sun4i_codec_codec,
 				     &sun4i_codec_dai, 1);
