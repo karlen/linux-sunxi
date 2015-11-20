@@ -50,18 +50,6 @@
 	status = "disabled";
 };
 
-&gmac {
-	pinctrl-names = "default";
-	pinctrl-0 = <&gmac_pins_rgmii_a>;
-	phy = <&phy_gmac>;
-	phy-mode = "rgmii";
-	status = "disabled";
-
-	phy_gmac: ethernet-phy@1 {
-		reg = <1>;
-	};
-};
-
 &mdio {
 	status = "disabled";
 

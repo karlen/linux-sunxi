@@ -66,19 +66,11 @@
 			default-state = "on";
 		};
 	};
-
-	reg_axp_ipsout: axp_ipsout {
-		compatible = "regulator-fixed";
-		regulator-name = "axp-ipsout";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		regulator-always-on;
-	};
 };
 
 &ahci {
 	target-supply = <&reg_ahci_5v>;
-	status = "okay";
+	status = "disabled";
 };
 
 &codec {
@@ -86,7 +78,7 @@
 };
 
 &ehci0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &ehci1 {
@@ -95,6 +87,10 @@
 
 &emac_sram {
 	status = "okay";
+};
+
+&gmac {
+	status = "disabled";
 };
 
 &i2c0 {
@@ -126,7 +122,7 @@
 };
 
 &ohci0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &ohci1 {
@@ -134,7 +130,7 @@
 };
 
 &otg_sram {
-	status = "okay";
+	status = "disabled";
 };
 
 &pio {
@@ -163,7 +159,7 @@
 &reg_ahci_5v {
 	pinctrl-0 = <&ahci_pwr_pin_a>;
 	gpio = <&pio 1 8 GPIO_ACTIVE_HIGH>;
-	status = "okay";
+	status = "disabled";
 };
 
 #include "axp209.dtsi"
@@ -194,7 +190,7 @@
 };
 
 &reg_usb0_vbus {
-	status = "okay";
+	status = "disabled";
 };
 
 &reg_usb1_vbus {
@@ -213,15 +209,10 @@
 
 &usb_otg {
 	dr_mode = "otg";
-	status = "okay";
+	status = "disabled";
 };
 
 &usbphy {
-	pinctrl-names = "default";
-	pinctrl-0 = <&usb0_id_detect_pin>, <&usb0_vbus_detect_pin>;
-	usb0_id_det-gpios = <&pio 7 4 GPIO_ACTIVE_HIGH>; /* PH4 */
-	usb0_vbus_det-gpios = <&pio 7 5 GPIO_ACTIVE_HIGH>; /* PH5 */
-	usb0_vbus-supply = <&reg_usb0_vbus>;
 	usb1_vbus-supply = <&reg_usb1_vbus>;
 	usb2_vbus-supply = <&reg_usb2_vbus>;
 	status = "okay";
