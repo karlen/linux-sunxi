@@ -601,6 +601,7 @@ dtb-$(CONFIG_MACH_SUN4I) += \
 	sun4i-a10-mini-xplus.dtb \
 	sun4i-a10-mk802.dtb \
 	sun4i-a10-mk802ii.dtb \
+	sun4i-a10-mk802-1gb.dtb \
 	sun4i-a10-olinuxino-lime.dtb \
 	sun4i-a10-pcduino.dtb \
 	sun4i-a10-pcduino2.dtb \
