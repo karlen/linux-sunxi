@@ -1345,6 +1345,8 @@
 			clock-names = "apb", "spdif";
 			dmas = <&dma 0 2>, <&dma 0 2>;
 			dma-names = "rx", "tx";
+			spdif-in = "disabled";
+			spdif-out = "disabled";
 			status = "disabled";
 		};
 
