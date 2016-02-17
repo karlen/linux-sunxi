@@ -159,6 +159,16 @@ static void sun4i_codec_stop_capture(struct sun4i_codec *scodec)
 	/* Disable ADC DRQ */
 	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
 			   BIT(SUN4I_CODEC_ADC_FIFOC_ADC_DRQ_EN), 0);
+
+	if (of_device_is_compatible(scodec->dev->of_node,
+				    "allwinner,sun7i-a20-codec"))
+		/* FIXME: Undocumented bits */
+		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_TUNE,
+				   0x3 << 8, 0x0 << 8);
+
+	/* set RX FIFO mode */
+	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+			   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE), 0);
 }
 
 static int sun4i_codec_trigger(struct snd_pcm_substream *substream, int cmd,
