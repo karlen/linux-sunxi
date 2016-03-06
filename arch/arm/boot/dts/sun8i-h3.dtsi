@@ -702,12 +702,12 @@
 			#reset-cells = <1>;
 		};
 
-		prcm@01f01400 {
-			compatible = "allwinner,sun8i-h3-prcm";
+		prcm: prcm@01f01400 {
+			compatible = "allwinner,sun8i-h3-prcm", "simple-bus";
 			reg = <0x01f01400 0x400>;
 
 			ac_pr_cfg: ac_pr_cfg {
-				compatible = "allwinner,sun6i-h3-ac-pr-cfg", "syscon";
+				compatible = "allwinner,sun8i-h3-ac-pr-cfg", "syscon";
 			};
 		};
 
