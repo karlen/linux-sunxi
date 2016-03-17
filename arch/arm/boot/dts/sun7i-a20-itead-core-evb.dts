@@ -90,6 +90,26 @@
 		pinctrl-0 = <&mmc3_pwrseq_pin_itead_core_evb>;
 		reset-gpios = <&pio 7 9 GPIO_ACTIVE_LOW>; /* PH9 WIFI_EN */
 	};
+
+        pcm5102: pcm510x {
+                compatible = "ti,pcm510x";
+                pcm510x,format = "i2s";
+                #sound-dai-cells = <0>;
+        };
+
+	sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&pcm5102>;
+		};
+	};
+
 };
 
 &ahci {
@@ -146,6 +166,12 @@
 &i2c2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c2_pins_a>;
+	status = "okay";
+};
+
+&i2s0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0>;
 	status = "okay";
 };
 
