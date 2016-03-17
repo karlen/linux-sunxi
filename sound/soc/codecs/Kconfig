@@ -93,6 +93,7 @@ config SND_SOC_ALL_CODECS
 	select SND_SOC_PCM3168A_SPI if SPI_MASTER
 	select SND_SOC_PCM512x_I2C if I2C
 	select SND_SOC_PCM512x_SPI if SPI_MASTER
+	select SND_SOC_PCM510x
 	select SND_SOC_RT286 if I2C
 	select SND_SOC_RT298 if I2C
 	select SND_SOC_RT5616 if I2C
@@ -547,6 +548,9 @@ config SND_SOC_PCM3168A_SPI
 	depends on SPI_MASTER
 	select SND_SOC_PCM3168A
 	select REGMAP_SPI
+
+config SND_SOC_PCM510x
+	tristate "Texas Instruments PCM510x CODEC"
 
 config SND_SOC_PCM512x
 	tristate
