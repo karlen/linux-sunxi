@@ -88,6 +88,7 @@
 #define SUN4I_DAI_RX_CHAN_MAP_REG	0x3c
 
 struct sun4i_dai {
+	struct platform_device *pdev;
 	struct clk	*bus_clk;
 	struct clk	*mod_clk;
 	struct regmap	*regmap;
@@ -233,7 +234,7 @@ static int sun4i_dai_set_clk_rate(struct sun4i_dai *sdai,
 						  clk_rate,
 						  rate);
 
-		printk("%s +%d mclk %d bclk %d\n", __func__, __LINE__,
+		printk("%s rate %dHz mclk %d bclk %d\n", __func__, rate,
 		       mclk_div, bclk_div);
 
 		if (bclk_div > 0 || mclk_div > 0)
@@ -466,6 +467,29 @@ static int sun4i_dai_trigger(struct snd_pcm_substream *substream, int cmd,
 	default:
 		return -EINVAL;
 	}
+	{
+	/* COOPS DEBUGGING FOR NOW */
+	struct platform_device *pdev = sdai->pdev;
+	u32 reg_val = 0;
+
+	dev_err(&pdev->dev,
+			"Command State %d Audio Clock is %lu\n", cmd, clk_get_rate(sdai->mod_clk));
+	regmap_read(sdai->regmap, SUN4I_DAI_CTRL_REG, &reg_val);
+	dev_err(&pdev->dev,
+			"SUN4I_DAI_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(sdai->regmap, SUN4I_DAI_FMT0_REG, &reg_val);
+	dev_err(&pdev->dev,
+			"SUN4I_DAI_FMT0_REG 0x%x\n", reg_val);
+	regmap_read(sdai->regmap, SUN4I_DAI_FMT1_REG, &reg_val);
+	dev_err(&pdev->dev,
+			"SUN4I_DAI_FMT1_REG 0x%x\n", reg_val);
+	regmap_read(sdai->regmap, SUN4I_DAI_FIFO_CTRL_REG, &reg_val);
+	dev_err(&pdev->dev,
+			"SUN4I_DAI_FIFO_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(sdai->regmap, SUN4I_DAI_FIFO_STA_REG, &reg_val);
+	dev_err(&pdev->dev,
+			"SUN4I_DAI_FIFO_STA_REG 0x%x\n", reg_val);
+	}
 
 	return 0;
 }
@@ -540,9 +564,13 @@ static int sun4i_dai_probe(struct platform_device *pdev)
 	void __iomem *regs;
 	int irq, ret;
 
+	dev_dbg(&pdev->dev, "Entered %s\n", __func__);
+
 	sdai = devm_kzalloc(&pdev->dev, sizeof(*sdai), GFP_KERNEL);
 	if (!sdai)
 		return -ENOMEM;
+
+	sdai->pdev = pdev;
 	platform_set_drvdata(pdev, sdai);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
