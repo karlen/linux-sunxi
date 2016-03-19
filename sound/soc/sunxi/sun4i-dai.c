@@ -125,22 +125,44 @@ static const struct sun4i_dai_clk_div sun4i_dai_mclk_div[] = {
 
 static int sun4i_dai_params_to_sr(struct snd_pcm_hw_params *params)
 {
+	int ret = -EINVAL;
 	switch (params_width(params)) {
 	case 16:
-		return 0;
+		ret = 0;
+		break;
+	case 20:
+		ret = 1;
+		break;
+	case 24:
+		ret = 2;
+		break;
+	case 32:
+		ret = 3;
+		break;
 	}
 
-	return -EINVAL;
+	return ret;
 }
 
 static u8 sun4i_dai_params_to_wss(struct snd_pcm_hw_params *params)
 {
+	int ret = -EINVAL;
 	switch (params_width(params)) {
 	case 16:
-		return 0;
+		ret = 0;
+		break;
+	case 20:
+		ret = 1;
+		break;
+	case 24:
+		ret = 2;
+		break;
+	case 32:
+		ret = 3;
+		break;
 	}
 
-	return -EINVAL;
+	return ret;
 }
 
 static int sun4i_dai_get_bclk_div(struct sun4i_dai *sdai,
@@ -533,14 +555,21 @@ static int sun4i_dai_dai_probe(struct snd_soc_dai *dai)
 	return 0;
 }
 
+#define SUN4I_RATES	SNDRV_PCM_RATE_8000_192000
+
+#define SUN4I_FORMATS	(SNDRV_PCM_FORMAT_S16_LE | \
+				SNDRV_PCM_FORMAT_S20_3LE | \
+				SNDRV_PCM_FORMAT_S24_LE | \
+				SNDRV_PCM_FORMAT_S32_LE)
+
 static struct snd_soc_dai_driver sun4i_dai_dai = {
 	.probe = sun4i_dai_dai_probe,
 	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
-		.rates = SNDRV_PCM_RATE_8000_192000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+		.rates = SUN4I_RATES,
+		.formats = SUN4I_FORMATS,
 	},
 	.ops = &sun4i_dai_dai_ops,
 	.symmetric_rates = 1,
