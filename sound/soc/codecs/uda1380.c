@@ -632,7 +632,8 @@ static int uda1380_set_bias_level(struct snd_soc_codec *codec,
 
 #define UDA1380_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |\
 		       SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_22050 |\
-		       SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000)
+		       SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |\
+		       SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000)
 
 static const struct snd_soc_dai_ops uda1380_dai_ops = {
 	.hw_params	= uda1380_pcm_hw_params,
