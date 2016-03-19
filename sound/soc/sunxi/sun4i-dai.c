@@ -172,8 +172,6 @@ static int sun4i_dai_get_bclk_div(struct sun4i_dai *sdai,
 	int div = oversample_rate / word_size / 2;
 	int i;
 
-	return 3;
-
 	for (i = 0; sun4i_dai_bclk_div[i].div; i++) {
 		const struct sun4i_dai_clk_div *bdiv = sun4i_dai_bclk_div + i;
 
@@ -191,8 +189,6 @@ static int sun4i_dai_get_mclk_div(struct sun4i_dai *sdai,
 {
 	int div = module_rate / sampling_rate / oversample_rate;
 	int i;
-
-	return 1;
 
 	for (i = 0; sun4i_dai_mclk_div[i].div; i++) {
 		const struct sun4i_dai_clk_div *mdiv = sun4i_dai_mclk_div + i;
@@ -256,10 +252,10 @@ static int sun4i_dai_set_clk_rate(struct sun4i_dai *sdai,
 						  clk_rate,
 						  rate);
 
-		printk("%s rate %dHz mclk %d bclk %d\n", __func__, rate,
-		       mclk_div, bclk_div);
+		printk("%s rate %dHz oversample rate %d fs mclk %d bclk %d\n", __func__, rate,
+		       oversample_rate, mclk_div, bclk_div);
 
-		if (bclk_div > 0 || mclk_div > 0)
+		if ((bclk_div >= 0) && (mclk_div >= 0))
 			break;
 	}
 
