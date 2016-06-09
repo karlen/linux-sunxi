@@ -1,0 +1,39 @@
+* GSL 1680 touchscreen controller
+
+Required properties:
+- compatible		  : "silead,gsl1680"
+- reg			  : I2C slave address of the chip (0x40)
+- interrupt-parent	  : a phandle pointing to the interrupt controller
+			    serving the interrupt for this chip
+- interrupts		  : interrupt specification for the gsl1680 interrupt
+- wake-gpios		  : GPIO specification for the WAKE input
+- touchscreen-size-x	  : horizontal resolution of touchscreen (in pixels)
+- touchscreen-size-y	  : vertical resolution of touchscreen (in pixels)
+- touchscreen-max-fingers : maximal input values given to inputsystem
+
+Optional properties:
+- touchscreen-inverted-x  : X axis is inverted (boolean)
+- touchscreen-inverted-y  : Y axis is inverted (boolean)
+- touchscreen-swapped-x-y : X and Y axis are swapped (boolean)
+			    Swapping is done after inverting the axis
+
+Example:
+
+i2c@00000000 {
+
+	gsl1680: touchscreen@40 {
+		compatible = "silead,gsl1680";
+		reg = <0x40>;
+		interrupt-parent = <&pio>;
+		interrupts = <6 11 IRQ_TYPE_EDGE_FALLING>;
+		power-gpios = <&pio 1 3 GPIO_ACTIVE_HIGH>;
+		touchscreen-size-x = <480>;
+		touchscreen-size-y = <800>;
+		touchscreen-max-fingers = <5>;
+		touchscreen-inverted-x;
+		touchscreen-swapped-x-y;
+	};
+
+	/* ... */
+};
+
