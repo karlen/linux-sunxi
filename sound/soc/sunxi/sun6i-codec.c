@@ -328,6 +328,7 @@ struct sun6i_codec {
 	struct clk		*clk_apb;
 	struct clk		*clk_module;
 	struct gpio_desc	*gpio_pa;
+	struct reset_control	*rst;
 
 	bool			linein_playback;
 	bool			linein_capture;
@@ -1344,6 +1345,16 @@ static int sun6i_codec_probe(struct platform_device *pdev)
 	scodec->capture_dma_data.addr = res->start + SUN6I_ADC_RXDATA;
 	scodec->capture_dma_data.maxburst = 4;
 	scodec->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+
+	scodec->rst = devm_reset_control_get_optional(&pdev->dev, NULL);
+	if (IS_ERR(scodec->rst) && PTR_ERR(scodec->rst) == -EPROBE_DEFER) {
+		ret = -EPROBE_DEFER;
+		dev_err(&pdev->dev, "Failed to get audio codec reset: %d\n", ret);
+		goto err_clk_disable;
+	}
+
+	if (!IS_ERR(scodec->rst))
+		reset_control_deassert(scodec->rst);
 
 	ret = snd_soc_register_codec(&pdev->dev, &sun6i_codec_codec, &sun6i_codec_dai, 1);
 
