@@ -89,6 +89,13 @@
 	};
 };
 
+&codec {
+	routing =
+		"Headphone Jack", "HP Right",
+		"Headphone Jack", "HP Left";
+	status = "okay";
+};
+
 &cpu0 {
 	cpu-supply = <&reg_dcdc3>;
 };
