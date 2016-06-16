@@ -369,6 +369,7 @@
 			interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&bus_gates 102>, <&codec_clk>;
 			clock-names = "apb", "codec";
+			resets = <&apb1_rst 0>;
 			dmas = <&dma 15>, <&dma 15>;
 			dma-names = "rx", "tx";
 			status = "disabled";
