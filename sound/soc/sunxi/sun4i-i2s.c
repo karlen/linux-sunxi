@@ -17,6 +17,7 @@
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/regmap.h>
+#include <linux/reset.h>
 
 #include <sound/dmaengine_pcm.h>
 #include <sound/pcm_params.h>
@@ -93,6 +94,7 @@ struct sun4i_i2s {
 	struct clk	*mod_clk;
 	struct regmap	*regmap;
 
+	struct reset_control	*rst;
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 };
@@ -672,9 +674,21 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	}
 	
 	i2s->playback_dma_data.addr = res->start + SUN4I_I2S_FIFO_TX_REG;
-	i2s->playback_dma_data.maxburst = 4;
+	i2s->playback_dma_data.maxburst = 8;
 	i2s->capture_dma_data.addr = res->start + SUN4I_I2S_FIFO_RX_REG;
 	i2s->capture_dma_data.maxburst = 4;
+
+	if (of_device_is_compatible(pdev->dev.of_node,
+				    "allwinner,sun6i-a31-i2s")) {
+		i2s->rst = devm_reset_control_get_optional(&pdev->dev, NULL);
+		if (IS_ERR(i2s->rst) && PTR_ERR(i2s->rst) == -EPROBE_DEFER) {
+			ret = -EPROBE_DEFER;
+			dev_err(&pdev->dev, "Failed to get i2s reset: %d\n", ret);
+			goto err_pm_disable;
+		}
+		if (!IS_ERR(i2s->rst))
+			reset_control_deassert(i2s->rst);
+	}
 
 	pm_runtime_enable(&pdev->dev);
 	if (!pm_runtime_enabled(&pdev->dev)) {
@@ -721,6 +735,7 @@ static int sun4i_i2s_remove(struct platform_device *pdev)
 
 static const struct of_device_id sun4i_i2s_match[] = {
 	{ .compatible = "allwinner,sun4i-a10-i2s", },
+	{ .compatible = "allwinner,sun6i-a31-i2s", },
 	{}
 };
 MODULE_DEVICE_TABLE(of, sun4i_i2s_match);
