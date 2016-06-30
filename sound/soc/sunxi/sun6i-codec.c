@@ -97,7 +97,7 @@
 #define SUN6I_DAC_ACTL_HPISL			(8)
 #define SUN6I_DAC_ACTL_HPPAMUTER		(7)
 #define SUN6I_DAC_ACTL_HPPAMUTEL		(6)
-#define SUNXI_DAC_ACTL_PA_MUTE			(6)
+#define SUN6I_DAC_ACTL_HPVOL			(0)
 #define SUNXI_DAC_ACTL_PA_VOL			(0)
 
 #define SUN6I_PA_CTRL		(0x24)		//new func
@@ -987,25 +987,40 @@ static const struct soc_enum sun6i_fir_length_enum =
 
 static const char *sun6i_left_hp_mux[] = {"Left DAC", "Left Output Mixer"};
 static const struct soc_enum sun6i_left_hp_mux_enum =
-	SOC_ENUM_SINGLE(SUN6I_DAC_ACTL, 8, 2, sun6i_left_hp_mux);
+	SOC_ENUM_SINGLE(SUN6I_DAC_ACTL, SUN6I_DAC_ACTL_HPISL, 2, sun6i_left_hp_mux);
 
 static const char *sun6i_right_hp_mux[] = {"Right DAC", "Right Output Mixer"};
 static const struct soc_enum sun6i_right_hp_mux_enum =
-	SOC_ENUM_SINGLE(SUN6I_DAC_ACTL, 9, 2, sun6i_right_hp_mux);
+	SOC_ENUM_SINGLE(SUN6I_DAC_ACTL, SUN6I_DAC_ACTL_HPISR, 2, sun6i_right_hp_mux);
+
+static const char *sun6i_left_lineout_mux[] = {"Left Output Mixer", "Left + Right Output Mixer"};
+static const struct soc_enum sun6i_left_lineout_mux_enum =
+	SOC_ENUM_SINGLE(SUN6I_MIC_CTRL, SUN6I_MIC_CTRL_LINEOUTL_SRC_SEL, 2, sun6i_left_lineout_mux);
+
+static const char *sun6i_right_lineout_mux[] = {"Right Output Mixer", "Left Lineout"};
+static const struct soc_enum sun6i_right_lineout_mux_enum =
+	SOC_ENUM_SINGLE(SUN6I_MIC_CTRL, SUN6I_MIC_CTRL_LINEOUTR_SRC_SEL, 2, sun6i_right_lineout_mux);
 
 /* NOTE DB VALUE IS WRONG */
 static DECLARE_TLV_DB_SCALE(sun6i_codec_digital_volume_scale, -6300, 100, 1);
+static DECLARE_TLV_DB_SCALE(sun6i_codec_headphone_volume_scale, -6200, 100, 0);
+static DECLARE_TLV_DB_SCALE(sun6i_codec_lineout_volume_scale, -4800, 150, 0);
 
 static const struct snd_kcontrol_new sun6i_snd_controls[] = {
 	/* This is actually an attenuation by 64 steps of -1.16dB */
 	SOC_SINGLE_TLV("DAC Volume",
 		   SUNXI_DAC_DPC, SUNXI_DAC_DPC_DVOL, 0x3f, 0,
 			sun6i_codec_digital_volume_scale),
+
+	SOC_SINGLE_TLV("Headphone Volume",
+		   SUN6I_DAC_ACTL, SUN6I_DAC_ACTL_HPVOL, 0x3f, 0,
+			sun6i_codec_headphone_volume_scale),
+
+	SOC_SINGLE_TLV("Lineout Volume",
+		   SUN6I_MIC_CTRL, SUN6I_MIC_CTRL_LINEOUT_VOL, 0x1f, 0,
+			sun6i_codec_lineout_volume_scale),
 /*	SOC_SINGLE("DAC High Pass Filter Switch",
 		   SUNXI_DAC_DPC, 18, 1, 0),
-
-	SOC_SINGLE("Headphone Volume",
-		   SUN6I_DAC_ACTL, 0, 0x1f, 0),
 
 	SOC_SINGLE("Zero-crossover Switch",
 		   SUN6I_ADDAC_TUNE, 22, 1, 0),
@@ -1037,6 +1052,12 @@ static const struct snd_kcontrol_new sun6i_left_hp_mux_controls =
 static const struct snd_kcontrol_new sun6i_right_hp_mux_controls =
 	SOC_DAPM_ENUM("Right Headphone Amplifier Select", sun6i_right_hp_mux_enum);
 
+static const struct snd_kcontrol_new sun6i_left_lineout_mux_controls =
+	SOC_DAPM_ENUM("Left Lineout Amplifier Select", sun6i_left_lineout_mux_enum);
+
+static const struct snd_kcontrol_new sun6i_right_lineout_mux_controls =
+	SOC_DAPM_ENUM("Right Lineout Amplifier Select", sun6i_right_lineout_mux_enum);
+
 static const struct snd_soc_dapm_widget sun6i_dapm_widgets[] = {
 	/* Digital controls of the DACs */
 	SND_SOC_DAPM_SUPPLY("DAC", SUNXI_DAC_DPC, SUNXI_DAC_DPC_EN_DA, 0, NULL, 0),
@@ -1054,6 +1075,12 @@ static const struct snd_soc_dapm_widget sun6i_dapm_widgets[] = {
 			 SUN6I_DAC_ACTL, SUN6I_DAC_ACTL_HPPAMUTEL, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("Right Headphone Amplifier",
 			 SUN6I_DAC_ACTL, SUN6I_DAC_ACTL_HPPAMUTER, 0, NULL, 0),
+
+	/* Mutes of both channels coming to the lineout amplifier */
+	SND_SOC_DAPM_PGA("Left Lineout Amplifier",
+			 SUN6I_MIC_CTRL, SUN6I_MIC_CTRL_LINEOUTL_EN, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("Right Lineout Amplifier",
+			 SUN6I_MIC_CTRL, SUN6I_MIC_CTRL_LINEOUTR_EN, 0, NULL, 0),
 
 	/* Mixers */
 	SND_SOC_DAPM_MIXER("Left Mixer", SUN6I_DAC_ACTL, 28, 0,
@@ -1074,8 +1101,15 @@ static const struct snd_soc_dapm_widget sun6i_dapm_widgets[] = {
 	SND_SOC_DAPM_MUX("Right Headphone Amplifier Mux", SND_SOC_NOPM, 0, 0,
 			 &sun6i_right_hp_mux_controls),
 
+	SND_SOC_DAPM_MUX("Left Lineout Amplifier Mux", SND_SOC_NOPM, 0, 0,
+			 &sun6i_left_lineout_mux_controls),
+	SND_SOC_DAPM_MUX("Right Lineout Amplifier Mux", SND_SOC_NOPM, 0, 0,
+			 &sun6i_right_lineout_mux_controls),
+
 	SND_SOC_DAPM_OUTPUT("HP Left"),
 	SND_SOC_DAPM_OUTPUT("HP Right"),
+	SND_SOC_DAPM_OUTPUT("Lineout Left"),
+	SND_SOC_DAPM_OUTPUT("Lineout Right"),
 };
 
 static const struct snd_soc_dapm_route sun6i_dapm_routes[] = {
@@ -1107,6 +1141,20 @@ static const struct snd_soc_dapm_route sun6i_dapm_routes[] = {
 	/* Right HP Amplifier */
 	{ "Headphone Amplifier", NULL, "Right Headphone Amplifier Mux" },
 
+	/* Left Lineout Mux */
+	{ "Left Lineout Amplifier Mux", NULL, "Left Output Mixer" },
+	{ "Left Lineout Amplifier Mux", NULL, "Left + Right Output Mixer" },
+
+	/* Right Lineout Mux */
+	{ "Right Lineout Amplifier Mux", NULL, "Right Output Mixer" },
+	{ "Right Lineout Amplifier Mux", NULL, "Lineout Left" },
+
+	/* Left Lineout Amplifier */
+	{ "Left Lineout Amplifier", NULL, "Left Lineout Amplifier Mux" },
+
+	/* Right Lineout Amplifier */
+	{ "Right Lineout Amplifier", NULL, "Right Lineout Amplifier Mux" },
+
 	/* Power up the headphone amplifiers */
 	{ "Left Headphone Amplifier", NULL, "Headphone Amplifier" },
 	{ "Right Headphone Amplifier", NULL, "Headphone Amplifier" },
@@ -1114,6 +1162,10 @@ static const struct snd_soc_dapm_route sun6i_dapm_routes[] = {
 	/* Headphone outputs */
 	{ "HP Left", NULL, "Left Headphone Amplifier" },
 	{ "HP Right", NULL, "Right Headphone Amplifier" },
+
+	/* Lineout outputs */
+	{ "Lineout Left", NULL, "Left Lineout Amplifier" },
+	{ "Lineout Right", NULL, "Right Lineout Amplifier" },
 };
 
 static struct snd_soc_codec_driver sun6i_codec_codec = {
