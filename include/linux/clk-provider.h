@@ -597,6 +597,10 @@ void clk_hw_unregister_fractional_divider(struct clk_hw *hw);
  *	leaving the parent rate unmodified.
  * CLK_MULTIPLIER_ROUND_CLOSEST - Makes the best calculated divider to be
  *	rounded to the closest integer instead of the down one.
+ * CLK_MULTIPLIER_ZERO_BASED - By default, the multiplier is the value read
+ *	from the register. If CLK_MULTIPLIER_ZERO_BASED is specified, then
+ *	the multiplier will be the value read + 1.
+ *
  */
 struct clk_multiplier {
 	struct clk_hw	hw;
@@ -611,6 +615,7 @@ struct clk_multiplier {
 
 #define CLK_MULTIPLIER_ZERO_BYPASS		BIT(0)
 #define CLK_MULTIPLIER_ROUND_CLOSEST	BIT(1)
+#define CLK_MULTIPLIER_ZERO_BASED	BIT(2)
 
 extern const struct clk_ops clk_multiplier_ops;
 

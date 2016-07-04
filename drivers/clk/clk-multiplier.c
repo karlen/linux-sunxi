@@ -35,6 +35,8 @@ static unsigned long clk_multiplier_recalc_rate(struct clk_hw *hw,
 
 	if (!val && mult->flags & CLK_MULTIPLIER_ZERO_BYPASS)
 		val = 1;
+	else if (mult->flags & CLK_MULTIPLIER_ZERO_BASED)
+		val++;
 
 	return parent_rate * val;
 }
@@ -54,12 +56,16 @@ static unsigned long __bestmult(struct clk_hw *hw, unsigned long rate,
 {
 	unsigned long orig_parent_rate = *best_parent_rate;
 	unsigned long parent_rate, current_rate, best_rate = ~0;
-	unsigned int i, bestmult = 0;
+	unsigned int i, max, bestmult = 0;
 
 	if (!(clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT))
 		return rate / *best_parent_rate;
 
-	for (i = 1; i < ((1 << width) - 1); i++) {
+	max = (1 << width) - 1;
+	if (flags & CLK_MULTIPLIER_ZERO_BASED)
+		max++;
+
+	for (i = 1; i < max; i++) {
 		if (rate == orig_parent_rate * i) {
 			/*
 			 * This is the best case for us if we have a
@@ -101,6 +107,9 @@ static int clk_multiplier_set_rate(struct clk_hw *hw, unsigned long rate,
 	unsigned long factor = __get_mult(mult, rate, parent_rate);
 	unsigned long flags = 0;
 	unsigned long val;
+
+	if (flags & CLK_MULTIPLIER_ZERO_BASED)
+		factor--;
 
 	if (mult->lock)
 		spin_lock_irqsave(mult->lock, flags);
