@@ -94,7 +94,7 @@ static void __init sun4i_pll2_setup(struct device_node *node,
 
 	mult->reg = reg;
 	mult->shift = SUN4I_PLL2_N_SHIFT;
-	mult->width = 7;
+	mult->width = SUN4I_PLL2_N_WIDTH;
 	mult->flags = CLK_MULTIPLIER_ZERO_BYPASS |
 			CLK_MULTIPLIER_ROUND_CLOSEST;
 	mult->lock = &sun4i_a10_pll2_lock;
