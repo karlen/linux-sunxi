@@ -34,6 +34,7 @@
 #define SUN4I_PLL2_N_MASK		GENMASK(SUN4I_PLL2_N_WIDTH - 1, 0)
 
 #define SUN4I_PLL2_POST_DIV_SHIFT	26
+#define SUN6I_PLL2_POST_DIV_SHIFT	16
 #define SUN4I_PLL2_POST_DIV_WIDTH	4
 #define SUN4I_PLL2_POST_DIV_MASK	GENMASK(SUN4I_PLL2_POST_DIV_WIDTH - 1, 0)
 
@@ -41,10 +42,17 @@
 
 #define SUN4I_PLL2_OUTPUTS		4
 
+struct sun4i_pll2_data {
+	u32	post_div_offset;
+	u32	post_div_shift;
+	u32	pre_div_flags;
+	u32	base_flags;
+};
+
 static DEFINE_SPINLOCK(sun4i_a10_pll2_lock);
 
 static void __init sun4i_pll2_setup(struct device_node *node,
-				    int post_div_offset)
+				    const struct sun4i_pll2_data *data)
 {
 	const char *clk_name = node->name, *parent;
 	struct clk **clks, *base_clk, *prediv_clk;
@@ -71,7 +79,7 @@ static void __init sun4i_pll2_setup(struct device_node *node,
 					  parent, 0, reg,
 					  SUN4I_PLL2_PRE_DIV_SHIFT,
 					  SUN4I_PLL2_PRE_DIV_WIDTH,
-					  CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
+					  data->pre_div_flags,
 					  &sun4i_a10_pll2_lock);
 	if (!prediv_clk) {
 		pr_err("Couldn't register the prediv clock\n");
@@ -95,8 +103,7 @@ static void __init sun4i_pll2_setup(struct device_node *node,
 	mult->reg = reg;
 	mult->shift = SUN4I_PLL2_N_SHIFT;
 	mult->width = SUN4I_PLL2_N_WIDTH;
-	mult->flags = CLK_MULTIPLIER_ZERO_BYPASS |
-			CLK_MULTIPLIER_ROUND_CLOSEST;
+	mult->flags = data->base_flags;
 	mult->lock = &sun4i_a10_pll2_lock;
 
 	parent = __clk_get_name(prediv_clk);
@@ -121,8 +128,9 @@ static void __init sun4i_pll2_setup(struct device_node *node,
 	 * fixed divider.
 	 */
 	val = readl(reg);
-	val &= ~(SUN4I_PLL2_POST_DIV_MASK << SUN4I_PLL2_POST_DIV_SHIFT);
-	val |= (SUN4I_PLL2_POST_DIV_VALUE - post_div_offset) << SUN4I_PLL2_POST_DIV_SHIFT;
+	val &= ~(SUN4I_PLL2_POST_DIV_MASK << data->post_div_shift);
+	val |= (SUN4I_PLL2_POST_DIV_VALUE - data->post_div_offset) <<
+	       data->post_div_shift;
 	writel(val, reg);
 
 	of_property_read_string_index(node, "clock-output-names",
@@ -186,18 +194,49 @@ err_unmap:
 	iounmap(reg);
 }
 
+static const struct sun4i_pll2_data sun4i_a10_pll2_data __initconst = {
+	.post_div_shift	= SUN4I_PLL2_POST_DIV_SHIFT,
+	.pre_div_flags	= CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
+	.base_flags	= CLK_MULTIPLIER_ZERO_BYPASS |
+			  CLK_MULTIPLIER_ROUND_CLOSEST,
+};
+
 static void __init sun4i_a10_pll2_setup(struct device_node *node)
 {
-	sun4i_pll2_setup(node, 0);
+	sun4i_pll2_setup(node, &sun4i_a10_pll2_data);
 }
 
 CLK_OF_DECLARE(sun4i_a10_pll2, "allwinner,sun4i-a10-pll2-clk",
 	       sun4i_a10_pll2_setup);
 
+static const struct sun4i_pll2_data sun5i_a13_pll2_data __initconst = {
+	.post_div_offset	= 1,
+	.post_div_shift		= SUN4I_PLL2_POST_DIV_SHIFT,
+	.pre_div_flags		= CLK_DIVIDER_ONE_BASED |
+				  CLK_DIVIDER_ALLOW_ZERO,
+	.base_flags		= CLK_MULTIPLIER_ZERO_BYPASS |
+				  CLK_MULTIPLIER_ROUND_CLOSEST,
+};
+
 static void __init sun5i_a13_pll2_setup(struct device_node *node)
 {
-	sun4i_pll2_setup(node, 1);
+	sun4i_pll2_setup(node, &sun5i_a13_pll2_data);
 }
 
 CLK_OF_DECLARE(sun5i_a13_pll2, "allwinner,sun5i-a13-pll2-clk",
 	       sun5i_a13_pll2_setup);
+
+static const struct sun4i_pll2_data sun6i_a31_pll2_data __initconst = {
+	.post_div_offset	= 1,
+	.post_div_shift		= SUN6I_PLL2_POST_DIV_SHIFT,
+	.base_flags		= CLK_MULTIPLIER_ZERO_BASED |
+				  CLK_MULTIPLIER_ROUND_CLOSEST,
+};
+
+static void __init sun6i_a31_pll2_setup(struct device_node *node)
+{
+	sun4i_pll2_setup(node, &sun6i_a31_pll2_data);
+}
+
+CLK_OF_DECLARE(sun6i_a31_pll2, "allwinner,sun6i-a31-pll2-clk",
+	       sun6i_a31_pll2_setup);
