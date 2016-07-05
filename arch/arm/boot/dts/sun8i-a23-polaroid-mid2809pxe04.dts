@@ -53,3 +53,12 @@
 	model = "Polaroid MID2809PXE04 tablet";
 	compatible = "polaroid,mid2809pxe04", "allwinner,sun8i-a23";
 };
+
+&gsl1680 {
+	compatible = "silead,gsl3670";
+	touchscreen-fw-name = "silead/gsl3670-polaroid-mid2809pxe04.fw";
+	touchscreen-size-x = <1660>;
+	touchscreen-size-y = <890>;
+	touchscreen-max-fingers = <5>;
+	status = "okay";
+};
