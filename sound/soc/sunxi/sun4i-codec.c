@@ -165,6 +165,11 @@
 #define SUN6I_CODEC_MIC_CTRL_MIC1BOOST			(25)
 #define SUN6I_CODEC_MIC_CTRL_MIC2AMPEN			(24)
 #define SUN6I_CODEC_MIC_CTRL_MIC2BOOST			(21)
+#define SUN6I_CODEC_MIC_CTRL_LINEOUTL_EN		(19)
+#define SUN6I_CODEC_MIC_CTRL_LINEOUTR_EN		(18)
+#define SUN6I_CODEC_MIC_CTRL_LINEOUTL_SRC_SEL		(17)
+#define SUN6I_CODEC_MIC_CTRL_LINEOUTR_SRC_SEL		(16)
+#define SUN6I_CODEC_MIC_CTRL_LINEOUT_VOL		(11)
 #define SUN6I_CODEC_MIC_CTRL_PHONEPREG			(8)
 #define SUN6I_CODEC_ADC_ACTL			(0x2c)
 #define SUN6I_CODEC_ADDA_TUNE			(0x30)
@@ -910,6 +915,9 @@ static const struct snd_kcontrol_new sun6i_codec_mic2_gain[] = {
 /* headphone controls */
 static DECLARE_TLV_DB_SCALE(sun6i_codec_dvol_scale, -7308, 116, 0);
 static DECLARE_TLV_DB_SCALE(sun6i_codec_hpvol_scale, -6300, 100, 1);
+/* Lineout controls */
+static DECLARE_TLV_DB_SCALE(sun6i_codec_lovol_scale, -4800, 150, 0);
+
 
 static const struct snd_kcontrol_new sun6i_codec_codec_widgets[] = {
 	SOC_SINGLE_TLV("Digital Volume", SUN4I_CODEC_DAC_DPC,
@@ -921,6 +929,12 @@ static const struct snd_kcontrol_new sun6i_codec_codec_widgets[] = {
 	SOC_SINGLE_TLV("Headphone Volume", SUN6I_CODEC_OM_DACA_CTRL,
 		       SUN6I_CODEC_OM_DACA_CTRL_HPVOL, 0x3f, 0,
 		       sun6i_codec_hpvol_scale),
+	SOC_DOUBLE("Lineout Mute", SUN6I_CODEC_MIC_CTRL,
+		   SUN6I_CODEC_MIC_CTRL_LINEOUTL_EN,
+		   SUN6I_CODEC_MIC_CTRL_LINEOUTR_EN, 1, 0),
+	SOC_SINGLE_TLV("Lineout Volume", SUN6I_CODEC_MIC_CTRL,
+		       SUN6I_CODEC_MIC_CTRL_LINEOUT_VOL, 0x1f, 0,
+		       sun6i_codec_lovol_scale),
 };
 
 static const char * const sun6i_codec_hpsrc_enum_text[] = {
@@ -935,6 +949,19 @@ static SOC_ENUM_DOUBLE_DECL(sun6i_codec_hpsrc_enum,
 
 static const struct snd_kcontrol_new sun6i_codec_hpsrc[] = {
 	SOC_DAPM_ENUM("Headphone Source", sun6i_codec_hpsrc_enum),
+};
+
+static const char * const sun6i_codec_losrc_enum_text[] = {
+	"Left Output Mixer", "Right Output Mixer",
+};
+
+static SOC_ENUM_SINGLE_DECL(sun6i_codec_losrc_enum,
+			    SUN6I_CODEC_MIC_CTRL,
+			    SUN6I_CODEC_MIC_CTRL_LINEOUTL_SRC_SEL,
+			    sun6i_codec_losrc_enum_text);
+
+static const struct snd_kcontrol_new sun6i_codec_losrc[] = {
+	SOC_DAPM_ENUM("Lineout Source", sun6i_codec_losrc_enum),
 };
 
 static const struct snd_soc_dapm_widget sun6i_codec_codec_dapm_widgets[] = {
@@ -1020,9 +1047,14 @@ static const struct snd_soc_dapm_widget sun6i_codec_codec_dapm_widgets[] = {
 	SND_SOC_DAPM_PGA("Headphone Amplifier", SUN6I_CODEC_OM_PA_CTRL,
 			 SUN6I_CODEC_OM_PA_CTRL_HPPAEN, 0, NULL, 0),
 	SND_SOC_DAPM_OUTPUT("HP"),
+
+	/* Lineout output path */
+#if 0 // no muxing for lineout yet
+ 	SND_SOC_DAPM_MUX("Lineout L Source", SND_SOC_NOPM, 0, 0,
+			 sun6i_codec_losrc),
+#endif
+	SND_SOC_DAPM_OUTPUT("Lineout"),
 #if 0
-	/* Outputs */
-	SND_SOC_DAPM_OUTPUT("Line Out"),
 	SND_SOC_DAPM_OUTPUT("Phone Out"),
 #endif
 };
@@ -1089,6 +1121,13 @@ static const struct snd_soc_dapm_route sun6i_codec_codec_dapm_routes[] = {
 	{ "Headphone Source", "Output Mixer", "Right Output Mixer" },
 	{ "Headphone Amplifier", NULL, "Headphone Source" },
 	{ "HP", NULL, "Headphone Amplifier" },
+
+	/* Lineout Routes */
+	{ "Lineout L Source", "Output Mixer", "Left Output Mixer" },
+	{ "Lineout L Source", "Output Mixer", "Right Output Mixer" },
+	{ "Lineout R Source", "Output Mixer", "Right Output Mixer" },
+	{ "Lineout", NULL, "Lineout L Source" },
+	{ "Lineout", NULL, "Lineout R Source" },
 };
 
 static struct snd_soc_codec_driver sun6i_codec_codec = {
