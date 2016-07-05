@@ -24,8 +24,9 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/of.h>
-#include <linux/of_platform.h>
 #include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_platform.h>
 #include <linux/clk.h>
 #include <linux/regmap.h>
 #include <linux/gpio/consumer.h>
@@ -55,6 +56,8 @@
 #define SUN4I_CODEC_DAC_FIFOC_FIFO_FLUSH		(0)
 #define SUN4I_CODEC_DAC_FIFOS			(0x08)
 #define SUN4I_CODEC_DAC_TXDATA			(0x0c)
+
+/* Codec DAC side analog signal controls */
 #define SUN4I_CODEC_DAC_ACTL			(0x10)
 #define SUN4I_CODEC_DAC_ACTL_DACAENR			(31)
 #define SUN4I_CODEC_DAC_ACTL_DACAENL			(30)
@@ -92,6 +95,8 @@
 #define SUN4I_CODEC_ADC_FIFOC_FIFO_FLUSH		(0)
 #define SUN4I_CODEC_ADC_FIFOS			(0x20)
 #define SUN4I_CODEC_ADC_RXDATA			(0x24)
+
+/* Codec ADC side analog signal controls */
 #define SUN4I_CODEC_ADC_ACTL			(0x28)
 #define SUN4I_CODEC_ADC_ACTL_ADC_R_EN			(31)
 #define SUN4I_CODEC_ADC_ACTL_ADC_L_EN			(30)
@@ -108,11 +113,81 @@
 #define SUN4I_CODEC_ADC_ACTL_DDE			(3)
 #define SUN4I_CODEC_ADC_DEBUG			(0x2c)
 
-/* Other various ADC registers */
+/* FIFO counters */
 #define SUN4I_CODEC_DAC_TXCNT			(0x30)
 #define SUN4I_CODEC_ADC_RXCNT			(0x34)
+
+/* Other various ADC registers */
 #define SUN4I_CODEC_AC_SYS_VERI			(0x38)
 #define SUN4I_CODEC_AC_MIC_PHONE_CAL		(0x3c)
+
+/*** sun6i specific register offsets ***/
+#define SUN6I_CODEC_ADC_FIFOC			(0x10)
+#define SUN6I_CODEC_ADC_FIFOC_EN_AD			(28)
+#define SUN6I_CODEC_ADC_FIFOS			(0x14)
+#define SUN6I_CODEC_ADC_RXDATA			(0x18)
+#define SUN6I_CODEC_OM_DACA_CTRL		(0x20)
+#define SUN6I_CODEC_OM_DACA_CTRL_DACAREN		(31)
+#define SUN6I_CODEC_OM_DACA_CTRL_DACALEN		(30)
+#define SUN6I_CODEC_OM_DACA_CTRL_RMIXEN			(29)
+#define SUN6I_CODEC_OM_DACA_CTRL_LMIXEN			(28)
+#define SUN6I_CODEC_OM_DACA_CTRL_RMIX_MIC1		(23)
+#define SUN6I_CODEC_OM_DACA_CTRL_RMIX_MIC2		(22)
+#define SUN6I_CODEC_OM_DACA_CTRL_RMIX_PHONE		(21)
+#define SUN6I_CODEC_OM_DACA_CTRL_RMIX_PHONEP		(20)
+#define SUN6I_CODEC_OM_DACA_CTRL_RMIX_LINEINL		(19)
+#define SUN6I_CODEC_OM_DACA_CTRL_RMIX_DACR		(18)
+#define SUN6I_CODEC_OM_DACA_CTRL_RMIX_DACL		(17)
+#define SUN6I_CODEC_OM_DACA_CTRL_LMIX_MIC1		(16)
+#define SUN6I_CODEC_OM_DACA_CTRL_LMIX_MIC2		(15)
+#define SUN6I_CODEC_OM_DACA_CTRL_LMIX_PHONE		(14)
+#define SUN6I_CODEC_OM_DACA_CTRL_LMIX_PHONEN		(13)
+#define SUN6I_CODEC_OM_DACA_CTRL_LMIX_LINEINL		(12)
+#define SUN6I_CODEC_OM_DACA_CTRL_LMIX_DACL		(11)
+#define SUN6I_CODEC_OM_DACA_CTRL_LMIX_DACR		(10)
+#define SUN6I_CODEC_OM_DACA_CTRL_RHPIS			(9)
+#define SUN6I_CODEC_OM_DACA_CTRL_LHPIS			(8)
+#define SUN6I_CODEC_OM_DACA_CTRL_RHPPAMUTE		(7)
+#define SUN6I_CODEC_OM_DACA_CTRL_LHPPAMUTE		(6)
+#define SUN6I_CODEC_OM_DACA_CTRL_HPVOL			(0)
+#define SUN6I_CODEC_OM_PA_CTRL			(0x24)
+#define SUN6I_CODEC_OM_PA_CTRL_HPPAEN			(31)
+#define SUN6I_CODEC_OM_PA_CTRL_MIC1G			(15)
+#define SUN6I_CODEC_OM_PA_CTRL_MIC2G			(12)
+#define SUN6I_CODEC_OM_PA_CTRL_LINEING			(9)
+#define SUN6I_CODEC_OM_PA_CTRL_PHONEG			(6)
+#define SUN6I_CODEC_OM_PA_CTRL_PHONEPG			(3)
+#define SUN6I_CODEC_OM_PA_CTRL_PHONENG			(0)
+#define SUN6I_CODEC_MIC_CTRL			(0x28)
+#define SUN6I_CODEC_MIC_CTRL_HBIASEN			(31)
+#define SUN6I_CODEC_MIC_CTRL_MBIASEN			(30)
+#define SUN6I_CODEC_MIC_CTRL_MIC1AMPEN			(28)
+#define SUN6I_CODEC_MIC_CTRL_MIC1BOOST			(25)
+#define SUN6I_CODEC_MIC_CTRL_MIC2AMPEN			(24)
+#define SUN6I_CODEC_MIC_CTRL_MIC2BOOST			(21)
+#define SUN6I_CODEC_MIC_CTRL_PHONEPREG			(8)
+#define SUN6I_CODEC_ADC_ACTL			(0x2c)
+#define SUN6I_CODEC_ADDA_TUNE			(0x30)
+#define SUN6I_CODEC_CALIBRATION			(0x34)
+#define SUN6I_CODEC_DAC_TXCNT			(0x40)
+#define SUN6I_CODEC_ADC_RXCNT			(0x44)
+#define SUN6I_CODEC_HMIC_CTL			(0x50)
+#define SUN6I_CODEC_HMIC_DATA			(0x54)
+
+/* TODO sun6i DAP (Digital Audio Processing) bits */
+
+struct sun4i_codec_regs {
+	u32	adc_fifoc;
+	u32	adc_fifos;
+	u32	adc_rxdata;
+};
+
+struct sun4i_codec_match {
+	const struct regmap_config *regmap_config;
+	const struct snd_soc_codec_driver *codec;
+	const struct sun4i_codec_regs *regs;
+	struct snd_soc_card * (*create_card)(struct device *dev);
+};
 
 struct sun4i_codec {
 	struct device	*dev;
@@ -120,6 +195,7 @@ struct sun4i_codec {
 	struct clk	*clk_apb;
 	struct clk	*clk_module;
 	struct gpio_desc *gpio_pa;
+	const struct sun4i_codec_regs *regs;
 
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
@@ -149,7 +225,7 @@ static void sun4i_codec_stop_playback(struct sun4i_codec *scodec)
 static void sun4i_codec_start_capture(struct sun4i_codec *scodec)
 {
 	/* Enable ADC DRQ */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+	regmap_update_bits(scodec->regmap, scodec->regs->adc_fifoc,
 			   BIT(SUN4I_CODEC_ADC_FIFOC_ADC_DRQ_EN),
 			   BIT(SUN4I_CODEC_ADC_FIFOC_ADC_DRQ_EN));
 }
@@ -157,7 +233,7 @@ static void sun4i_codec_start_capture(struct sun4i_codec *scodec)
 static void sun4i_codec_stop_capture(struct sun4i_codec *scodec)
 {
 	/* Disable ADC DRQ */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+	regmap_update_bits(scodec->regmap, scodec->regs->adc_fifoc,
 			   BIT(SUN4I_CODEC_ADC_FIFOC_ADC_DRQ_EN), 0);
 }
 
@@ -201,13 +277,13 @@ static int sun4i_codec_prepare_capture(struct snd_pcm_substream *substream,
 
 
 	/* Flush RX FIFO */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+	regmap_update_bits(scodec->regmap, scodec->regs->adc_fifoc,
 			   BIT(SUN4I_CODEC_ADC_FIFOC_FIFO_FLUSH),
 			   BIT(SUN4I_CODEC_ADC_FIFOC_FIFO_FLUSH));
 
 
 	/* Set RX FIFO trigger level */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+	regmap_update_bits(scodec->regmap, scodec->regs->adc_fifoc,
 			   0xf << SUN4I_CODEC_ADC_FIFOC_RX_TRIG_LEVEL,
 			   0x7 << SUN4I_CODEC_ADC_FIFOC_RX_TRIG_LEVEL);
 
@@ -219,7 +295,7 @@ static int sun4i_codec_prepare_capture(struct snd_pcm_substream *substream,
 				   0x1 << 8);
 
 	/* Fill most significant bits with valid data MSB */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+	regmap_update_bits(scodec->regmap, scodec->regs->adc_fifoc,
 			   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE),
 			   BIT(SUN4I_CODEC_ADC_FIFOC_RX_FIFO_MODE));
 
@@ -348,17 +424,17 @@ static int sun4i_codec_hw_params_capture(struct sun4i_codec *scodec,
 					 unsigned int hwrate)
 {
 	/* Set ADC sample rate */
-	regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+	regmap_update_bits(scodec->regmap, scodec->regs->adc_fifoc,
 			   7 << SUN4I_CODEC_ADC_FIFOC_ADC_FS,
 			   hwrate << SUN4I_CODEC_ADC_FIFOC_ADC_FS);
 
 	/* Set the number of channels we want to use */
 	if (params_channels(params) == 1)
-		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+		regmap_update_bits(scodec->regmap, scodec->regs->adc_fifoc,
 				   BIT(SUN4I_CODEC_ADC_FIFOC_MONO_EN),
 				   BIT(SUN4I_CODEC_ADC_FIFOC_MONO_EN));
 	else
-		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_FIFOC,
+		regmap_update_bits(scodec->regmap, scodec->regs->adc_fifoc,
 				   BIT(SUN4I_CODEC_ADC_FIFOC_MONO_EN), 0);
 
 	return 0;
@@ -391,7 +467,7 @@ static int sun4i_codec_hw_params_playback(struct sun4i_codec *scodec,
 				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS),
 				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS));
 
-		/* Set TX FIFO mode to padding the LSBs with 0 */
+		/* Use higher 24 bits of TX FIFO */
 		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
 				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE),
 				   0);
@@ -402,7 +478,7 @@ static int sun4i_codec_hw_params_playback(struct sun4i_codec *scodec,
 				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_SAMPLE_BITS),
 				   0);
 
-		/* Set TX FIFO mode to repeat the MSB */
+		/* Use lower 16 bits of TX FIFO */
 		regmap_update_bits(scodec->regmap, SUN4I_CODEC_DAC_FIFOC,
 				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE),
 				   BIT(SUN4I_CODEC_DAC_FIFOC_TX_FIFO_MODE));
@@ -724,6 +800,306 @@ static struct snd_soc_codec_driver sun4i_codec_codec = {
 	.num_dapm_routes	= ARRAY_SIZE(sun4i_codec_codec_dapm_routes),
 };
 
+/*** sun6i Codec ***/
+
+/* output mixer controls */
+static const DECLARE_TLV_DB_SCALE(sun6i_codec_out_mixer_pregain_scale, -450, 150, 0);
+
+static const struct snd_kcontrol_new sun6i_codec_out_mic1_gain[] = {
+	SOC_SINGLE_TLV("Gain", SUN6I_CODEC_OM_PA_CTRL,
+		       SUN6I_CODEC_OM_PA_CTRL_MIC1G, 0x7, 0,
+		       sun6i_codec_out_mixer_pregain_scale),
+};
+
+static const struct snd_kcontrol_new sun6i_codec_out_mic2_gain[] = {
+	SOC_SINGLE_TLV("Gain", SUN6I_CODEC_OM_PA_CTRL,
+		       SUN6I_CODEC_OM_PA_CTRL_MIC2G, 0x7, 0,
+		       sun6i_codec_out_mixer_pregain_scale),
+};
+
+static const struct snd_kcontrol_new sun6i_codec_out_linein_gain[] = {
+	SOC_SINGLE_TLV("Gain", SUN6I_CODEC_OM_PA_CTRL,
+		       SUN6I_CODEC_OM_PA_CTRL_LINEING, 0x7, 0,
+		       sun6i_codec_out_mixer_pregain_scale),
+};
+
+static const struct snd_kcontrol_new sun6i_codec_out_phone_gain[] = {
+	SOC_SINGLE_TLV("Gain", SUN6I_CODEC_OM_PA_CTRL,
+		       SUN6I_CODEC_OM_PA_CTRL_PHONEG, 0x7, 0,
+		       sun6i_codec_out_mixer_pregain_scale),
+};
+
+static const struct snd_kcontrol_new sun6i_codec_out_phonep_gain[] = {
+	SOC_SINGLE_TLV("Gain", SUN6I_CODEC_OM_PA_CTRL,
+		       SUN6I_CODEC_OM_PA_CTRL_PHONEPG, 0x7, 0,
+		       sun6i_codec_out_mixer_pregain_scale),
+};
+
+static const struct snd_kcontrol_new sun6i_codec_out_phonen_gain[] = {
+	SOC_SINGLE_TLV("Gain", SUN6I_CODEC_OM_PA_CTRL,
+		       SUN6I_CODEC_OM_PA_CTRL_PHONENG, 0x7, 0,
+		       sun6i_codec_out_mixer_pregain_scale),
+};
+
+static const struct snd_kcontrol_new sun6i_codec_left_out_mixer_controls[] = {
+	SOC_DAPM_SINGLE("DAC L Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_LMIX_DACL, 1, 0),
+	SOC_DAPM_SINGLE("DAC R Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_LMIX_DACR, 1, 0),
+#if 0
+	SOC_DAPM_SINGLE("Line In Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_LMIX_LINEINL, 1, 0),
+	SOC_DAPM_SINGLE("Phone N Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_LMIX_PHONEN, 1, 0),
+	SOC_DAPM_SINGLE("Phone Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_LMIX_PHONE, 1, 0),
+	SOC_DAPM_SINGLE("Mic1 Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_LMIX_MIC1, 1, 0),
+	SOC_DAPM_SINGLE("Mic2 Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_LMIX_MIC2, 1, 0),
+#endif
+};
+
+static const struct snd_kcontrol_new sun6i_codec_right_out_mixer_controls[] = {
+	SOC_DAPM_SINGLE("DAC L Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_RMIX_DACL, 1, 0),
+	SOC_DAPM_SINGLE("DAC R Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_RMIX_DACR, 1, 0),
+#if 0
+	SOC_DAPM_SINGLE("Line In Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_RMIX_LINEINL, 1, 0),
+	SOC_DAPM_SINGLE("Phone P Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_RMIX_PHONEP, 1, 0),
+	SOC_DAPM_SINGLE("Phone Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_RMIX_PHONE, 1, 0),
+	SOC_DAPM_SINGLE("Mic1 Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_RMIX_MIC1, 1, 0),
+	SOC_DAPM_SINGLE("Mic2 Switch", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_RMIX_MIC2, 1, 0),
+#endif
+};
+
+/* phone input controls */
+static DECLARE_TLV_DB_SCALE(sun6i_codec_phone_gain_scale, -1200, 300, 0);
+
+static const struct snd_kcontrol_new sun6i_codec_phone_gain[] = {
+	SOC_DAPM_SINGLE_TLV("Gain", SUN6I_CODEC_MIC_CTRL,
+			    SUN6I_CODEC_MIC_CTRL_PHONEPREG, 0x7, 0,
+			    sun6i_codec_phone_gain_scale),
+};
+
+/* mic input controls */
+static const unsigned int sun6i_codec_mic_gain_scale[] = {
+	TLV_DB_RANGE_HEAD(2),
+	0, 0, TLV_DB_SCALE_ITEM(0, 0, 0),
+	1, 7, TLV_DB_SCALE_ITEM(2400, 300, 0),
+};
+
+static const struct snd_kcontrol_new sun6i_codec_mic1_gain[] = {
+	SOC_DAPM_SINGLE_TLV("Gain", SUN6I_CODEC_MIC_CTRL,
+			    SUN6I_CODEC_MIC_CTRL_MIC1BOOST, 0x7, 0,
+			    sun6i_codec_mic_gain_scale),
+};
+
+static const struct snd_kcontrol_new sun6i_codec_mic2_gain[] = {
+	SOC_DAPM_SINGLE_TLV("Gain", SUN6I_CODEC_MIC_CTRL,
+			    SUN6I_CODEC_MIC_CTRL_MIC2BOOST, 0x7, 0,
+			    sun6i_codec_mic_gain_scale),
+};
+
+/* headphone controls */
+static DECLARE_TLV_DB_SCALE(sun6i_codec_dvol_scale, -7308, 116, 0);
+static DECLARE_TLV_DB_SCALE(sun6i_codec_hpvol_scale, -6300, 100, 1);
+
+static const struct snd_kcontrol_new sun6i_codec_codec_widgets[] = {
+	SOC_SINGLE_TLV("Digital Volume", SUN4I_CODEC_DAC_DPC,
+		       SUN4I_CODEC_DAC_DPC_DVOL, 0x3f, 1,
+		       sun6i_codec_dvol_scale),
+	SOC_DOUBLE("Headphone Mute", SUN6I_CODEC_OM_DACA_CTRL,
+		   SUN6I_CODEC_OM_DACA_CTRL_LHPPAMUTE,
+		   SUN6I_CODEC_OM_DACA_CTRL_RHPPAMUTE, 1, 0),
+	SOC_SINGLE_TLV("Headphone Volume", SUN6I_CODEC_OM_DACA_CTRL,
+		       SUN6I_CODEC_OM_DACA_CTRL_HPVOL, 0x3f, 0,
+		       sun6i_codec_hpvol_scale),
+};
+
+static const char * const sun6i_codec_hpsrc_enum_text[] = {
+	"DAC", "Output Mixer",
+};
+
+static SOC_ENUM_DOUBLE_DECL(sun6i_codec_hpsrc_enum,
+			    SUN6I_CODEC_OM_DACA_CTRL,
+			    SUN6I_CODEC_OM_DACA_CTRL_LHPIS,
+			    SUN6I_CODEC_OM_DACA_CTRL_RHPIS,
+			    sun6i_codec_hpsrc_enum_text);
+
+static const struct snd_kcontrol_new sun6i_codec_hpsrc[] = {
+	SOC_DAPM_ENUM("Headphone Source", sun6i_codec_hpsrc_enum),
+};
+
+static const struct snd_soc_dapm_widget sun6i_codec_codec_dapm_widgets[] = {
+#if 0
+	/* Microphones */
+	SND_SOC_DAPM_INPUT("Mic1"),
+	SND_SOC_DAPM_INPUT("Mic2"),
+
+	/* Microphone Bias */
+	SND_SOC_DAPM_SUPPLY("HBIAS", SUN6I_CODEC_MIC_CTRL,
+			    SUN6I_CODEC_MIC_CTRL_HBIASEN, 0, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("MBIAS", SUN6I_CODEC_MIC_CTRL,
+			    SUN6I_CODEC_MIC_CTRL_MBIASEN, 0, NULL, 0),
+
+	/* Mic Pre-Amplifiers */
+	SOC_PGA_ARRAY("Mic1 Amplifier", SUN6I_CODEC_MIC_CTRL,
+		      SUN6I_CODEC_MIC_CTRL_MIC1AMPEN, 0,
+		      sun6i_codec_mic1_gain),
+	SOC_PGA_ARRAY("Mic2 Amplifier", SUN6I_CODEC_MIC_CTRL,
+		      SUN6I_CODEC_MIC_CTRL_MIC2AMPEN, 0,
+		      sun6i_codec_mic2_gain),
+
+	/* Inputs */
+	SND_SOC_DAPM_INPUT("Line In"),
+
+	/* Phone input path */
+	SND_SOC_DAPM_INPUT("PHONEN"),
+	SND_SOC_DAPM_INPUT("PHONEP"),
+	SOC_MIXER_ARRAY("Phone Pre-Amplifier", SND_SOC_NOPM, 0, 0,
+			sun6i_codec_phone_gain),
+
+	/* Digital parts of the ADCs */
+	SND_SOC_DAPM_SUPPLY("ADC Enable", SUN6I_CODEC_ADC_FIFOC,
+			    SUN6I_CODEC_ADC_FIFOC_EN_AD, 0,
+			    NULL, 0),
+
+	/* Analog parts of the ADCs */
+	SND_SOC_DAPM_ADC("Left ADC", "Codec Capture", SUN6I_CODEC_ADC_ACTL,
+			 SUN4I_CODEC_ADC_ACTL_ADC_L_EN, 0),
+	SND_SOC_DAPM_ADC("Right ADC", "Codec Capture", SUN6I_CODEC_ADC_ACTL,
+			 SUN4I_CODEC_ADC_ACTL_ADC_R_EN, 0),
+
+#endif
+
+	/* Digital parts of the DACs */
+	SND_SOC_DAPM_SUPPLY("DAC Enable", SUN4I_CODEC_DAC_DPC,
+			    SUN4I_CODEC_DAC_DPC_EN_DA, 0,
+			    NULL, 0),
+
+	/* Analog parts of the DACs */
+	SND_SOC_DAPM_DAC("Left DAC", "Codec Playback", SUN6I_CODEC_OM_DACA_CTRL,
+			 SUN6I_CODEC_OM_DACA_CTRL_DACALEN, 0),
+	SND_SOC_DAPM_DAC("Right DAC", "Codec Playback", SUN6I_CODEC_OM_DACA_CTRL,
+			 SUN6I_CODEC_OM_DACA_CTRL_DACAREN, 0),
+
+#if 0
+	/* Output Mixer Pre-Gains */
+	SOC_PGA_ARRAY("Mic1 Output Mixer Input", SND_SOC_NOPM, 0, 0,
+		      sun6i_codec_out_mic1_gain),
+	SOC_PGA_ARRAY("Mic2 Output Mixer Input", SND_SOC_NOPM, 0, 0,
+		      sun6i_codec_out_mic2_gain),
+	SOC_PGA_ARRAY("Line In Output Mixer Input", SND_SOC_NOPM, 0, 0,
+		      sun6i_codec_out_linein_gain),
+	SOC_PGA_ARRAY("Phone Output Mixer Input", SND_SOC_NOPM, 0, 0,
+		      sun6i_codec_out_phone_gain),
+	SOC_PGA_ARRAY("Phone N Output Mixer Input", SND_SOC_NOPM, 0, 0,
+		      sun6i_codec_out_phonen_gain),
+	SOC_PGA_ARRAY("Phone P Output Mixer Input", SND_SOC_NOPM, 0, 0,
+		      sun6i_codec_out_phonep_gain),
+#endif
+
+	/* Output Mixers */
+	SOC_MIXER_ARRAY("Left Output Mixer", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_LMIXEN, 0,
+			sun6i_codec_left_out_mixer_controls),
+	SOC_MIXER_ARRAY("Right Output Mixer", SUN6I_CODEC_OM_DACA_CTRL,
+			SUN6I_CODEC_OM_DACA_CTRL_RMIXEN, 0,
+			sun6i_codec_right_out_mixer_controls),
+
+	/* Headphone output path */
+	SND_SOC_DAPM_MUX("Headphone Source", SND_SOC_NOPM, 0, 0,
+			 sun6i_codec_hpsrc),
+	SND_SOC_DAPM_PGA("Headphone Amplifier", SUN6I_CODEC_OM_PA_CTRL,
+			 SUN6I_CODEC_OM_PA_CTRL_HPPAEN, 0, NULL, 0),
+	SND_SOC_DAPM_OUTPUT("HP"),
+#if 0
+	/* Outputs */
+	SND_SOC_DAPM_OUTPUT("Line Out"),
+	SND_SOC_DAPM_OUTPUT("Phone Out"),
+#endif
+};
+
+static const struct snd_soc_dapm_route sun6i_codec_codec_dapm_routes[] = {
+#if 0
+	/* Microphone Bias (Should these be at the platform level?) */
+	{ "Mic1", NULL, "MBIAS" },
+	{ "Mic2", NULL, "HBIAS" },
+
+	/* Microphone Routes */
+	{ "Mic1 Amplifier", NULL, "Mic1"},
+	{ "Mic2 Amplifier", NULL, "Mic2"},
+
+	/* Phone Routes */
+	{ "Phone Pre-Amplifier", NULL, "PHONEN" },
+	{ "Phone Pre-Amplifier", NULL, "PHONEP" },
+
+	/* Output Mixer Gain Routes */
+	{ "Line In Output Mixer Input", NULL, "Line In" },
+	{ "Phone Output Mixer Input", NULL, "Phone Pre-Amplifier" },
+	{ "Phone N Output Mixer Input", NULL, "PHONEN" },
+	{ "Phone P Output Mixer Input", NULL, "PHONEP" },
+	{ "Mic1 Output Mixer Input", NULL, "Mic1 Amplifier" },
+	{ "Mic2 Output Mixer Input", NULL, "Mic2 Amplifier" },
+#endif
+
+#if 0
+	/* ADC Routes */
+	{ "Left ADC", NULL, "ADC Enable" },
+	{ "Right ADC", NULL, "ADC Enable" },
+#endif
+
+	/* DAC Routes */
+	{ "Left DAC", NULL, "DAC Enable" },
+	{ "Right DAC", NULL, "DAC Enable" },
+
+	/* Left Mixer Routes */
+	{ "Left Output Mixer", "DAC L Switch", "Left DAC" },
+	{ "Left Output Mixer", "DAC R Switch", "Right DAC" },
+#if 0
+	{ "Left Output Mixer", "Line In Switch", "Line In Output Mixer Input" },
+	{ "Left Output Mixer", "Phone Switch", "Phone Output Mixer Input" },
+	{ "Left Output Mixer", "Phone N Switch", "Phone N Output Mixer Input" },
+	{ "Left Output Mixer", "Mic1 Switch", "Mic1 Output Mixer Input" },
+	{ "Left Output Mixer", "Mic2 Switch", "Mic2 Output Mixer Input" },
+#endif
+
+	/* Right Mixer Routes */
+	{ "Right Output Mixer", "DAC L Switch", "Left DAC" },
+	{ "Right Output Mixer", "DAC R Switch", "Right DAC" },
+#if 0
+	{ "Right Output Mixer", "Line In Switch", "Line In Output Mixer Input" },
+	{ "Right Output Mixer", "Phone Switch", "Phone Output Mixer Input" },
+	{ "Right Output Mixer", "Phone P Switch", "Phone P Output Mixer Input" },
+	{ "Right Output Mixer", "Mic1 Switch", "Mic1 Output Mixer Input" },
+	{ "Right Output Mixer", "Mic2 Switch", "Mic2 Output Mixer Input" },
+#endif
+
+	/* Headphone Routes */
+	{ "Headphone Source", "DAC", "Left DAC" },
+	{ "Headphone Source", "DAC", "Right DAC" },
+	{ "Headphone Source", "Output Mixer", "Left Output Mixer" },
+	{ "Headphone Source", "Output Mixer", "Right Output Mixer" },
+	{ "Headphone Amplifier", NULL, "Headphone Source" },
+	{ "HP", NULL, "Headphone Amplifier" },
+};
+
+static struct snd_soc_codec_driver sun6i_codec_codec = {
+	.controls		= sun6i_codec_codec_widgets,
+	.num_controls		= ARRAY_SIZE(sun6i_codec_codec_widgets),
+	.dapm_widgets		= sun6i_codec_codec_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(sun6i_codec_codec_dapm_widgets),
+	.dapm_routes		= sun6i_codec_codec_dapm_routes,
+	.num_dapm_routes	= ARRAY_SIZE(sun6i_codec_codec_dapm_routes),
+};
+
 static const struct snd_soc_component_driver sun4i_codec_component = {
 	.name = "sun4i-codec",
 };
@@ -763,20 +1139,6 @@ static struct snd_soc_dai_driver dummy_cpu_dai = {
 		.sig_bits	= 24,
 	 },
 };
-
-static const struct regmap_config sun4i_codec_regmap_config = {
-	.reg_bits	= 32,
-	.reg_stride	= 4,
-	.val_bits	= 32,
-	.max_register	= SUN4I_CODEC_AC_MIC_PHONE_CAL,
-};
-
-static const struct of_device_id sun4i_codec_of_match[] = {
-	{ .compatible = "allwinner,sun4i-a10-codec" },
-	{ .compatible = "allwinner,sun7i-a20-codec" },
-	{}
-};
-MODULE_DEVICE_TABLE(of, sun4i_codec_of_match);
 
 static struct snd_soc_dai_link *sun4i_codec_create_link(struct device *dev,
 							int *num_links)
@@ -842,19 +1204,105 @@ static struct snd_soc_card *sun4i_codec_create_card(struct device *dev)
 	return card;
 };
 
+static const struct snd_soc_dapm_widget sun6i_codec_card_dapm_widgets[] = {
+	SND_SOC_DAPM_HP("Headphone", NULL),
+};
+
+static const struct snd_soc_dapm_route sun6i_codec_card_dapm_routes[] = {
+	{ "Headphone", NULL, "HP" },
+};
+
+static struct snd_soc_card *sun6i_codec_create_card(struct device *dev)
+{
+	struct snd_soc_card *card;
+
+	card = devm_kzalloc(dev, sizeof(*card), GFP_KERNEL);
+	if (!card)
+		return NULL;
+
+	card->dai_link = sun4i_codec_create_link(dev, &card->num_links);
+	if (!card->dai_link)
+		return NULL;
+
+	card->dev		= dev;
+	card->name		= "sun4i-codec";
+#if 0
+	card->dapm_widgets	= sun6i_codec_card_dapm_widgets;
+	card->num_dapm_widgets	= ARRAY_SIZE(sun6i_codec_card_dapm_widgets);
+	card->dapm_routes	= sun6i_codec_card_dapm_routes;
+	card->num_dapm_routes	= ARRAY_SIZE(sun6i_codec_card_dapm_routes);
+#endif
+
+	return card;
+};
+
+static const struct regmap_config sun4i_codec_regmap_config = {
+	.reg_bits	= 32,
+	.reg_stride	= 4,
+	.val_bits	= 32,
+	.max_register	= SUN4I_CODEC_AC_MIC_PHONE_CAL,
+};
+
+static const struct regmap_config sun6i_codec_regmap_config = {
+	.reg_bits	= 32,
+	.reg_stride	= 4,
+	.val_bits	= 32,
+	.max_register	= SUN6I_CODEC_HMIC_DATA,
+};
+
+static const struct sun4i_codec_regs sun4i_codec_regs = {
+	.adc_fifoc	= SUN4I_CODEC_ADC_FIFOC,
+	.adc_fifos	= SUN4I_CODEC_ADC_FIFOS,
+	.adc_rxdata	= SUN4I_CODEC_ADC_RXDATA,
+};
+
+static const struct sun4i_codec_regs sun6i_codec_regs = {
+	.adc_fifoc	= SUN6I_CODEC_ADC_FIFOC,
+	.adc_fifos	= SUN6I_CODEC_ADC_FIFOS,
+	.adc_rxdata	= SUN6I_CODEC_ADC_RXDATA,
+};
+
+static const struct sun4i_codec_match sun4i_codec_match = {
+	.regmap_config	= &sun4i_codec_regmap_config,
+	.regs		= &sun4i_codec_regs,
+	.codec		= &sun4i_codec_codec,
+	.create_card	= sun4i_codec_create_card,
+};
+
+static const struct sun4i_codec_match sun6i_codec_match = {
+	.regmap_config	= &sun6i_codec_regmap_config,
+	.regs		= &sun6i_codec_regs,
+	.codec		= &sun6i_codec_codec,
+	.create_card	= sun6i_codec_create_card,
+};
+
+static const struct of_device_id sun4i_codec_of_match[] = {
+	{ .compatible = "allwinner,sun4i-a10-codec", .data = &sun4i_codec_match },
+	{ .compatible = "allwinner,sun6i-a31-codec", .data = &sun6i_codec_match },
+	{ .compatible = "allwinner,sun7i-a20-codec", .data = &sun4i_codec_match },
+	{}
+};
+MODULE_DEVICE_TABLE(of, sun4i_codec_of_match);
+
 static int sun4i_codec_probe(struct platform_device *pdev)
 {
 	struct snd_soc_card *card;
 	struct sun4i_codec *scodec;
 	struct resource *res;
+	const struct sun4i_codec_match *match;
 	void __iomem *base;
 	int ret;
+
+	match = of_device_get_match_data(&pdev->dev);
+	if (WARN_ON(!match))
+		return -EINVAL;
 
 	scodec = devm_kzalloc(&pdev->dev, sizeof(*scodec), GFP_KERNEL);
 	if (!scodec)
 		return -ENOMEM;
 
 	scodec->dev = &pdev->dev;
+	scodec->regs = match->regs;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
@@ -864,7 +1312,7 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 	}
 
 	scodec->regmap = devm_regmap_init_mmio(&pdev->dev, base,
-					     &sun4i_codec_regmap_config);
+					       match->regmap_config);
 	if (IS_ERR(scodec->regmap)) {
 		dev_err(&pdev->dev, "Failed to create our regmap\n");
 		return PTR_ERR(scodec->regmap);
@@ -900,15 +1348,15 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 
 	/* DMA configuration for TX FIFO */
 	scodec->playback_dma_data.addr = res->start + SUN4I_CODEC_DAC_TXDATA;
-	scodec->playback_dma_data.maxburst = 4;
+	scodec->playback_dma_data.maxburst = 8;
 	scodec->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 
 	/* DMA configuration for RX FIFO */
-	scodec->capture_dma_data.addr = res->start + SUN4I_CODEC_ADC_RXDATA;
-	scodec->capture_dma_data.maxburst = 4;
+	scodec->capture_dma_data.addr = res->start + match->regs->adc_rxdata;
+	scodec->capture_dma_data.maxburst = 8;
 	scodec->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 
-	ret = snd_soc_register_codec(&pdev->dev, &sun4i_codec_codec,
+	ret = snd_soc_register_codec(&pdev->dev, match->codec,
 				     &sun4i_codec_dai, 1);
 	if (ret) {
 		dev_err(&pdev->dev, "Failed to register our codec\n");
@@ -929,7 +1377,7 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 		goto err_unregister_codec;
 	}
 
-	card = sun4i_codec_create_card(&pdev->dev);
+	card = match->create_card(&pdev->dev);
 	if (!card) {
 		dev_err(&pdev->dev, "Failed to create our card\n");
 		goto err_unregister_codec;
