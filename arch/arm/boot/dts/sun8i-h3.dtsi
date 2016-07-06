@@ -590,6 +590,33 @@
 				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
 			};
+
+			i2s0_bclk: i2s0@0 {
+				allwinner,pins = "PA19";
+				allwinner,function = "i2s0";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
+			i2s0_lrclk: i2s0@1 {
+				allwinner,pins = "PA18";
+				allwinner,function = "i2s0";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
+			i2s0_sdo0: i2s0@3 {
+				allwinner,pins = "PA20";
+				allwinner,function = "i2s0";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
+			i2s0_sdi: i2s0@4 {
+				allwinner,pins = "PA21";
+				allwinner,function = "i2s0";
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
 		};
 
 		ahb_rst: reset@01c202c0 {
