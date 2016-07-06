@@ -30,6 +30,7 @@
 #define SUN4I_I2S_CTRL_MODE_MASK		BIT(5)
 #define SUN4I_I2S_CTRL_MODE_SLAVE			(1 << 5)
 #define SUN4I_I2S_CTRL_MODE_MASTER			(0 << 5)
+#define SUN4I_I2S_CTRL_LOOP			BIT(3)
 #define SUN4I_I2S_CTRL_TX_EN			BIT(2)
 #define SUN4I_I2S_CTRL_RX_EN			BIT(1)
 #define SUN4I_I2S_CTRL_GL_EN			BIT(0)
@@ -97,6 +98,8 @@ struct sun4i_i2s {
 	struct reset_control	*rst;
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
+
+	bool loopback;
 };
 
 struct sun4i_i2s_clk_div {
@@ -357,6 +360,12 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 static void sun4i_i2s_start_capture(struct sun4i_i2s *i2s)
 {
+	/* Debugging without codec */
+	if(i2s->loopback)
+		regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
+			   SUN4I_I2S_CTRL_LOOP,
+			   SUN4I_I2S_CTRL_LOOP);
+
 	/* Flush RX FIFO */
         regmap_update_bits(i2s->regmap, SUN4I_I2S_FIFO_CTRL_REG,
 			   SUN4I_I2S_FIFO_CTRL_FLUSH_RX,
@@ -707,6 +716,9 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	i2s->playback_dma_data.maxburst = 8;
 	i2s->capture_dma_data.addr = res->start + SUN4I_I2S_FIFO_RX_REG;
 	i2s->capture_dma_data.maxburst = 4;
+
+	if (of_property_read_bool(pdev->dev.of_node, "loopback"))
+		i2s->loopback = true;
 
 	if (of_device_is_compatible(pdev->dev.of_node,
 				    "allwinner,sun6i-a31-i2s")) {
