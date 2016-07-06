@@ -389,16 +389,6 @@ static int sun8i_codec_prepare(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static int sun8i_codec_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	return 0;
-}
-
-static int sun8i_codec_digital_mute(struct snd_soc_dai *dai, int mute)
-{
-	return 0;
-}
-
 static int sun8i_codec_trigger(struct snd_pcm_substream *substream, int cmd,
 			 struct snd_soc_dai *dai)
 {
@@ -484,8 +474,6 @@ static int sun8i_codec_startup(struct snd_pcm_substream *substream,
 
 	sun8i_codec_init(priv);
 
-	clk_prepare_enable(priv->clk_module);
-
 	return 0;
 }
 
@@ -522,7 +510,6 @@ static void sun8i_codec_shutdown(struct snd_pcm_substream *substream,
 			adchpf_enable(0);
 		}*/
 	}
-	clk_disable_unprepare(priv->clk_module);
 }
 
 /*** Codec DAI ***/
@@ -530,10 +517,7 @@ static void sun8i_codec_shutdown(struct snd_pcm_substream *substream,
 static const struct snd_soc_dai_ops sun8i_codec_dai_ops = {
 	.startup	= sun8i_codec_startup,
 	.shutdown	= sun8i_codec_shutdown,
-	.set_fmt	= sun8i_codec_set_fmt,
-	.digital_mute	= sun8i_codec_digital_mute,
 	.prepare	= sun8i_codec_prepare,
-	.hw_params	= sun8i_codec_hw_params,
 	.trigger	= sun8i_codec_trigger,
 };
 
@@ -990,74 +974,16 @@ static int sun8i_codec_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, card);
 	snd_soc_card_set_drvdata(card, priv);
 
-	priv->revision = (enum sun8i_soc_family)of_id->data;
-
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
-
-	priv->regmap = devm_regmap_init_mmio(&pdev->dev, base,
-					     &sun8i_codec_regmap_config);
-	if (IS_ERR(priv->regmap))
-		return PTR_ERR(priv->regmap);
-	dev_dbg(dev, "COOPS registers mapped");
-
 	priv->prcm_regmap = syscon_regmap_lookup_by_compatible(
 					"allwinner,sun8i-h3-ac-pr-cfg");
 	if (IS_ERR(priv->prcm_regmap))
 		return PTR_ERR(priv->prcm_regmap);
 	dev_dbg(dev, "COOPS Analog Part mapped");
 
-	/* Get the clocks from the DT */
-	priv->clk_apb = devm_clk_get(dev, "apb");
-	if (IS_ERR(priv->clk_apb)) {
-		dev_err(dev, "failed to get apb clock\n");
-		return PTR_ERR(priv->clk_apb);
-	}
-	priv->clk_module = devm_clk_get(dev, "codec");
-	if (IS_ERR(priv->clk_module)) {
-		dev_err(dev, "failed to get codec clock\n");
-		return PTR_ERR(priv->clk_module);
-	}
-
-	/* Enable the clock on a basic rate */
-	ret = clk_set_rate(priv->clk_module, 24576000);
-	if (ret) {
-		dev_err(dev, "failed to set codec base clock rate\n");
-		return ret;
-	}
-
-	/* Enable the bus clock */
-	if (clk_prepare_enable(priv->clk_apb)) {
-		dev_err(dev, "failed to enable apb clock\n");
-		clk_disable_unprepare(priv->clk_module);
-		return -EINVAL;
-	}
-
-	/* DMA configuration for TX FIFO */
-	priv->playback_dma_data.addr = res->start + SUN8I_DAC_TXDATA;
-
-	priv->playback_dma_data.maxburst = 4;
-	priv->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-
-	/* DMA configuration for RX FIFO */
-	priv->capture_dma_data.addr = res->start + SUN8I_ADC_RXDATA;
-	priv->capture_dma_data.maxburst = 4;
-	priv->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-
 	ret = snd_soc_register_codec(&pdev->dev, &sun8i_codec, &sun8i_codec_dai, 1);
 
 	ret = devm_snd_soc_register_component(&pdev->dev, &sun8i_codec_component, &dummy_cpu_dai, 1);
-	if (ret)
-		goto err_clk_disable;
-
-	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
-	if (ret)
-		goto err_clk_disable;
-
 	sun8i_codec_init(priv);
-	dev_err(&pdev->dev, "COOPS:regmap 0x%x\n", priv->regmap);
 
 	ret = snd_soc_register_card(card);
 	if (ret) {
@@ -1073,18 +999,11 @@ static int sun8i_codec_probe(struct platform_device *pdev)
 
 err_fini_utils:
 err:
-err_clk_disable:
-	clk_disable_unprepare(priv->clk_apb);
 	return ret;
 }
 
 static int sun8i_codec_remove(struct platform_device *pdev)
 {
-	struct sun8i_priv *priv = platform_get_drvdata(pdev);
-
-	clk_disable_unprepare(priv->clk_apb);
-	clk_disable_unprepare(priv->clk_module);
-
 	return 0;
 }
 
