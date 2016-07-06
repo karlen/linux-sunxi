@@ -993,7 +993,7 @@ static const char *sun6i_right_hp_mux[] = {"Right DAC", "Right Output Mixer"};
 static const struct soc_enum sun6i_right_hp_mux_enum =
 	SOC_ENUM_SINGLE(SUN6I_DAC_ACTL, SUN6I_DAC_ACTL_HPISR, 2, sun6i_right_hp_mux);
 
-static const char *sun6i_left_lineout_mux[] = {"Left Output Mixer", "Left + Right Output Mixer"};
+static const char *sun6i_left_lineout_mux[] = {"Left Output Mixer", "Right Output Mixer"};
 static const struct soc_enum sun6i_left_lineout_mux_enum =
 	SOC_ENUM_SINGLE(SUN6I_MIC_CTRL, SUN6I_MIC_CTRL_LINEOUTL_SRC_SEL, 2, sun6i_left_lineout_mux);
 
@@ -1077,16 +1077,16 @@ static const struct snd_soc_dapm_widget sun6i_dapm_widgets[] = {
 			 SUN6I_DAC_ACTL, SUN6I_DAC_ACTL_HPPAMUTER, 0, NULL, 0),
 
 	/* Mutes of both channels coming to the lineout amplifier */
-	SND_SOC_DAPM_PGA("Left Lineout Amplifier",
+	SND_SOC_DAPM_PGA("Left Lineout Amplifier Mute",
 			 SUN6I_MIC_CTRL, SUN6I_MIC_CTRL_LINEOUTL_EN, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("Right Lineout Amplifier",
+	SND_SOC_DAPM_PGA("Right Lineout Amplifier Mute",
 			 SUN6I_MIC_CTRL, SUN6I_MIC_CTRL_LINEOUTR_EN, 0, NULL, 0),
 
 	/* Mixers */
-	SND_SOC_DAPM_MIXER("Left Mixer", SUN6I_DAC_ACTL, 28, 0,
+	SND_SOC_DAPM_MIXER("Left Mixer Output", SUN6I_DAC_ACTL, 28, 0,
 			   sun6i_left_output_mixer_controls,
 			   ARRAY_SIZE(sun6i_left_output_mixer_controls)),
-	SND_SOC_DAPM_MIXER("Right Mixer", SUN6I_DAC_ACTL, 29, 0,
+	SND_SOC_DAPM_MIXER("Right Mixer Output", SUN6I_DAC_ACTL, 29, 0,
 			   sun6i_right_output_mixer_controls,
 			   ARRAY_SIZE(sun6i_right_output_mixer_controls)),
 
@@ -1119,13 +1119,19 @@ static const struct snd_soc_dapm_route sun6i_dapm_routes[] = {
 
 	/* Left Mixer */
 	{ "Left Mixer", NULL, "Left Mixer Enable" },
-	{ "Left Output Mixer", NULL, "Left DAC" },/* sun4i has switch here */
-	{ "Left Output Mixer", NULL, "Right DAC" },/* sun4i has switch here */
+	{ "Left Mixer", "Left DAC Switch", "Left DAC" },/* sun4i has switch here */
+	//{ "Left Mixer", NULL, "Right DAC" },/* sun4i has switch here */
 
 	/* Right Mixer */
 	{ "Right Mixer", NULL, "Right Mixer Enable" },
-	{ "Right Output Mixer", NULL, "Left DAC" },/* sun4i has switch here */
-	{ "Right Output Mixer", NULL, "Right DAC" },/* sun4i has switch here */
+	{ "Right Mixer", "Right DAC Switch", "Left DAC" },/* sun4i has switch here */
+	//{ "Right Mixer", NULL, "Right DAC" },/* sun4i has switch here */
+
+	/* Left Output Mixer */
+	{ "Left Output Mixer", NULL, "Left Mixer" },
+
+	/* Right Output Mixer */
+	{ "Right Output Mixer", NULL, "Right Mixer" },
 
 	/* Left HP Mux */
 	{ "Left Headphone Amplifier Mux", NULL, "Left Output Mixer" },
@@ -1143,17 +1149,17 @@ static const struct snd_soc_dapm_route sun6i_dapm_routes[] = {
 
 	/* Left Lineout Mux */
 	{ "Left Lineout Amplifier Mux", NULL, "Left Output Mixer" },
-	{ "Left Lineout Amplifier Mux", NULL, "Left + Right Output Mixer" },
+	//{ "Left Lineout Amplifier Mux", NULL, "Left + Right Output Mixer" },
 
 	/* Right Lineout Mux */
 	{ "Right Lineout Amplifier Mux", NULL, "Right Output Mixer" },
-	{ "Right Lineout Amplifier Mux", NULL, "Lineout Left" },
+	//{ "Right Lineout Amplifier Mux", NULL, "Lineout Left" },
 
 	/* Left Lineout Amplifier */
-	{ "Left Lineout Amplifier", NULL, "Left Lineout Amplifier Mux" },
+	{ "Left Lineout Amplifier", "Left Lineout Amplifier Mute", "Left Lineout Amplifier Mux" },
 
 	/* Right Lineout Amplifier */
-	{ "Right Lineout Amplifier", NULL, "Right Lineout Amplifier Mux" },
+	{ "Right Lineout Amplifier", "Right Lineout Amplifier Mute", "Right Lineout Amplifier Mux" },
 
 	/* Power up the headphone amplifiers */
 	{ "Left Headphone Amplifier", NULL, "Headphone Amplifier" },
